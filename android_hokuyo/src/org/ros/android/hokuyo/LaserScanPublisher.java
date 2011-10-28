@@ -31,65 +31,48 @@ import org.ros.node.topic.Publisher;
  */
 public class LaserScanPublisher implements NodeMain {
 
-  private static final double CLUSTER = 1;
-  private static final double SKIP = 0;
+  private final LaserScannerDevice scipDevice;
 
-  private final Scip20Device scipDevice;
+  /**
+   * The offset from our local clock to the actual wall clock time. This is
+   * necessary because we cannot set time on android devices accurately enough
+   * at the moment.
+   */
+  private Duration wallClockOffset;
 
-  private Duration timeOffset;
-  
   private Node node;
   private Publisher<org.ros.message.sensor_msgs.LaserScan> publisher;
-  
+
   /**
-   * We need a way to adjust time stamps because it is not (easily) possible to change 
-   * a tablet's clock.
+   * We need a way to adjust time stamps because it is not (easily) possible to
+   * change a tablet's clock.
    */
-  public LaserScanPublisher(Scip20Device scipDevice) {
+  public LaserScanPublisher(LaserScannerDevice scipDevice) {
     this.scipDevice = scipDevice;
   }
 
   @Override
   public void main(NodeConfiguration nodeConfiguration) throws Exception {
-    node = new DefaultNodeFactory().newNode("android_hokuyo_node", nodeConfiguration);
+    node = new DefaultNodeFactory().newNode("android_hokuyo_node",
+        nodeConfiguration);
     ParameterTree params = node.newParameterTree();
     final String laserTopic = params.getString("~laser_topic", "laser");
     final String laserFrame = params.getString("~laser_frame", "laser");
-    timeOffset = new Duration(0);
-    publisher = node.newPublisher(node.resolveName(laserTopic), "sensor_msgs/LaserScan");
-    node.newSubscriber("/wall_clock", "std_msgs/Time", 
+    wallClockOffset = new Duration(0);
+    publisher = node.newPublisher(node.resolveName(laserTopic),
+        "sensor_msgs/LaserScan");
+    node.newSubscriber("/wall_clock", "std_msgs/Time",
         new MessageListener<org.ros.message.std_msgs.Time>() {
           @Override
           public void onNewMessage(Time message) {
-            timeOffset = message.data.subtract(node.getCurrentTime());
+            wallClockOffset = message.data.subtract(node.getCurrentTime());
           }
         });
-    scipDevice.reset();
-    final Configuration configuration = scipDevice.queryConfiguration();
-    scipDevice.calibrateTime();
-    node.getLog().info("Calibrated laser time offset: " + scipDevice.getScanOffset());
     scipDevice.startScanning(new LaserScanListener() {
       @Override
       public void onNewLaserScan(LaserScan scan) {
-        org.ros.message.sensor_msgs.LaserScan message = 
-            node.getMessageFactory().newMessage("sensor_msgs/LaserScan");
-        // Some laser scanners have blind areas before and after the actual detection range.
-        // These are indicated by the front step and the last step configuration variables.
-        // Since the blind values never change, we can just ignore them when creating the 
-        // range array.
-        message.angle_increment = (float) (CLUSTER * (2.0 * Math.PI) / configuration.getTotalSteps());
-        message.angle_min = (configuration.getFirstStep() - configuration.getFrontStep()) * message.angle_increment;
-        message.angle_max = (configuration.getLastStep() - configuration.getFrontStep()) * message.angle_increment;
-        message.ranges = new float[configuration.getLastStep() - configuration.getFirstStep()];
-        for (int i = 0; i < message.ranges.length; i++) {
-          message.ranges[i] = (float) (scan.getRanges().get(i + configuration.getFirstStep()) / 1000.0);
-        }
-        message.time_increment = (float) (60.0 / ((double) configuration.getStandardMotorSpeed() * configuration.getTotalSteps()));
-        message.scan_time = (float) (60.0 * (SKIP + 1) / (double) configuration.getStandardMotorSpeed());
-        message.range_min = (float) (configuration.getMinimumMeasurment() / 1000.0);
-        message.range_max = (float) (configuration.getMaximumMeasurement() / 1000.0);
-        message.header.frame_id = laserFrame;
-        message.header.stamp = new org.ros.message.Time(scan.getTimeStamp()).add(timeOffset);
+        org.ros.message.sensor_msgs.LaserScan message = toLaserScanMessage(
+            laserFrame, scan);
         publisher.publish(message);
       }
     });
@@ -99,4 +82,47 @@ public class LaserScanPublisher implements NodeMain {
   public void shutdown() {
     scipDevice.shutdown();
   }
+
+  /**
+   * Construct a LaserScan message from sensor readings and the laser
+   * configuration.
+   * 
+   * Also gets rid of readings that don't contain any information.
+   * 
+   * Some laser scanners have blind areas before and after the actual detection
+   * range. These are indicated by the frontStep and the lastStep properties of
+   * the laser's configuration. Since the blind values never change, we can just
+   * ignore them when copying the range readings.
+   * 
+   * @param laserFrame
+   *          The laser's sensor frame.
+   * @param scan
+   *          The actual range readings.
+   * @return A new LaserScan message
+   */
+  private org.ros.message.sensor_msgs.LaserScan toLaserScanMessage(
+      String laserFrame, LaserScan scan) {
+    org.ros.message.sensor_msgs.LaserScan message = node.getMessageFactory()
+        .newMessage("sensor_msgs/LaserScan");
+    LaserScannerConfiguration configuration = scipDevice.getConfiguration();
+    
+    message.angle_increment = configuration.getAngleIncrement();
+    message.angle_min = configuration.getMinimumAngle();
+    message.angle_max = configuration.getMaximumAngle();
+    message.ranges = new float[configuration.getLastStep()
+        - configuration.getFirstStep()];
+    for (int i = 0; i < message.ranges.length; i++) {
+      message.ranges[i] = (float) (scan.getRanges().get(
+          i + configuration.getFirstStep()) / 1000.0);
+    }
+    message.time_increment = configuration.getTimeIncrement();
+    message.scan_time = configuration.getScanTime();
+    message.range_min = (float) (configuration.getMinimumMeasurment() / 1000.0);
+    message.range_max = (float) (configuration.getMaximumMeasurement() / 1000.0);
+    message.header.frame_id = laserFrame;
+    message.header.stamp = new org.ros.message.Time(scan.getTimeStamp())
+        .add(wallClockOffset);
+    return message;
+  }
+
 }
