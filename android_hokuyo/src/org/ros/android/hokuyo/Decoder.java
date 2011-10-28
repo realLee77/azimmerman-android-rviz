@@ -32,12 +32,12 @@ class Decoder {
     return result;
   }
 
-  public static List<Integer> decode(String buffer, int blockSize) {
+  public static List<Integer> decodeValues(String buffer, int blockSize) {
     Preconditions.checkArgument(buffer.length() % blockSize == 0);
     List<Integer> data = Lists.newArrayList();
     for (int i = 0; i < buffer.length(); i += blockSize) {
       // sensor_msgs/LaserScan uses floats for ranges.
-      data.add((int) decodeValue(buffer.substring(i, i + 3), blockSize));
+      data.add(decodeValue(buffer.substring(i, i + 3), blockSize));
     }
     return data;
   }
