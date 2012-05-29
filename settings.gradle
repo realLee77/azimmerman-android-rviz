@@ -16,4 +16,4 @@
 
 include 'android_gingerbread_mr1', 'android_tutorial_pubsub', 'android_honeycomb_mr2',
         'android_tutorial_teleop', 'android_tutorial_hokuyo', 'android_acm_serial',
-        'android_tutorial_camera', 'android_tutorial_image_transport', 'docs'
+        'android_tutorial_camera', 'android_tutorial_image_transport', 'docs', 'rviz_for_android'

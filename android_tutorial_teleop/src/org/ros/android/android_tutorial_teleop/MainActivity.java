@@ -65,7 +65,7 @@ public class MainActivity extends RosActivity {
         if (!item.isChecked()) {
           item.setChecked(true);
           virtualJoystickView.EnableSnapping();
-        } else {
+        } else { 
           item.setChecked(false);
           virtualJoystickView.DisableSnapping();
         }
@@ -91,13 +91,10 @@ public class MainActivity extends RosActivity {
     visualizationView.addLayer(new RobotLayer("base_footprint", this));
   }
 
-  @Override
-  protected void init(NodeMainExecutor nodeMainExecutor) {
-    NodeConfiguration nodeConfiguration =
-        NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(),
-            getMasterUri());
-    nodeMainExecutor
-        .execute(virtualJoystickView, nodeConfiguration.setNodeName("virtual_joystick"));
-    nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/map_view"));
-  }
+	@Override
+	protected void init(NodeMainExecutor nodeMainExecutor) {
+		NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
+		nodeMainExecutor.execute(virtualJoystickView, nodeConfiguration.setNodeName("virtual_joystick"));
+		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/map_view"));
+	}
 }
