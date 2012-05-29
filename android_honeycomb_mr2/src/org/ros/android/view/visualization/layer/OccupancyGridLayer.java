@@ -18,6 +18,7 @@ package org.ros.android.view.visualization.layer;
 
 import android.graphics.Bitmap;
 import android.os.Handler;
+
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.TextureBitmapUtilities;
 import org.ros.android.view.visualization.TextureDrawable;

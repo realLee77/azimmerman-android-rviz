@@ -20,6 +20,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.shape.RobotShape;
