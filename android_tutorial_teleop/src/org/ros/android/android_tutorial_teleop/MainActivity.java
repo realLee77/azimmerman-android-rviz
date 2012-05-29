@@ -25,7 +25,7 @@ import org.ros.android.RosActivity;
 import org.ros.android.android_tutorial_teleop.R;
 import org.ros.android.view.VirtualJoystickView;
 import org.ros.android.view.visualization.VisualizationView;
-import org.ros.android.view.visualization.layer.CameraControlLayer;
+import org.ros.android.view.visualization.layer.OrthogonalCameraControlLayer;
 import org.ros.android.view.visualization.layer.CompressedBitmapLayer;
 import org.ros.android.view.visualization.layer.LaserScanLayer;
 import org.ros.android.view.visualization.layer.PathLayer;
@@ -81,7 +81,7 @@ public class MainActivity extends RosActivity {
     setContentView(R.layout.main);
     virtualJoystickView = (VirtualJoystickView) findViewById(R.id.virtual_joystick);
     visualizationView = (VisualizationView) findViewById(R.id.visualization);
-    visualizationView.addLayer(new CameraControlLayer(this));
+    visualizationView.addLayer(new OrthogonalCameraControlLayer(this));
     visualizationView.addLayer(new CompressedBitmapLayer("~compressed_map"));
     visualizationView.addLayer(new PathLayer("move_base/NavfnROS/plan"));
     visualizationView.addLayer(new PathLayer("move_base_dynamic/NavfnROS/plan"));

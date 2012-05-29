@@ -16,11 +16,9 @@
 
 package org.ros.android.view.visualization;
 
-import android.util.Log;
+import javax.microedition.khronos.opengles.GL10;
 
 import com.google.common.base.Preconditions;
-
-import javax.microedition.khronos.opengles.GL10;
 
 /**
  * @author damonkohler@google.com (Damon Kohler)
