@@ -16,6 +16,8 @@
 
 package org.ros.android.view.visualization;
 
+import android.util.Log;
+
 import com.google.common.base.Preconditions;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -30,7 +32,7 @@ public class Viewport {
    * meter (the display density) then 1 cm in the world will be displayed as 1
    * cm on the display.
    */
-  private static final float DEFAULT_ZOOM = 100.0f;
+  private static final float DEFAULT_ZOOM = 1.0f;
 
   private final int width;
   private final int height;
@@ -45,12 +47,16 @@ public class Viewport {
 
   public void apply(GL10 gl) {
     gl.glViewport(0, 0, width, height);
-    // Set the perspective projection to be orthographic.
+    
+    float zNear = 0.1f;
+    float zFar = 1000;
+    float fov = 45.0f;
+    float aspectRatio = (float)width/(float)height;
+    
+    gl.glEnable(GL10.GL_NORMALIZE);
     gl.glMatrixMode(GL10.GL_PROJECTION);
     gl.glLoadIdentity();
-    // This corrects for the aspect ratio of the viewport. The viewport can now
-    // be reasoned about in pixels.
-    gl.glOrthof(-width / 2.0f, width / 2.0f, -height / 2.0f, height / 2.0f, -1.0f, 1.0f);
+    android.opengl.GLU.gluPerspective(gl, fov, aspectRatio, zNear, zFar);
   }
 
   public void zoom(GL10 gl) {

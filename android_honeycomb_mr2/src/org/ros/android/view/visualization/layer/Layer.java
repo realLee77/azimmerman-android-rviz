@@ -18,6 +18,7 @@ package org.ros.android.view.visualization.layer;
 
 import android.os.Handler;
 import android.view.MotionEvent;
+
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.OpenGlDrawable;
 import org.ros.android.view.visualization.RenderRequestListener;

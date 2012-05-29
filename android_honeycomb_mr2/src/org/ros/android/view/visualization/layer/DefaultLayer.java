@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 
 import android.os.Handler;
 import android.view.MotionEvent;
+
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.RenderRequestListener;
 import org.ros.android.view.visualization.VisualizationView;

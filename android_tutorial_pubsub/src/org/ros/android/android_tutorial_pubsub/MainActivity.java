@@ -17,12 +17,13 @@
 package org.ros.android.android_tutorial_pubsub;
 
 import android.os.Bundle;
+
+import org.ros.address.InetAddressFactory;
 import org.ros.android.MessageCallable;
 import org.ros.android.RosActivity;
 import org.ros.android.view.RosTextView;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
-import org.ros.rosjava_tutorial_pubsub.Talker;
 
 /**
  * @author damonkohler@google.com (Damon Kohler)
@@ -56,8 +57,8 @@ public class MainActivity extends RosActivity {
 
   @Override
   protected void init(NodeMainExecutor nodeMainExecutor) {
-    talker = new Talker();
-    NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
+    talker = new Talker("TALKING");
+    NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress());
     // At this point, the user has already been prompted to either enter the URI
     // of a master to use or to start a master locally.
     nodeConfiguration.setMasterUri(getMasterUri());
