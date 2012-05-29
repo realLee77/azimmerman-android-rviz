@@ -19,7 +19,8 @@ package org.ros.android.rviz_for_android;
 import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
 import org.ros.android.view.visualization.VisualizationView;
-import org.ros.android.view.visualization.layer.CameraControlLayer;
+import org.ros.android.view.visualization.layer.OrbitCameraControlLayer;
+import org.ros.android.view.visualization.layer.OrthogonalCameraControlLayer;
 import org.ros.android.view.visualization.layer.RobotLayer;
 import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
@@ -64,7 +65,7 @@ public class MainActivity extends RosActivity {
 		setContentView(R.layout.main);
 		MainActivity.context = getApplicationContext();
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
-		visualizationView.addLayer(new CameraControlLayer(this));
+		visualizationView.addLayer(new OrbitCameraControlLayer(this));
 		visualizationView.addLayer(new GridLayer(10, 10, 0.5f, 0.5f));
 		visualizationView.addLayer(new RobotLayer("base_footprint", this));
 		visualizationView.addLayer(new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE));
