@@ -65,7 +65,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
       }
     };
     frameTransformTree = new FrameTransformTree();
-    camera = new Camera(frameTransformTree);
+    camera = new OrbitCamera(frameTransformTree);
     renderer = new XYOrthographicRenderer(frameTransformTree, camera);
     layers = Lists.newArrayList();
     setEGLConfigChooser(8, 8, 8, 8, 0, 0);

@@ -18,6 +18,7 @@ package org.ros.android.view.visualization.layer;
 
 import android.os.Handler;
 import geometry_msgs.PoseStamped;
+
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.shape.Color;
 import org.ros.message.MessageListener;

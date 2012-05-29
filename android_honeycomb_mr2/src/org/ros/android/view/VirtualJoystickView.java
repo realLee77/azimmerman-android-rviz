@@ -778,7 +778,9 @@ public class VirtualJoystickView extends RelativeLayout implements AnimationList
     // screen.
     publishVelocity = false;
     // Publish one last message to make sure the robot stops.
-    publisher.publish(currentVelocityCommand);
+    if(currentVelocityCommand != null) {
+    	publisher.publish(currentVelocityCommand);
+    }
     // Turn-in-place should not be active anymore.
     endTurnInPlaceRotation();
     // Hide the orientation tacks.
@@ -797,12 +799,14 @@ public class VirtualJoystickView extends RelativeLayout implements AnimationList
    */
   private void publishVelocity(double linearVelocityX, double linearVelocityY,
       double angularVelocityZ) {
-    currentVelocityCommand.getLinear().setX(linearVelocityX);
-    currentVelocityCommand.getLinear().setY(-linearVelocityY);
-    currentVelocityCommand.getLinear().setZ(0);
-    currentVelocityCommand.getAngular().setX(0);
-    currentVelocityCommand.getAngular().setY(0);
-    currentVelocityCommand.getAngular().setZ(-angularVelocityZ);
+	  if(currentVelocityCommand != null) {
+	    currentVelocityCommand.getLinear().setX(linearVelocityX);
+	    currentVelocityCommand.getLinear().setY(-linearVelocityY);
+	    currentVelocityCommand.getLinear().setZ(0);
+	    currentVelocityCommand.getAngular().setX(0);
+	    currentVelocityCommand.getAngular().setY(0);
+	    currentVelocityCommand.getAngular().setZ(-angularVelocityZ);
+	  }
   }
 
   /**
@@ -925,6 +929,7 @@ public class VirtualJoystickView extends RelativeLayout implements AnimationList
   public void onStart(ConnectedNode connectedNode) {
     publisher = connectedNode.newPublisher("~cmd_vel", geometry_msgs.Twist._TYPE);
     publisher.setQueueLimit(1);
+    currentVelocityCommand = publisher.newMessage();
     Subscriber<nav_msgs.Odometry> subscriber =
         connectedNode.newSubscriber("odom", nav_msgs.Odometry._TYPE);
     subscriber.addMessageListener(this);
@@ -932,7 +937,7 @@ public class VirtualJoystickView extends RelativeLayout implements AnimationList
     publisherTimer.schedule(new TimerTask() {
       @Override
       public void run() {
-        if (publishVelocity) {
+        if (publishVelocity && currentVelocityCommand != null) {
           publisher.publish(currentVelocityCommand);
         }
       }

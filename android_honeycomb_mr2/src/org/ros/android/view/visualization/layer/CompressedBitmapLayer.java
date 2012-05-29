@@ -20,6 +20,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.util.Log;
+
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.TextureBitmapUtilities;
 import org.ros.android.view.visualization.TextureDrawable;

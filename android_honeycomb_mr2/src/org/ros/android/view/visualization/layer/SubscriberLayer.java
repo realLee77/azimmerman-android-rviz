@@ -19,6 +19,7 @@ package org.ros.android.view.visualization.layer;
 import com.google.common.base.Preconditions;
 
 import android.os.Handler;
+
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.namespace.GraphName;

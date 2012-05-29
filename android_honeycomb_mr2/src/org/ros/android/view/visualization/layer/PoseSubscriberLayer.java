@@ -17,6 +17,7 @@
 package org.ros.android.view.visualization.layer;
 
 import android.os.Handler;
+
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.shape.GoalShape;
 import org.ros.android.view.visualization.shape.Shape;
