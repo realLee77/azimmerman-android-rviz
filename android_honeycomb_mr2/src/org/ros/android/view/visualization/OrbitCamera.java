@@ -59,6 +59,8 @@ public class OrbitCamera implements Camera {
 	private static final float ORBIT_RADIUS = 5.0f;
 	private static final float MAX_FLING_VELOCITY = 25;
 	private static final float MIN_FLING_VELOCITY = 0.05f;
+	private static final float MAX_TRANSLATE_SPEED = 0.25f;
+	
 	private float angleTheta = (float) (Math.PI / 4);
 	private float anglePhi = (float) (Math.PI / 4);
 	private Vector3 location;
@@ -105,7 +107,7 @@ public class OrbitCamera implements Camera {
 	
 	private void velocityUpdate() {
 		if(vTheta != 0f || vPhi != 0f) {
-			moveCameraScreenCoordinates(vPhi, vTheta);
+			moveOrbitPosition(vPhi, vTheta);
 			vTheta *= .9f;
 			vPhi *= .9f;
 		}		
@@ -119,34 +121,30 @@ public class OrbitCamera implements Camera {
 		location.setY((float) lookTarget.getY() + (ORBIT_RADIUS * Math.sin(angleTheta) * Math.sin(anglePhi)));
 		location.setZ((float) lookTarget.getZ() + (ORBIT_RADIUS * Math.cos(angleTheta)));
 	}
-
-	public void translateLookTarget(float xDistance, float yDistance) {
-		updateLocation();
-	}
 	
 	public void flingCamera(float vX, float vY) {
 		vPhi = Utility.cap(-vX/500, -MAX_FLING_VELOCITY, MAX_FLING_VELOCITY);
 		vTheta = Utility.cap(-vY/500, -MAX_FLING_VELOCITY, MAX_FLING_VELOCITY);
 	}
 	
-	/**
-	 * Moves the camera.
-	 * 
-	 * <p>
-	 * The distances are given in viewport coordinates, not in world coordinates.
-	 * 
-	 * @param xDistance
-	 *            distance in x to move
-	 * @param yDistance
-	 *            distance in y to move
-	 */
-	public void moveCameraScreenCoordinates(float xDistance, float yDistance) {
+	public void moveOrbitPosition(float xDistance, float yDistance) {
 		anglePhi += Math.toRadians(xDistance);
 		anglePhi = Utility.angleWrap(anglePhi);
 
 		angleTheta += Math.toRadians(yDistance);
 		angleTheta = Utility.cap(angleTheta, 0.00872664626f, 3.13286601f);
 
+		updateLocation();
+	}
+	
+
+	@Override
+	public void moveCameraScreenCoordinates(float xDistance, float yDistance) {
+		float xDistCap = Utility.cap(xDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED);
+		float yDistCap = Utility.cap(yDistance, -MAX_TRANSLATE_SPEED,MAX_TRANSLATE_SPEED);
+			
+		lookTarget = lookTarget.subtract(new Vector3(Math.cos(anglePhi-Math.PI/2)*xDistCap - Math.sin(anglePhi+Math.PI/2)*yDistCap, Math.sin(anglePhi-Math.PI/2)*xDistCap + Math.cos(anglePhi+Math.PI/2)*yDistCap, 0));
+		Log.d("Camera", "Phi: " + Math.toDegrees(anglePhi));
 		updateLocation();
 	}
 
