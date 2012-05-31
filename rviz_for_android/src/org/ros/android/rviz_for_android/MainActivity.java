@@ -18,9 +18,10 @@ package org.ros.android.rviz_for_android;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
+import org.ros.android.rviz_for_android.prop.PropertyHolder;
+import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.layer.OrbitCameraControlLayer;
-import org.ros.android.view.visualization.layer.OrthogonalCameraControlLayer;
 import org.ros.android.view.visualization.layer.RobotLayer;
 import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
@@ -31,6 +32,9 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 
 /**
  * An app that can be used to control a remote robot. This app also demonstrates how to use some of views from the rosjava android library.
@@ -42,6 +46,9 @@ public class MainActivity extends RosActivity {
 
 	private VisualizationView visualizationView;
 	private static Context context;
+
+	private TextLayer tl = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);
+	private Button bt;
 
 	public MainActivity() {
 		super("Rviz", "Rviz");
@@ -64,14 +71,23 @@ public class MainActivity extends RosActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		MainActivity.context = getApplicationContext();
+		
+		//TODO: Temporary to demonstrate GUI interacting with layer properties
+		bt = (Button) findViewById(R.id.button1);
+		bt.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				tl.getProperties().getProperty("toWrite").setValue("You clicked the button!");
+			}
+		});
+		
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
 		visualizationView.addLayer(new OrbitCameraControlLayer(this));
 		visualizationView.addLayer(new GridLayer(10, 10, 0.5f, 0.5f));
 		visualizationView.addLayer(new RobotLayer("base_footprint", this));
-		visualizationView.addLayer(new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE));
+		visualizationView.addLayer(tl);
 		visualizationView.addLayer(new AxisLayer());
 	}
-
+	
 	public static Context getAppContext() {
 		return MainActivity.context;
 	}
