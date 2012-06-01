@@ -40,123 +40,126 @@ import java.util.List;
  */
 public class VisualizationView extends GLSurfaceView implements NodeMain {
 
-  private RenderRequestListener renderRequestListener;
-  private FrameTransformTree frameTransformTree;
-  private Camera camera;
-  private XYOrthographicRenderer renderer;
-  private List<Layer> layers;
-  private ConnectedNode connectedNode;
+	private RenderRequestListener renderRequestListener;
+	private FrameTransformTree frameTransformTree;
+	private Camera camera;
+	private XYOrthographicRenderer renderer;
+	private List<Layer> layers;
+	private ConnectedNode connectedNode;
 
-  public VisualizationView(Context context) {
-    super(context);
-    init();
-  }
+	public VisualizationView(Context context) {
+		super(context);
+		init();
+	}
 
-  public VisualizationView(Context context, AttributeSet attrs) {
-    super(context, attrs);
-    init();
-  }
+	public VisualizationView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		init();
+	}
 
-  private void init() {
-    renderRequestListener = new RenderRequestListener() {
-      @Override
-      public void onRenderRequest() {
-        requestRender();
-      }
-    };
-    frameTransformTree = new FrameTransformTree();
-    camera = new OrbitCamera(frameTransformTree);
-    renderer = new XYOrthographicRenderer(frameTransformTree, camera);
-    layers = Lists.newArrayList();
-    setEGLConfigChooser(8, 8, 8, 8, 0, 0);
-    getHolder().setFormat(PixelFormat.TRANSLUCENT);
-    setRenderer(renderer);
-  }
+	private void init() {
+		renderRequestListener = new RenderRequestListener() {
+			@Override
+			public void onRenderRequest() {
+				requestRender();
+			}
+		};
+		frameTransformTree = new FrameTransformTree();
+		camera = new OrbitCamera(frameTransformTree);
+		renderer = new XYOrthographicRenderer(frameTransformTree, camera);
+		layers = Lists.newArrayList();
+		setEGLConfigChooser(8, 8, 8, 8, 0, 0);
+		getHolder().setFormat(PixelFormat.TRANSLUCENT);
+		setRenderer(renderer);
+	}
 
-  @Override
-  public GraphName getDefaultNodeName() {
-    return new GraphName("android_honeycomb_mr2/visualization_view");
-  }
+	@Override
+	public GraphName getDefaultNodeName() {
+		return new GraphName("android_honeycomb_mr2/visualization_view");
+	}
 
-  @Override
-  public boolean onTouchEvent(MotionEvent event) {
-    for (Layer layer : Iterables.reverse(layers)) {
-      if (layer.onTouchEvent(this, event)) {
-        return true;
-      }
-    }
-    return false;
-  }
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		for(Layer layer : Iterables.reverse(layers)) {
+			if(layer.onTouchEvent(this, event)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-  public XYOrthographicRenderer getRenderer() {
-    return renderer;
-  }
+	public XYOrthographicRenderer getRenderer() {
+		return renderer;
+	}
 
-  /**
-   * Adds a new layer at the end of the layers collection. The new layer will be
-   * drawn last, i.e. on top of all other layers.
-   * 
-   * @param layer
-   *          layer to add
-   */
-  public void addLayer(Layer layer) {
-    layers.add(layer);
-    layer.addRenderListener(renderRequestListener);
-    if (connectedNode != null) {
-      layer.onStart(connectedNode, getHandler(), frameTransformTree, camera);
-    }
-    requestRender();
-  }
+	/**
+	 * Adds a new layer at the end of the layers collection. The new layer will be drawn last, i.e. on top of all other layers.
+	 * 
+	 * @param layer
+	 *            layer to add
+	 */
+	public void addLayer(Layer layer) {
+		synchronized(layers) {
+			layers.add(layer);
+		}
+		layer.addRenderListener(renderRequestListener);
+		if(connectedNode != null) {
+			layer.onStart(connectedNode, getHandler(), frameTransformTree, camera);
+		}
+		requestRender();
+	}
 
-  public void removeLayer(Layer layer) {
-    layer.onShutdown(this, connectedNode);
-    layers.remove(layer);
-  }
+	public void removeLayer(Layer layer) {
+		layer.onShutdown(this, connectedNode);
+		synchronized(layers) {
+			layers.remove(layer);
+		}
+	}
 
-  @Override
-  public void onStart(ConnectedNode connectedNode) {
-    this.connectedNode = connectedNode;
-    startTransformListener();
-    startLayers();
-  }
+	@Override
+	public void onStart(ConnectedNode connectedNode) {
+		this.connectedNode = connectedNode;
+		startTransformListener();
+		startLayers();
+	}
 
-  private void startTransformListener() {
-    String tfPrefix = connectedNode.getParameterTree().getString("~tf_prefix", "");
-    if (!tfPrefix.isEmpty()) {
-      frameTransformTree.setPrefix(tfPrefix);
-    }
-    Subscriber<tf.tfMessage> tfSubscriber = connectedNode.newSubscriber("tf", tf.tfMessage._TYPE);
-    tfSubscriber.addMessageListener(new MessageListener<tf.tfMessage>() {
-      @Override
-      public void onNewMessage(tf.tfMessage message) {
-        for (geometry_msgs.TransformStamped transform : message.getTransforms()) {
-          frameTransformTree.updateTransform(transform);
-        }
-      }
-    });
-  }
+	private void startTransformListener() {
+		String tfPrefix = connectedNode.getParameterTree().getString("~tf_prefix", "");
+		if(!tfPrefix.isEmpty()) {
+			frameTransformTree.setPrefix(tfPrefix);
+		}
+		Subscriber<tf.tfMessage> tfSubscriber = connectedNode.newSubscriber("tf", tf.tfMessage._TYPE);
+		tfSubscriber.addMessageListener(new MessageListener<tf.tfMessage>() {
+			@Override
+			public void onNewMessage(tf.tfMessage message) {
+				for(geometry_msgs.TransformStamped transform : message.getTransforms()) {
+					frameTransformTree.updateTransform(transform);
+				}
+			}
+		});
+	}
 
-  private void startLayers() {
-    for (Layer layer : layers) {
-      layer.onStart(connectedNode, getHandler(), frameTransformTree, camera);
-    }
-    renderer.setLayers(layers);
-  }
+	private void startLayers() {
+		for(Layer layer : layers) {
+			layer.onStart(connectedNode, getHandler(), frameTransformTree, camera);
+		}
+		renderer.setLayers(layers);
+	}
 
-  @Override
-  public void onShutdown(Node node) {
-    renderer.setLayers(null);
-    for (Layer layer : layers) {
-      layer.onShutdown(this, node);
-    }
-    this.connectedNode = null;
-  }
+	@Override
+	public void onShutdown(Node node) {
+		renderer.setLayers(null);
+		for(Layer layer : layers) {
+			layer.onShutdown(this, node);
+		}
+		this.connectedNode = null;
+	}
 
-  @Override
-  public void onShutdownComplete(Node node) {
-  }
+	@Override
+	public void onShutdownComplete(Node node) {
+	}
 
-  @Override
-  public void onError(Node node, Throwable throwable) {
-  }
+	@Override
+	public void onError(Node node, Throwable throwable) {
+	}
 }

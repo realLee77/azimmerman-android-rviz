@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2012, Willow Garage, Inc.
+ * All rights reserved.
+ *
+ * Willow Garage licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
 package org.ros.android.rviz_for_android.prop;
 
 import org.ros.android.rviz_for_android.R;
@@ -18,20 +35,26 @@ public class IntProperty extends Property<Integer> {
 	private int min = Integer.MIN_VALUE;
 	private int max = Integer.MAX_VALUE;
 	
+	private TextView textView;
+	private EditText et;
+	
 	public IntProperty(String name, int value, PropertyUpdateListener updateListener) {
 		super(name, value, updateListener);
 		newInt = value;
 	}
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater) {
+	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
 		convertView = inflater.inflate(R.layout.row_property_numericfield, parent, false);
 
-		final TextView textView = (TextView) convertView.findViewById(R.id.tvProp_NumericField_Name);	
-		textView.setText(super.name);
+		textView = (TextView) convertView.findViewById(R.id.tvProp_NumericField_Name);	
+		if(title != null)
+			textView.setText(title);
+		else
+			textView.setText(super.name);
 
 		// Show the numeric input field
-		final EditText et = (EditText) convertView.findViewById(R.id.etProp_NumericField_DecimalValue);
+		et = (EditText) convertView.findViewById(R.id.etProp_NumericField_DecimalValue);
 		et.setVisibility(EditText.VISIBLE);		
 		et.setText(Integer.toString(newInt));
 		
@@ -75,4 +98,12 @@ public class IntProperty extends Property<Integer> {
 			super.setValue(super.value);
 	}
 
+	@Override
+	protected void informListeners(Integer newvalue) {
+		if(et != null)
+			et.setText(newvalue.toString());
+		super.informListeners(newvalue);
+	}
+
+	
 }

@@ -14,17 +14,23 @@ public class StringProperty extends Property<String> {
 
 	String newText;
 	
+	private TextView textView;
+	private EditText et;
+	
 	public StringProperty(String name, String value, PropertyUpdateListener updateListener) {
 		super(name, value, updateListener);
 		newText = value;
 	}
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater) {
+	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
 		convertView = inflater.inflate(R.layout.row_property_textfield, parent, false);
-		final TextView textView = (TextView) convertView.findViewById(R.id.tvProp_TextField_Name);
-		textView.setText(super.name);
-		final EditText et = (EditText) convertView.findViewById(R.id.etProp_TextField_Value);
+		textView = (TextView) convertView.findViewById(R.id.tvProp_TextField_Name);
+		if(title != null)
+			textView.setText(title);
+		else
+			textView.setText(super.name);
+		et = (EditText) convertView.findViewById(R.id.etProp_TextField_Value);
 		et.setText(newText);
 		et.setOnKeyListener(new OnKeyListener() {
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
