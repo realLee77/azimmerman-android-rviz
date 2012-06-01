@@ -9,7 +9,7 @@
     android:weightSum="1.0" >
 
     <TextView
-        android:id="@+id/tvProp_TextField_Name"
+        android:id="@+id/tvProp_Boolean_Name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="35dp"

@@ -36,13 +36,13 @@ public abstract class Property<T> {
 		informListeners(value);
 	}
 	
-	private void informListeners(T newvalue) {
+	protected void informListeners(T newvalue) {
 		for(PropertyUpdateListener<T> pul : updateListeners) {
 			if(pul != null)	pul.onPropertyChanged(newvalue);
 		}
 	}
 
-	public abstract View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater);
+	public abstract View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title);
 	
 	public T getValue() {
 		return value;

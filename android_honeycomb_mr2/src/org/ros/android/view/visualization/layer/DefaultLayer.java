@@ -41,10 +41,20 @@ public abstract class DefaultLayer implements Layer {
 
   private final Collection<RenderRequestListener> renderListeners;
 
+  protected String layerName = "Unnamed Layer";
+  
   public DefaultLayer() {
     renderListeners = Lists.newArrayList();
   }
+  
+  public void setName(String name) {
+	  layerName = name;
+  }
 
+  public String getName() {
+	  return layerName;
+  }
+  
   @Override
   public void draw(GL10 gl) {
   }

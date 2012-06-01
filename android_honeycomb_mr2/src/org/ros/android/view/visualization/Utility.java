@@ -103,7 +103,11 @@ public final class Utility {
 	public static Vector3 newVector3FromString(String str) {
 		double x, y, z;
 		Vector3 retval = null;
-		String[] parts = str.split("[ ,:/-]");
+		String[] parts = str.split("[ ,:/]+");
+		
+		if(parts.length != 3)
+			return null;
+		
 		try {
 			x = Double.parseDouble(parts[0]);
 			y = Double.parseDouble(parts[1]);

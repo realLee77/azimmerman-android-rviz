@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-  <item
-      android:id="@+id/options_menu"
-      android:title="Options go here">
-  </item>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/options_menu"
+        android:title="Options go here"/>
+    <item
+        android:id="@+id/menu_layertoggle"
+        android:showAsAction="withText|always"
+        android:checkable="true"
+        android:icon="@drawable/layers"
+        android:title="Layers"/>
+
 </menu>

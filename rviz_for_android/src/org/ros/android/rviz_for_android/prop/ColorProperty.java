@@ -22,14 +22,20 @@ public class ColorProperty extends Property<Color> {
 	public ColorProperty(String name, Color value, PropertyUpdateListener<Color> updateListener) {
 		super(name, value, updateListener);
 	}
+	
+	private TextView textView;
+	private Button btn;
 
 	@Override
-	public View getGUI(View convertView, final ViewGroup parent, LayoutInflater inflater) {
+	public View getGUI(View convertView, final ViewGroup parent, LayoutInflater inflater, String title) {
 		convertView = inflater.inflate(R.layout.row_property_button, parent, false);
-		final TextView textView = (TextView) convertView.findViewById(R.id.tvProp_Button_Name);
-		textView.setText(super.name);
+		textView = (TextView) convertView.findViewById(R.id.tvProp_Button_Name);
+		if(title != null)
+			textView.setText(title);
+		else
+			textView.setText(super.name);
 		
-		final Button btn = (Button) convertView.findViewById(R.id.btProp_Button);
+		btn = (Button) convertView.findViewById(R.id.btProp_Button);
 		btn.setText(" ");
 		btn.setBackgroundColor(androidColor.rgb((int)value.getRed()*255, (int)value.getGreen()*255, (int)value.getBlue()*255));
 
@@ -48,13 +54,14 @@ public class ColorProperty extends Property<Color> {
 		});
 		btn.setText("Pick Color");
 		btn.setTextColor(androidColor.BLACK);
-
-		this.addUpdateListener(new PropertyUpdateListener<Color>() {
-			public void onPropertyChanged(Color newval) {
-				btn.setBackgroundColor(Utility.ColorToInt(newval));
-			}
-		});
 		
 		return convertView;
+	}
+	
+	@Override
+	protected void informListeners(Color newvalue) {
+		if(btn != null)
+			btn.setBackgroundColor(Utility.ColorToInt(newvalue));
+		super.informListeners(newvalue);
 	}
 }
