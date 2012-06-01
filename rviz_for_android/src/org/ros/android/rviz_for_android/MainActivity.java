@@ -16,10 +16,15 @@
 
 package org.ros.android.rviz_for_android;
 
+import java.util.ArrayList;
+
 import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
-import org.ros.android.rviz_for_android.prop.PropertyHolder;
-import org.ros.android.rviz_for_android.prop.StringProperty;
+import org.ros.android.rviz_for_android.layers.AxisLayer;
+import org.ros.android.rviz_for_android.layers.GridLayer;
+import org.ros.android.rviz_for_android.layers.TextLayer;
+import org.ros.android.rviz_for_android.prop.LayerWithProperties;
+import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.layer.OrbitCameraControlLayer;
 import org.ros.android.view.visualization.layer.RobotLayer;
@@ -32,9 +37,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
+import android.widget.ExpandableListView;
 
 /**
  * An app that can be used to control a remote robot. This app also demonstrates how to use some of views from the rosjava android library.
@@ -47,8 +50,12 @@ public class MainActivity extends RosActivity {
 	private VisualizationView visualizationView;
 	private static Context context;
 
+	private ExpandableListView elv;
+	private ArrayList<LayerWithProperties> layers = new ArrayList<LayerWithProperties>();
+	private PropertyListAdapter propAdapter; 
+
 	private TextLayer tl = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);
-	private Button bt;
+	private GridLayer gl = new GridLayer(10, 10, 0.5f, 0.5f);
 
 	public MainActivity() {
 		super("Rviz", "Rviz");
@@ -71,23 +78,23 @@ public class MainActivity extends RosActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		MainActivity.context = getApplicationContext();
-		
-		//TODO: Temporary to demonstrate GUI interacting with layer properties
-		bt = (Button) findViewById(R.id.button1);
-		bt.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				tl.getProperties().getProperty("toWrite").setValue("You clicked the button!");
-			}
-		});
+
+		layers.add(tl);
+		layers.add(gl);
 		
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
 		visualizationView.addLayer(new OrbitCameraControlLayer(this));
-		visualizationView.addLayer(new GridLayer(10, 10, 0.5f, 0.5f));
+		visualizationView.addLayer(gl);
 		visualizationView.addLayer(new RobotLayer("base_footprint", this));
 		visualizationView.addLayer(tl);
 		visualizationView.addLayer(new AxisLayer());
+
+		elv = (ExpandableListView) findViewById(R.id.expandableListView1);
+		propAdapter = new PropertyListAdapter(layers, getApplicationContext());
+		elv.setAdapter(propAdapter);
+		elv.setItemsCanFocus(true);
 	}
-	
+
 	public static Context getAppContext() {
 		return MainActivity.context;
 	}
