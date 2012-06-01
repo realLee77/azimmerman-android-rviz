@@ -57,7 +57,7 @@ public class IntProperty extends Property<Integer> {
 		et = (EditText) convertView.findViewById(R.id.etProp_NumericField_DecimalValue);
 		et.setVisibility(EditText.VISIBLE);		
 		et.setText(Integer.toString(newInt));
-		
+		et.setSelectAllOnFocus(true);
 		et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
 		
 		et.setOnKeyListener(new OnKeyListener() {

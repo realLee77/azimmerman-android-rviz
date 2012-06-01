@@ -32,6 +32,7 @@ public class StringProperty extends Property<String> {
 			textView.setText(super.name);
 		et = (EditText) convertView.findViewById(R.id.etProp_TextField_Value);
 		et.setText(newText);
+		et.setSelectAllOnFocus(true);
 		et.setOnKeyListener(new OnKeyListener() {
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				newText = et.getText().toString();

@@ -35,6 +35,7 @@ import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -46,6 +47,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -83,6 +85,7 @@ public class MainActivity extends RosActivity {
 	private static AlertDialog remLayerDialog;
 	private Button addLayer;
 	private Button remLayer;
+	private Button nameLayer;
 	
 	// Show and hide the layer selection panel
 	private LinearLayout ll;
@@ -96,6 +99,13 @@ public class MainActivity extends RosActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.settings_menu, menu);
+		
+		// Configure the action bar
+		ActionBar ab = getActionBar();
+		ab.setDisplayShowHomeEnabled(false);
+		ab.setDisplayShowTitleEnabled(false);
+		ab.setDisplayShowCustomEnabled(true);
+
 		return true;
 	}
 
@@ -108,7 +118,7 @@ public class MainActivity extends RosActivity {
 				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 				imm.hideSoftInputFromWindow(ll.getWindowToken(), 0);
 			} else {
-				ll.setVisibility(LinearLayout.VISIBLE);
+				ll.setVisibility(LinearLayout.VISIBLE);				
 			}
 			showLayers = !showLayers;
 		}
@@ -122,39 +132,17 @@ public class MainActivity extends RosActivity {
 		MainActivity.context = this;
 
 		createLayerDialogs();
-
-		ll = ((LinearLayout) findViewById(R.id.layer_layout));
-		ll.setVisibility(LinearLayout.GONE);
-
-		addLayer = (Button) findViewById(R.id.add_layer);
-		addLayer.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				addLayerDialog.show();
-			}
-		});
-		remLayer = (Button) findViewById(R.id.remove_layer);
-		remLayer.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				if(layers.size() > 0) {
-					remLayerDialogBuilder.setItems(listLiveLayers(), new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int item) {
-							removeLayer(item);
-						}
-					});
-					remLayerDialog = remLayerDialogBuilder.create();
-					remLayerDialog.show();
-				} else {
-					Toast.makeText(context, "No layers to delete!", Toast.LENGTH_LONG).show();
-				}
-			}
-		});
-
+		configureGUI();
+		
 		tl.setName("Text");
 		layers.add(tl);
 		gl.setName("Grid");
 		layers.add(gl);
 		al.setName("Axis");
 		layers.add(al);
+		
+		ll = ((LinearLayout) findViewById(R.id.layer_layout));
+		ll.setVisibility(LinearLayout.GONE);
 
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
 		visualizationView.addLayer(new OrbitCameraControlLayer(this));
@@ -180,22 +168,48 @@ public class MainActivity extends RosActivity {
 		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/map_view"));
 	}
 	
-	private void removeLayer(int item) {
-		Layer toRemove = null;
-		
-		for(LayerWithProperties lwp : layers) {
-			if(lwp.getName().equals(liveLayers[item])) {
-				toRemove = lwp;
-				break;
-			}
+	private void addNewLayer(int layertype) {
+		DefaultLayer newLayer = null;
+		switch(layertype) {
+		case 0:
+			newLayer = new AxisLayer();
+			break;
+		case 1:
+			newLayer = new GridLayer(10, 10, 1, 1);
+			break;
+		case 2:
+			newLayer = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);
+			break;
 		}
+
+		if(newLayer != null) {
+			newLayer.setName(availableLayers[layertype] + " " + counts[layertype]++);
+			if(newLayer instanceof LayerWithProperties) {
+				layers.add((LayerWithProperties) newLayer);
+				propAdapter.notifyDataSetChanged();
+			}
+			visualizationView.addLayer(newLayer);
+		} else {
+			Toast.makeText(context, "Invalid selection!", Toast.LENGTH_LONG).show();
+		}
+	}
+	
+	private void removeLayer(int item) {
+		Layer toRemove = layers.get(item);
+		
+//		for(LayerWithProperties lwp : layers) {
+//			if(lwp.getName().equals(liveLayers[item])) {
+//				toRemove = lwp;
+//				break;
+//			}
+//		}
 
 		if(toRemove != null) {
 			visualizationView.removeLayer(toRemove);
 			layers.remove(toRemove);
 			propAdapter.notifyDataSetChanged();
 		} else {
-			Toast.makeText(context, "Unable to remove selected layer: " + liveLayers[item], Toast.LENGTH_LONG).show();
+			Toast.makeText(context, "Unable to remove selected layer " + liveLayers[item], Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -228,30 +242,68 @@ public class MainActivity extends RosActivity {
 		remLayerDialogBuilder = new AlertDialog.Builder(context);
 		remLayerDialogBuilder.setTitle("Select a Layer");
 	}
+	
+	private void configureGUI() {
+		addLayer = (Button) findViewById(R.id.add_layer);
+		remLayer = (Button) findViewById(R.id.remove_layer);
+		nameLayer = (Button) findViewById(R.id.rename_layer);
+		addLayer.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				addLayerDialog.show();
+			}
+		});
+		remLayer.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				if(layers.size() > 0) {
+					remLayerDialogBuilder.setItems(listLiveLayers(), new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int item) {
+							removeLayer(item);
+						}
+					});
+					remLayerDialog = remLayerDialogBuilder.create();
+					remLayerDialog.show();
+				} else {
+					Toast.makeText(context, "No layers to delete!", Toast.LENGTH_LONG).show();
+				}
+			}
+		});
+		nameLayer.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				remLayerDialogBuilder.setItems(listLiveLayers(), new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int item) {
+						renameLayer(item);
+					}
+				});
+				remLayerDialog = remLayerDialogBuilder.create();
+				remLayerDialog.show();
+			}
+		});
+	}
+	
+	private void renameLayer(int item) {
+		final int selectedItem = item;
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle("Rename Layer");
+		alert.setMessage("New layer name");
 
-	private void addNewLayer(int layertype) {
-		DefaultLayer newLayer = null;
-		switch(layertype) {
-		case 0:
-			newLayer = new AxisLayer();
-			break;
-		case 1:
-			newLayer = new GridLayer(10, 10, 1, 1);
-			break;
-		case 2:
-			newLayer = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);
-			break;
-		}
+		final EditText input = new EditText(this);
+		input.setText(liveLayers[item]);
+		input.setSelectAllOnFocus(true);
+		input.setSingleLine(true);
+		alert.setView(input);
 
-		if(newLayer != null) {
-			newLayer.setName(availableLayers[layertype] + " " + counts[layertype]++);
-			if(newLayer instanceof LayerWithProperties) {
-				layers.add((LayerWithProperties) newLayer);
+		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				String newName = input.getText().toString();
+				((DefaultLayer)layers.get(selectedItem)).setName(newName);
 				propAdapter.notifyDataSetChanged();
 			}
-			visualizationView.addLayer(newLayer);
-		} else {
-			Toast.makeText(context, "Invalid selection!", Toast.LENGTH_LONG).show();
-		}
+		});
+
+		alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+			}
+		});
+		alert.show();
 	}
 }

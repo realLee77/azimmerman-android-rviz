@@ -53,6 +53,7 @@ public class Vector3Property extends Property<Vector3> {
 		et = (EditText) convertView.findViewById(R.id.etProp_TextField_Value);
 		et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_CLASS_TEXT);
 		et.setText(newVector.getX() + ", " + newVector.getY() + ", " + newVector.getZ());
+		et.setSelectAllOnFocus(true);
 		et.setOnKeyListener(new OnKeyListener() {
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if(keyCode == KeyEvent.KEYCODE_ENTER) {
