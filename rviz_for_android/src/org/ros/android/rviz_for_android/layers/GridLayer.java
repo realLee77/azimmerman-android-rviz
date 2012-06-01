@@ -59,23 +59,23 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties {
 			public void onPropertyChanged(Integer newval) {
 				onValueChanged();
 			}
-		}).setValidRange(1, Integer.MAX_VALUE));
+		}).setValidRange(1, 1000));
 		prop.addSubProperty(new IntProperty("yCells", yCells, new PropertyUpdateListener<Integer>() {
 			public void onPropertyChanged(Integer newval) {
 				onValueChanged();
 			}
-		}).setValidRange(1, Integer.MAX_VALUE));
+		}).setValidRange(1, 1000));
 		
 		prop.addSubProperty(new FloatProperty("xSpacing", xSpacing, new PropertyUpdateListener<Float>() {
 			public void onPropertyChanged(Float newval) {
 				onValueChanged();
 			}
-		}).setValidRange(0.01f, Float.MAX_VALUE));
+		}).setValidRange(0.01f, 10000f));
 		prop.addSubProperty(new FloatProperty("ySpacing", ySpacing, new PropertyUpdateListener<Float>() {
 			public void onPropertyChanged(Float newval) {
 				onValueChanged();
 			}
-		}).setValidRange(0.01f, Float.MAX_VALUE));
+		}).setValidRange(0.01f, 10000f));
 		prop.addSubProperty(new Vector3Property("offset", new Vector3(0,0,0), new PropertyUpdateListener<Vector3>() {
 
 			public void onPropertyChanged(Vector3 newval) {

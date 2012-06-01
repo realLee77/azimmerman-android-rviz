@@ -10,5 +10,4 @@
         android:checkable="true"
         android:icon="@drawable/layers"
         android:title="Layers"/>
-
 </menu>

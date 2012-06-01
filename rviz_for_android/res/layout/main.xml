@@ -25,15 +25,6 @@
             android:orientation="vertical"
             android:weightSum="1.0" >
 
-            <ExpandableListView
-                android:id="@+id/expandableListView1"
-                android:layout_width="fill_parent"
-                android:layout_height="0dp"
-                android:layout_gravity="top"
-                android:layout_weight="0.93"
-                android:background="#000000" >
-            </ExpandableListView>
-
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="0dp"
@@ -51,16 +42,34 @@
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="fill_parent"
-                    android:layout_weight="0.1"
+                    android:layout_weight="0.05"
                     android:visibility="invisible" />
 
                 <Button
                     android:id="@+id/remove_layer"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.45"
-                    android:text="Remove Layer" />
+                    android:layout_height="fill_parent"
+                    android:layout_weight="0.25"
+                    android:textSize="13sp"
+                    android:text="Remove" />
+
+                <Button
+                    android:id="@+id/rename_layer"
+                    android:layout_width="0dp"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="0.25"
+                    android:textSize="13sp"
+                    android:text="Rename" />
             </LinearLayout>
+
+            <ExpandableListView
+                android:id="@+id/expandableListView1"
+                android:layout_width="fill_parent"
+                android:layout_height="0dp"
+                android:layout_gravity="top"
+                android:layout_weight="0.93"
+                android:background="#000000" >
+            </ExpandableListView>
         </LinearLayout>
 
         <TextView

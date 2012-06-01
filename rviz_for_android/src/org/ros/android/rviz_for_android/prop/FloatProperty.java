@@ -39,7 +39,7 @@ public class FloatProperty extends Property<Float> {
 		// Show the numeric input field
 		et = (EditText) convertView.findViewById(R.id.etProp_NumericField_DecimalValue);
 		et.setVisibility(EditText.VISIBLE);
-
+		et.setSelectAllOnFocus(true);
 		et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED);
 
 		et.setText(Float.toString(newFloat));
