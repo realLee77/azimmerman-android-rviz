@@ -1,5 +1,7 @@
 package org.ros.android.view.visualization;
 
+import org.ros.android.view.visualization.shape.Color;
+
 public final class Utility {
 	private Utility() {
 	}
@@ -68,4 +70,20 @@ public final class Utility {
 		}
 		return retval;
 	}
+	
+	// Convert a ROSJava Color object to/from an Android Color integer
+	private static final android.graphics.Color androidColor = new android.graphics.Color();
+	public static int ColorToInt(Color c) {
+		//System.out.println("Color is: " + cap((int)(c.getRed()*255),0,255) + ", " + cap((int)(c.getGreen()*255),0,255) + ", " + cap((int)(c.getBlue()*255),0,255));
+		return androidColor.argb(cap((int)(c.getAlpha()*255),0,255), cap((int)(c.getRed()*255),0,255), cap((int)(c.getGreen()*255),0,255), cap((int)(c.getBlue()*255),0,255));
+	}
+	public static Color IntToColor(int i) {
+		float r,g,b,a;
+		r = androidColor.red(i)/255f;
+		g = androidColor.green(i)/255f;
+		b = androidColor.blue(i)/255f;
+		a = androidColor.alpha(i)/255f;
+		//System.out.println("Color is: " + r + ", " + g + ", " + b + ", " + a);
+		return new Color(r, g, b, a);
+	}	
 }
