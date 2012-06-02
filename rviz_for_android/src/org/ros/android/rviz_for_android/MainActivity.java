@@ -50,6 +50,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -109,7 +110,6 @@ public class MainActivity extends RosActivity {
 		return true;
 	}
 
-
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if(item.getItemId() == R.id.menu_layertoggle) {
@@ -143,7 +143,7 @@ public class MainActivity extends RosActivity {
 		
 		ll = ((LinearLayout) findViewById(R.id.layer_layout));
 		ll.setVisibility(LinearLayout.GONE);
-
+		
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
 		visualizationView.addLayer(new OrbitCameraControlLayer(this));
 		visualizationView.addLayer(new RobotLayer("base_footprint", this));
@@ -196,13 +196,6 @@ public class MainActivity extends RosActivity {
 	
 	private void removeLayer(int item) {
 		Layer toRemove = layers.get(item);
-		
-//		for(LayerWithProperties lwp : layers) {
-//			if(lwp.getName().equals(liveLayers[item])) {
-//				toRemove = lwp;
-//				break;
-//			}
-//		}
 
 		if(toRemove != null) {
 			visualizationView.removeLayer(toRemove);

@@ -42,6 +42,7 @@ public class PropertyListAdapter extends BaseExpandableListAdapter {
 	}
 	
 	private void generateContents() {
+		props.clear();
 		for(int i = 0; i < layers.size(); i++) {
 			LayerWithProperties lwp = layers.get(i);
 			props.add(i, new ArrayList<Property>(lwp.getProperties().getPropertyCollection()));
@@ -61,7 +62,6 @@ public class PropertyListAdapter extends BaseExpandableListAdapter {
 	}
 
 	public int getChildrenCount(int groupPosition) {
-		System.out.println("Children count gp " + groupPosition + " = " + props.get(groupPosition).size());
 		return props.get(groupPosition).size();
 	}
 

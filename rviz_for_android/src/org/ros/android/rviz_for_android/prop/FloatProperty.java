@@ -3,12 +3,14 @@ package org.ros.android.rviz_for_android.prop;
 import org.ros.android.rviz_for_android.R;
 import org.ros.android.view.visualization.Utility;
 
+import android.content.Context;
 import android.text.InputType;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnKeyListener;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -29,7 +31,8 @@ public class FloatProperty extends Property<Float> {
 	@Override
 	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
 		convertView = inflater.inflate(R.layout.row_property_numericfield, parent, false);
-
+		final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+		
 		textView = (TextView) convertView.findViewById(R.id.tvProp_NumericField_Name);
 		if(title != null)
 			textView.setText(title);
@@ -52,6 +55,7 @@ public class FloatProperty extends Property<Float> {
 				}
 				if(keyCode == KeyEvent.KEYCODE_ENTER) {
 					setValue(newFloat);
+					imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
 					return true;
 				}
 				return false;

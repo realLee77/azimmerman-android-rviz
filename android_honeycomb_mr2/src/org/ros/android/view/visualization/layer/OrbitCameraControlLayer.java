@@ -106,20 +106,20 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 
 					@Override
 					public boolean onScale(ScaleGestureDetector detector) {
-						switch (scaleType) {
-						case PAN:
+						//switch (scaleType) {
+						//case PAN:
 							Vector3 diff = prevScaleCenter.subtract(new Vector3(detector.getFocusX(), detector.getFocusY(), 0));
 							cam.moveCameraScreenCoordinates((float) diff.getX() / 50, (float) diff.getY() / 50);
 
 							prevScaleCenter.setX(detector.getFocusX());
 							prevScaleCenter.setY(detector.getFocusY());
-							requestRender();
-							break;
-						case RESIZE:
+						//	requestRender();
+						//	break;
+						//case RESIZE:
 							camera.zoomCamera(detector.getScaleFactor());
 							requestRender();
-							break;
-						}
+						//	break;
+						//}
 						return true;
 					}
 				});

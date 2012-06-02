@@ -16,14 +16,8 @@
 
 package org.ros.android.view.visualization;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import java.util.List;
 
-import android.content.Context;
-import android.graphics.PixelFormat;
-import android.opengl.GLSurfaceView;
-import android.util.AttributeSet;
-import android.view.MotionEvent;
 import org.ros.android.view.visualization.layer.Layer;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
@@ -33,7 +27,15 @@ import org.ros.node.NodeMain;
 import org.ros.node.topic.Subscriber;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
-import java.util.List;
+import android.content.Context;
+import android.graphics.PixelFormat;
+import android.opengl.GLSurfaceView;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.inputmethod.InputMethodManager;
+
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 /**
  * @author moesenle@google.com (Lorenz Moesenlechner)
@@ -79,7 +81,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 	}
 
 	@Override
-	public boolean onTouchEvent(MotionEvent event) {
+	public boolean onTouchEvent(MotionEvent event) {	
 		for(Layer layer : Iterables.reverse(layers)) {
 			if(layer.onTouchEvent(this, event)) {
 				return true;

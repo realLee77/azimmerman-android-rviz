@@ -56,10 +56,10 @@ public class OrbitCamera implements Camera {
 	private static final float MAXIMUM_ZOOM = 500.0f;
 
 	// TODO: Make this variable (possibly changing with pinch instead of zoom?)
-	private static final float ORBIT_RADIUS = 5.0f;
+	private float orbitRadius = 5.0f;
 	private static final float MAX_FLING_VELOCITY = 25;
 	private static final float MIN_FLING_VELOCITY = 0.05f;
-	private static final float MAX_TRANSLATE_SPEED = 0.25f;
+	private static final float MAX_TRANSLATE_SPEED = 0.18f;
 	
 	private float angleTheta = (float) (Math.PI / 4);
 	private float anglePhi = (float) (Math.PI / 4);
@@ -117,9 +117,9 @@ public class OrbitCamera implements Camera {
 	}
 
 	private void updateLocation() {
-		location.setX((float) lookTarget.getX() + (ORBIT_RADIUS * Math.sin(angleTheta) * Math.cos(anglePhi)));
-		location.setY((float) lookTarget.getY() + (ORBIT_RADIUS * Math.sin(angleTheta) * Math.sin(anglePhi)));
-		location.setZ((float) lookTarget.getZ() + (ORBIT_RADIUS * Math.cos(angleTheta)));
+		location.setX((float) lookTarget.getX() + (orbitRadius * Math.sin(angleTheta) * Math.cos(anglePhi)));
+		location.setY((float) lookTarget.getY() + (orbitRadius * Math.sin(angleTheta) * Math.sin(anglePhi)));
+		location.setZ((float) lookTarget.getZ() + (orbitRadius * Math.cos(angleTheta)));
 	}
 	
 	public void flingCamera(float vX, float vY) {
@@ -158,13 +158,14 @@ public class OrbitCamera implements Camera {
 	}
 
 	public void zoomCamera(float factor) {
-		float zoom = viewport.getZoom() * factor;
-		if (zoom < MINIMUM_ZOOM) {
-			zoom = MINIMUM_ZOOM;
-		} else if (zoom > MAXIMUM_ZOOM) {
-			zoom = MAXIMUM_ZOOM;
-		}
-		viewport.setZoom(zoom);
+		orbitRadius *= factor;
+//		float zoom = viewport.getZoom() * factor;
+//		if (zoom < MINIMUM_ZOOM) {
+//			zoom = MINIMUM_ZOOM;
+//		} else if (zoom > MAXIMUM_ZOOM) {
+//			zoom = MAXIMUM_ZOOM;
+//		}
+//		viewport.setZoom(zoom);
 	}
 
 	/**

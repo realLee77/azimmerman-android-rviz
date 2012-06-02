@@ -21,11 +21,13 @@ import org.ros.android.rviz_for_android.R;
 import org.ros.android.view.visualization.Utility;
 import org.ros.rosjava_geometry.Vector3;
 
+import android.content.Context;
 import android.text.InputType;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnKeyListener;
+import android.view.inputmethod.InputMethodManager;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -45,6 +47,7 @@ public class Vector3Property extends Property<Vector3> {
 	@Override
 	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
 		convertView = inflater.inflate(R.layout.row_property_textfield, parent, false);
+		final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 		textView = (TextView) convertView.findViewById(R.id.tvProp_TextField_Name);
 		if(title != null)
 			textView.setText(title);
@@ -63,6 +66,7 @@ public class Vector3Property extends Property<Vector3> {
 					else 
 						newVector = value;
 					et.setText(newVector.getX() + ", " + newVector.getY() + ", " + newVector.getZ());
+					imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
 					return true;
 				}
 				return false;
