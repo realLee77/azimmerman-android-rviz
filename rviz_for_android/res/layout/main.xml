@@ -15,7 +15,7 @@
         android:layout_centerVertical="true"
         android:layout_marginLeft="0dp"
         android:orientation="horizontal"
-        android:weightSum="1.0" >
+        android:weightSum="1.01" >
 
         <LinearLayout
             android:layout_width="0dp"
@@ -50,16 +50,16 @@
                     android:layout_width="0dp"
                     android:layout_height="fill_parent"
                     android:layout_weight="0.25"
-                    android:textSize="13sp"
-                    android:text="Remove" />
+                    android:text="Remove"
+                    android:textSize="13sp" />
 
                 <Button
                     android:id="@+id/rename_layer"
                     android:layout_width="0dp"
                     android:layout_height="fill_parent"
                     android:layout_weight="0.25"
-                    android:textSize="13sp"
-                    android:text="Rename" />
+                    android:text="Rename"
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <ExpandableListView
@@ -67,13 +67,17 @@
                 android:layout_width="fill_parent"
                 android:layout_height="0dp"
                 android:layout_gravity="top"
-                android:layout_weight="0.93"
-                android:background="#000000" >
+                android:layout_weight="0.93" >
             </ExpandableListView>
         </LinearLayout>
 
         <TextView
-            android:id="@+id/textView1"
+            android:layout_width="2dp"
+            android:layout_height="fill_parent"
+            android:background="#33B5E5" />
+
+        <TextView
+            android:id="@+id/tv_spacer"
             android:layout_width="0dp"
             android:layout_height="fill_parent"
             android:layout_weight="0.72"
