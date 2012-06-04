@@ -18,6 +18,7 @@ package org.ros.android.view.visualization;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -25,6 +26,7 @@ import javax.microedition.khronos.opengles.GL10;
 import org.ros.android.view.visualization.layer.Layer;
 import org.ros.android.view.visualization.layer.TfLayer;
 import org.ros.namespace.GraphName;
+import org.ros.rosjava_geometry.FrameTransform;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Transform;
 
@@ -100,9 +102,16 @@ public class XYOrthographicRenderer implements GLSurfaceView.Renderer {
 					GraphName layerFrame = ((TfLayer) layer).getFrame();
 					// TODO(moesenle): throw a warning that no transform could be found and
 					// the layer has been ignored.
-					if (layerFrame != null && frameTransformTree.canTransform(layerFrame, camera.getFixedFrame())) {
+					if (layerFrame != null && frameTransformTree.canTransform(camera.getFixedFrame(),layerFrame)) {
+						System.out.println("Can transform from " + layerFrame.toString() + " <-> " + camera.getFixedFrame().toString());
 						Transform transform = frameTransformTree.newFrameTransform(layerFrame, camera.getFixedFrame()).getTransform();
 						OpenGlTransform.apply(gl, transform);
+					} else {
+						System.out.println("No transform found for " + layerFrame.toString() + " <-> " + camera.getFixedFrame().toString());
+						System.out.println("Available transforms:");
+						for(GraphName gn : frameTransformTree.getFrames()) {
+							System.out.println("\t" + gn.toString());
+						}
 					}
 				}
 				layer.draw(gl);

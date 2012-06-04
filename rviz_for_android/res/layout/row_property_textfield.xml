@@ -19,6 +19,7 @@
         android:textSize="20sp" />
 
     <EditText
+        android:inputType="text"
         android:id="@+id/etProp_TextField_Value"
         android:layout_width="0dp"
         android:layout_weight="0.5"

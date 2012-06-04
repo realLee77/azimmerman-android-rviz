@@ -40,7 +40,7 @@ public class IntProperty extends Property<Integer> {
 	private TextView textView;
 	private EditText et;
 	
-	public IntProperty(String name, int value, PropertyUpdateListener updateListener) {
+	public IntProperty(String name, int value, PropertyUpdateListener<Integer> updateListener) {
 		super(name, value, updateListener);
 		newInt = value;
 	}
