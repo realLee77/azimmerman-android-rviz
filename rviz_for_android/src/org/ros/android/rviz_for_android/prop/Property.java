@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2012, Willow Garage, Inc.
+ * All rights reserved.
+ *
+ * Willow Garage licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
 package org.ros.android.rviz_for_android.prop;
 
 import java.util.Collection;
@@ -19,7 +36,7 @@ public abstract class Property<T> {
 	protected String description = "Not implemented! ಠ_ಠ";
 	protected LinkedList<PropertyUpdateListener<T>> updateListeners = new LinkedList<PropertyUpdateListener<T>>();
 	
-	protected HashMap<String, Property> subProps = new HashMap<String, Property>();
+	protected HashMap<String, Property<?>> subProps = new HashMap<String, Property<?>>();
 
 	public Property(String name, T value, PropertyUpdateListener<T> updateListener) {
 		this.name = name;
@@ -73,7 +90,7 @@ public abstract class Property<T> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Property other = (Property) obj;
+		Property<?> other = (Property<?>) obj;
 		if (description == null) {
 			if (other.description != null)
 				return false;
@@ -88,21 +105,21 @@ public abstract class Property<T> {
 	}
 	
 	// Nested property access functions
-	public Property getProperty(String... levels) {
-		Property cur = this;
+	public Property<?> getProperty(String... levels) {
+		Property<?> cur = this;
 		for(int i = 0; i < levels.length; i++) {
-			cur = (Property) cur.subProps.get(levels[i]);
+			cur = (Property<?>) cur.subProps.get(levels[i]);
 		}
 		return cur;
 	}
-	public void addSubProperty(Property p, String... levels) {
-		Property cur = this;
+	public void addSubProperty(Property<?> p, String... levels) {
+		Property<?> cur = this;
 		for(int i = 0; i < levels.length; i ++) {
-			cur = (Property) cur.subProps.get(levels[i]);
+			cur = (Property<?>) cur.subProps.get(levels[i]);
 		}
 		cur.subProps.put(p.getName(), p);
 	}
-	public Collection<Property> getPropertyCollection() {
+	public Collection<Property<?>> getPropertyCollection() {
 		return subProps.values();
 	}
 }

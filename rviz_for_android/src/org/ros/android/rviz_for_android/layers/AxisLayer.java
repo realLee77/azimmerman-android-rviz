@@ -20,20 +20,26 @@ package org.ros.android.rviz_for_android.layers;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.prop.BoolProperty;
+import org.ros.android.rviz_for_android.prop.FloatProperty;
+import org.ros.android.rviz_for_android.prop.GraphNameProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.layer.DefaultLayer;
+import org.ros.android.view.visualization.layer.TfLayer;
+import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.os.Handler;
 
-public class AxisLayer extends DefaultLayer implements LayerWithProperties {
+public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLayer {
 
 	private static final float VERTICES[] = {
 		0,0,0,
@@ -87,7 +93,14 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties {
 	private FloatBuffer colorBuffer;
 	private ByteBuffer indexBuffer;
 	
-	private BoolProperty prop = new BoolProperty("enabled", true, null);
+	private BoolProperty prop;
+	
+	public AxisLayer() {
+		super();
+		prop = new BoolProperty("enabled", true, null);
+		prop.addSubProperty(new FloatProperty("Scale", 1.0f, null));
+		prop.addSubProperty(new GraphNameProperty("Parent", new GraphName("/turtle1"), null, null));
+	}
 	
 	@Override
 	public void draw(GL10 gl) {		
@@ -97,15 +110,20 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties {
 			
 			gl.glEnableClientState(GL10.GL_COLOR_ARRAY);
 			gl.glColorPointer(4, GL10.GL_FLOAT, 0, colorBuffer);
+			gl.glPushMatrix();
+			gl.glScalef((Float)prop.getProperty("Scale").getValue(), (Float)prop.getProperty("Scale").getValue(), (Float)prop.getProperty("Scale").getValue());
 			gl.glDrawElements(GL10.GL_LINES, 18, GL10.GL_UNSIGNED_BYTE, indexBuffer);
+			gl.glPopMatrix();
 			gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
 			
 			gl.glDisableClientState(GL10.GL_COLOR_ARRAY);
 		}
 	}
-
+	private Timer redrawTimer;
 	@Override
-	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
+	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
+		((GraphNameProperty)prop.getProperty("Parent")).setTransformTree(frameTransformTree);
+		
 		ByteBuffer vbb = ByteBuffer.allocateDirect(VERTICES.length * 4);
 		vbb.order(ByteOrder.nativeOrder());
 		vertexBuffer = vbb.asFloatBuffer();
@@ -121,9 +139,23 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties {
 		indexBuffer = ByteBuffer.allocateDirect(INDEX.length);
 		indexBuffer.put(INDEX);
 		indexBuffer.position(0);
+		
+	    redrawTimer = new Timer();
+	    redrawTimer.scheduleAtFixedRate(new TimerTask() {
+	      @Override
+	      public void run() {
+	        if (frameTransformTree.canTransform(camera.getFixedFrame(), (GraphName) prop.getProperty("Parent").getValue())) {
+	          requestRender();
+	        }
+	      }
+	    }, 0, 100);
 	}
 
-	public Property getProperties() {
+	public Property<?> getProperties() {
 		return prop;
+	}
+
+	public GraphName getFrame() {
+		return (GraphName) prop.getProperty("Parent").getValue();
 	}	
 }

@@ -50,7 +50,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -68,11 +67,6 @@ public class MainActivity extends RosActivity {
 	private ExpandableListView elv;
 	private ArrayList<LayerWithProperties> layers = new ArrayList<LayerWithProperties>();
 	private PropertyListAdapter propAdapter;
-
-	// Default layers
-	private TextLayer tl = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);
-	private GridLayer gl = new GridLayer(10, 10, 0.5f, 0.5f);
-	private AxisLayer al = new AxisLayer();
 
 	// Tracking layers
 	private CharSequence[] liveLayers;
@@ -134,6 +128,10 @@ public class MainActivity extends RosActivity {
 		createLayerDialogs();
 		configureGUI();
 		
+		TextLayer tl = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);
+		GridLayer gl = new GridLayer(10, 10, 0.5f, 0.5f);
+		AxisLayer al = new AxisLayer();
+		
 		tl.setName("Text");
 		layers.add(tl);
 		gl.setName("Grid");
@@ -150,7 +148,7 @@ public class MainActivity extends RosActivity {
 		visualizationView.addLayer(gl);
 		visualizationView.addLayer(tl);
 		visualizationView.addLayer(al);
-
+		
 		elv = (ExpandableListView) findViewById(R.id.expandableListView1);
 		propAdapter = new PropertyListAdapter(layers, getApplicationContext());
 		elv.setAdapter(propAdapter);

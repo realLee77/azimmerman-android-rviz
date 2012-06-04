@@ -136,9 +136,6 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties {
 			indices[i] = (short)i;
 		}
 		
-		System.out.println(Arrays.toString(vertices));
-		System.out.println(Arrays.toString(indices));
-		
 		// Pack the vertices into a byte array
 		ByteBuffer bb_vtx = ByteBuffer.allocateDirect(vertices.length * 4);
 		bb_vtx.order(ByteOrder.nativeOrder());
@@ -173,7 +170,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties {
 		}
 	}
 
-	public Property getProperties() {
+	public Property<?> getProperties() {
 		return prop;
 	}
 }

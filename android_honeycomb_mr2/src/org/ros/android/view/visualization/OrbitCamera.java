@@ -16,10 +16,7 @@
 
 package org.ros.android.view.visualization;
 
-import com.google.common.base.Preconditions;
-
-import android.graphics.Point;
-import android.util.Log;
+import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
@@ -27,7 +24,9 @@ import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
-import javax.microedition.khronos.opengles.GL10;
+import android.graphics.Point;
+
+import com.google.common.base.Preconditions;
 
 /**
  * @author moesenle@google.com (Lorenz Moesenlechner)
@@ -38,7 +37,7 @@ public class OrbitCamera implements Camera {
 	 * 
 	 * TODO(moesenle): make this the root of the TF tree.
 	 */
-	private static final GraphName DEFAULT_FIXED_FRAME = new GraphName("/map");
+	private static final GraphName DEFAULT_FIXED_FRAME = new GraphName("/world");
 
 	/**
 	 * The default target frame is null which means that the renderer uses the user set camera.
@@ -144,7 +143,6 @@ public class OrbitCamera implements Camera {
 		float yDistCap = Utility.cap(yDistance, -MAX_TRANSLATE_SPEED,MAX_TRANSLATE_SPEED);
 			
 		lookTarget = lookTarget.subtract(new Vector3(Math.cos(anglePhi-Math.PI/2)*xDistCap - Math.sin(anglePhi+Math.PI/2)*yDistCap, Math.sin(anglePhi-Math.PI/2)*xDistCap + Math.cos(anglePhi+Math.PI/2)*yDistCap, 0));
-		Log.d("Camera", "Phi: " + Math.toDegrees(anglePhi));
 		updateLocation();
 	}
 
