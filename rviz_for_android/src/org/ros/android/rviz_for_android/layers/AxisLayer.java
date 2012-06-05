@@ -139,16 +139,6 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		indexBuffer = ByteBuffer.allocateDirect(INDEX.length);
 		indexBuffer.put(INDEX);
 		indexBuffer.position(0);
-		
-	    redrawTimer = new Timer();
-	    redrawTimer.scheduleAtFixedRate(new TimerTask() {
-	      @Override
-	      public void run() {
-	        if (frameTransformTree.canTransform(camera.getFixedFrame(), (GraphName) prop.getProperty("Parent").getValue())) {
-	          requestRender();
-	        }
-	      }
-	    }, 0, 100);
 	}
 
 	public Property<?> getProperties() {

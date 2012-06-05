@@ -156,7 +156,7 @@ public class OrbitCamera implements Camera {
 	}
 
 	public void zoomCamera(float factor) {
-		orbitRadius *= factor;
+		orbitRadius /= factor;
 //		float zoom = viewport.getZoom() * factor;
 //		if (zoom < MINIMUM_ZOOM) {
 //			zoom = MINIMUM_ZOOM;

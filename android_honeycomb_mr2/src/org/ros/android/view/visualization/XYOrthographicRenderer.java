@@ -103,15 +103,8 @@ public class XYOrthographicRenderer implements GLSurfaceView.Renderer {
 					// TODO(moesenle): throw a warning that no transform could be found and
 					// the layer has been ignored.
 					if (layerFrame != null && frameTransformTree.canTransform(camera.getFixedFrame(),layerFrame)) {
-						System.out.println("Can transform from " + layerFrame.toString() + " <-> " + camera.getFixedFrame().toString());
 						Transform transform = frameTransformTree.newFrameTransform(layerFrame, camera.getFixedFrame()).getTransform();
 						OpenGlTransform.apply(gl, transform);
-					} else {
-						System.out.println("No transform found for " + layerFrame.toString() + " <-> " + camera.getFixedFrame().toString());
-						System.out.println("Available transforms:");
-						for(GraphName gn : frameTransformTree.getFrames()) {
-							System.out.println("\t" + gn.toString());
-						}
 					}
 				}
 				layer.draw(gl);
