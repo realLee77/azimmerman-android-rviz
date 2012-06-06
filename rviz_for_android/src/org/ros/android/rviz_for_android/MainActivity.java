@@ -146,12 +146,8 @@ public class MainActivity extends RosActivity {
 		ll.setVisibility(LinearLayout.GONE);
 		
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
-//		for(Layer l : layers)
-//			visualizationView.addLayer(l);
-		visualizationView.addLayer(cam);
-		visualizationView.addLayer(gl);
-		visualizationView.addLayer(tl);
-		visualizationView.addLayer(al);
+		for(Layer l : layers)
+			visualizationView.addLayer(l);
 		
 		elv = (ExpandableListView) findViewById(R.id.expandableListView1);
 		propAdapter = new PropertyListAdapter(layers, getApplicationContext());
@@ -210,7 +206,7 @@ public class MainActivity extends RosActivity {
 	private CharSequence[] listLiveLayers() {
 		liveLayers = new CharSequence[layers.size()-1];
 		for(int i = 1; i < layers.size(); i++) {
-			liveLayers[i] = layers.get(i).getName();
+			liveLayers[i-1] = layers.get(i).getName();
 		}
 		return liveLayers;
 	}

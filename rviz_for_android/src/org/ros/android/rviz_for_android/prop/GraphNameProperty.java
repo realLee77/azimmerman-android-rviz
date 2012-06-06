@@ -47,6 +47,14 @@ public class GraphNameProperty extends Property<GraphName> {
 	public GraphNameProperty(String name, GraphName value, PropertyUpdateListener<GraphName> updateListener, FrameTransformTree ftt) {
 		super(name, value, updateListener);
 		this.ftt = ftt;
+		
+		this.addUpdateListener(new PropertyUpdateListener<GraphName>() {
+			public void onPropertyChanged(GraphName newval) {
+				if(newval == null) {
+					selection = 0;
+				}
+			}
+		});
 	}
 
 	@Override
@@ -86,6 +94,8 @@ public class GraphNameProperty extends Property<GraphName> {
 			}
 		});
 		spin.setSelection(selection);
+		
+
 
 		return convertView;
 	}
