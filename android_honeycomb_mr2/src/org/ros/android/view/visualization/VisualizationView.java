@@ -84,7 +84,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		for(Layer layer : Iterables.reverse(layers)) {
-			if(layer.onTouchEvent(this, event)) {
+			if(layer != null && layer.onTouchEvent(this, event)) {
 				return true;
 			}
 		}
@@ -126,8 +126,6 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 		startLayers();
 	}
 
-	private long lastmsg;
-
 	private void startTransformListener() {
 		String tfPrefix = connectedNode.getParameterTree().getString("~tf_prefix", "");
 		if(!tfPrefix.isEmpty()) {
@@ -138,8 +136,6 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 			@Override
 			public void onNewMessage(tf.tfMessage message) {
 				for(geometry_msgs.TransformStamped transform : message.getTransforms()) {
-					Log.d("VisView", "Received message. deltaT: " + (System.currentTimeMillis() - lastmsg));
-					lastmsg = System.currentTimeMillis();
 					frameTransformTree.updateTransform(transform);
 				}
 			}

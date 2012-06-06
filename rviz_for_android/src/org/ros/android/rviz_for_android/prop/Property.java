@@ -105,12 +105,13 @@ public abstract class Property<T> {
 	}
 	
 	// Nested property access functions
-	public Property<?> getProperty(String... levels) {
+	@SuppressWarnings("unchecked")
+	public <R extends Property<?>> R getProperty(String... levels) {
 		Property<?> cur = this;
 		for(int i = 0; i < levels.length; i++) {
 			cur = (Property<?>) cur.subProps.get(levels[i]);
 		}
-		return cur;
+		return (R) cur;
 	}
 	public void addSubProperty(Property<?> p, String... levels) {
 		Property<?> cur = this;

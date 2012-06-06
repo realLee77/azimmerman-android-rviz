@@ -109,7 +109,7 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			gl.glEnableClientState(GL10.GL_COLOR_ARRAY);
 			gl.glColorPointer(4, GL10.GL_FLOAT, 0, colorBuffer);
 			gl.glPushMatrix();
-			gl.glScalef((Float)prop.getProperty("Scale").getValue(), (Float)prop.getProperty("Scale").getValue(), (Float)prop.getProperty("Scale").getValue());
+			gl.glScalef(prop.<FloatProperty>getProperty("Scale").getValue(), prop.<FloatProperty>getProperty("Scale").getValue(), prop.<FloatProperty>getProperty("Scale").getValue());
 			gl.glDrawElements(GL10.GL_LINES, 18, GL10.GL_UNSIGNED_BYTE, indexBuffer);
 			gl.glPopMatrix();
 			gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
@@ -120,7 +120,7 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
-		((GraphNameProperty)prop.getProperty("Parent")).setTransformTree(frameTransformTree);
+		(prop.<GraphNameProperty>getProperty("Parent")).setTransformTree(frameTransformTree);
 		
 		ByteBuffer vbb = ByteBuffer.allocateDirect(VERTICES.length * 4);
 		vbb.order(ByteOrder.nativeOrder());
@@ -144,7 +144,7 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	}
 
 	public GraphName getFrame() {
-		return (GraphName) prop.getProperty("Parent").getValue();
+		return prop.<GraphNameProperty>getProperty("Parent").getValue();
 	}
 
 	@Override
