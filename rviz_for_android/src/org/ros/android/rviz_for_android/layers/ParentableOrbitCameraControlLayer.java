@@ -42,16 +42,18 @@ public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer i
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, final Camera camera) {
-		GraphNameProperty subprop = (GraphNameProperty) prop.getProperty("Target");
+		GraphNameProperty subprop = prop.<GraphNameProperty>getProperty("Target");
+		
 		subprop.setTransformTree(frameTransformTree);
 		subprop.addUpdateListener(new PropertyUpdateListener<GraphName>() {
 			public void onPropertyChanged(GraphName newval) {
-				camera.setTargetFrame(newval);	
-				System.out.println("Changed target frame to " + newval);
+				camera.setTargetFrame(newval);
 			}
 		});
 		
 		subprop = (GraphNameProperty) prop.getProperty("Fixed");
+		subprop.setDefaultItem(camera.getFixedFrame().toString(), false);
+		subprop.setValue(camera.getFixedFrame());
 		subprop.setTransformTree(frameTransformTree);
 		subprop.addUpdateListener(new PropertyUpdateListener<GraphName>() {
 			public void onPropertyChanged(GraphName newval) {

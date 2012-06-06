@@ -61,7 +61,7 @@ public class TextLayer extends SubscriberLayer<std_msgs.String> implements Layer
 			}
 		}));
 		
-		toWrite = (String) prop.getProperty("toWrite").getValue();
+		toWrite = prop.<StringProperty>getProperty("toWrite").getValue();
 	}
 
 	@Override

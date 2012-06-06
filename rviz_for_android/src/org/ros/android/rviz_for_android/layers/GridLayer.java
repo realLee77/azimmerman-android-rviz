@@ -33,13 +33,19 @@ import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.Vector3Property;
+import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.layer.DefaultLayer;
 import org.ros.android.view.visualization.layer.TfLayer;
 import org.ros.android.view.visualization.shape.Color;
 import org.ros.namespace.GraphName;
+import org.ros.node.ConnectedNode;
+import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Vector3;
 
+import android.os.Handler;
+
 public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLayer {
+	
 	private int nLines;
 	private float vertices[];
 	private short indices[];
@@ -93,6 +99,11 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		initGrid();
 	}
 	
+	@Override
+	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
+		prop.<GraphNameProperty>getProperty("Parent").setTransformTree(frameTransformTree);
+	}
+	
 	private void onValueChanged() {
 		initGrid();
 		requestRender();
@@ -100,10 +111,10 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 
 	private void initGrid() {
 		ready = false;
-		int xCells = (Integer) prop.getProperty("xCells").getValue();
-		int yCells = (Integer) prop.getProperty("yCells").getValue();
-		float xSpacing = (Float) prop.getProperty("xSpacing").getValue();
-		float ySpacing = (Float) prop.getProperty("ySpacing").getValue();
+		int xCells = prop.<IntProperty>getProperty("xCells").getValue();
+		int yCells = prop.<IntProperty>getProperty("yCells").getValue();
+		float xSpacing = prop.<FloatProperty>getProperty("xSpacing").getValue();
+		float ySpacing = prop.<FloatProperty>getProperty("ySpacing").getValue();
 		
 		nLines = 2*xCells + 2*yCells + 2;
 		vertices = new float[3*(2*nLines)];
@@ -160,7 +171,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	public void draw(GL10 gl) {		
 		if(prop.getValue() && ready) {
 					
-			Color c = (Color) prop.getProperty("color").getValue();
+			Color c = prop.<ColorProperty>getProperty("color").getValue();
 			gl.glColor4f(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
 			
 			gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
@@ -178,7 +189,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	}
 
 	public GraphName getFrame() {
-		return (GraphName) prop.getProperty("Parent").getValue();
+		return prop.<GraphNameProperty>getProperty("Parent").getValue();
 	}
 	
 	@Override
