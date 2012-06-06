@@ -126,7 +126,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 		startLayers();
 	}
 
-	//private long lastmsg;
+	private long lastmsg;
 
 	private void startTransformListener() {
 		String tfPrefix = connectedNode.getParameterTree().getString("~tf_prefix", "");
@@ -138,8 +138,8 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 			@Override
 			public void onNewMessage(tf.tfMessage message) {
 				for(geometry_msgs.TransformStamped transform : message.getTransforms()) {
-//					Log.d("VisView", "Received message. deltaT: " + (System.currentTimeMillis() - lastmsg));
-//					lastmsg = System.currentTimeMillis();
+					Log.d("VisView", "Received message. deltaT: " + (System.currentTimeMillis() - lastmsg));
+					lastmsg = System.currentTimeMillis();
 					frameTransformTree.updateTransform(transform);
 				}
 			}

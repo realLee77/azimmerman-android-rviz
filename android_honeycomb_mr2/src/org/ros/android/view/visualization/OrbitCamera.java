@@ -37,22 +37,12 @@ public class OrbitCamera implements Camera {
 	 * 
 	 * TODO(moesenle): make this the root of the TF tree.
 	 */
-	private static final GraphName DEFAULT_FIXED_FRAME = new GraphName("/map");
+	private static final GraphName DEFAULT_FIXED_FRAME = new GraphName("/world");
 
 	/**
 	 * The default target frame is null which means that the renderer uses the user set camera.
 	 */
 	private static final GraphName DEFAULT_TARGET_FRAME = null;
-
-	/**
-	 * Most the user can zoom in.
-	 */
-	private static final float MINIMUM_ZOOM = 1.0f;
-
-	/**
-	 * Most the user can zoom out.
-	 */
-	private static final float MAXIMUM_ZOOM = 500.0f;
 
 	// TODO: Make this variable (possibly changing with pinch instead of zoom?)
 	private float orbitRadius = 5.0f;
@@ -148,7 +138,7 @@ public class OrbitCamera implements Camera {
 
 	public void setCamera(Vector3 newCameraPoint) {
 		resetTargetFrame();
-		// location = newCameraPoint;
+		lookTarget = newCameraPoint;
 	}
 
 	public Vector3 getCamera() {
@@ -157,13 +147,6 @@ public class OrbitCamera implements Camera {
 
 	public void zoomCamera(float factor) {
 		orbitRadius /= factor;
-//		float zoom = viewport.getZoom() * factor;
-//		if (zoom < MINIMUM_ZOOM) {
-//			zoom = MINIMUM_ZOOM;
-//		} else if (zoom > MAXIMUM_ZOOM) {
-//			zoom = MAXIMUM_ZOOM;
-//		}
-//		viewport.setZoom(zoom);
 	}
 
 	/**
@@ -204,7 +187,7 @@ public class OrbitCamera implements Camera {
 		this.fixedFrame = fixedFrame;
 		// To prevent camera jumps, we always center on the fixedFrame when
 		// it is reset.
-		// location = Vector3.newIdentityVector3();
+		lookTarget = Vector3.newIdentityVector3();
 	}
 
 	public void resetFixedFrame() {
