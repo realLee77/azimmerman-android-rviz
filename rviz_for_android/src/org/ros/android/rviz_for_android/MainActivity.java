@@ -23,6 +23,7 @@ import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
+import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
 import org.ros.android.rviz_for_android.layers.TextLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
@@ -131,7 +132,9 @@ public class MainActivity extends RosActivity {
 		TextLayer tl = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);
 		GridLayer gl = new GridLayer(10, 10, 0.5f, 0.5f);
 		AxisLayer al = new AxisLayer();
-		
+		ParentableOrbitCameraControlLayer cam = new ParentableOrbitCameraControlLayer(this);
+		cam.setName("Camera");
+		layers.add(cam);
 		tl.setName("Text");
 		layers.add(tl);
 		gl.setName("Grid");
@@ -143,8 +146,9 @@ public class MainActivity extends RosActivity {
 		ll.setVisibility(LinearLayout.GONE);
 		
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
-		visualizationView.addLayer(new OrbitCameraControlLayer(this));
-		visualizationView.addLayer(new RobotLayer("base_footprint", this));
+//		for(Layer l : layers)
+//			visualizationView.addLayer(l);
+		visualizationView.addLayer(cam);
 		visualizationView.addLayer(gl);
 		visualizationView.addLayer(tl);
 		visualizationView.addLayer(al);
@@ -192,7 +196,7 @@ public class MainActivity extends RosActivity {
 	}
 	
 	private void removeLayer(int item) {
-		Layer toRemove = layers.get(item);
+		Layer toRemove = layers.get(item+1);
 
 		if(toRemove != null) {
 			visualizationView.removeLayer(toRemove);
@@ -204,8 +208,8 @@ public class MainActivity extends RosActivity {
 	}
 
 	private CharSequence[] listLiveLayers() {
-		liveLayers = new CharSequence[layers.size()];
-		for(int i = 0; i < layers.size(); i++) {
+		liveLayers = new CharSequence[layers.size()-1];
+		for(int i = 1; i < layers.size(); i++) {
 			liveLayers[i] = layers.get(i).getName();
 		}
 		return liveLayers;
@@ -277,7 +281,7 @@ public class MainActivity extends RosActivity {
 		alert.setMessage("New layer name");
 
 		final EditText input = new EditText(this);
-		input.setText(liveLayers[item]);
+		input.setText(liveLayers[item+1]);
 		input.setSelectAllOnFocus(true);
 		input.setSingleLine(true);
 		alert.setView(input);

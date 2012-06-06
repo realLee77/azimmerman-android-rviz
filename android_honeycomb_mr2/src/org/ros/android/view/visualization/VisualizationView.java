@@ -31,6 +31,7 @@ import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.inputmethod.InputMethodManager;
 
@@ -81,7 +82,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 	}
 
 	@Override
-	public boolean onTouchEvent(MotionEvent event) {	
+	public boolean onTouchEvent(MotionEvent event) {
 		for(Layer layer : Iterables.reverse(layers)) {
 			if(layer.onTouchEvent(this, event)) {
 				return true;
@@ -124,19 +125,21 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 		startTransformListener();
 		startLayers();
 	}
-	
+
+	//private long lastmsg;
+
 	private void startTransformListener() {
 		String tfPrefix = connectedNode.getParameterTree().getString("~tf_prefix", "");
 		if(!tfPrefix.isEmpty()) {
 			frameTransformTree.setPrefix(tfPrefix);
 		}
 		Subscriber<tf.tfMessage> tfSubscriber = connectedNode.newSubscriber("tf", tf.tfMessage._TYPE);
-		tfSubscriber.setQueueLimit(200);
 		tfSubscriber.addMessageListener(new MessageListener<tf.tfMessage>() {
 			@Override
 			public void onNewMessage(tf.tfMessage message) {
 				for(geometry_msgs.TransformStamped transform : message.getTransforms()) {
-					//System.out.println("QUEUE LIMIT IS " + tfSubscriber.getQueueLimit());
+//					Log.d("VisView", "Received message. deltaT: " + (System.currentTimeMillis() - lastmsg));
+//					lastmsg = System.currentTimeMillis();
 					frameTransformTree.updateTransform(transform);
 				}
 			}

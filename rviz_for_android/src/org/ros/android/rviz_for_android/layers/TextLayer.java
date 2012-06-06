@@ -102,4 +102,9 @@ public class TextLayer extends SubscriberLayer<std_msgs.String> implements Layer
 	public Property<?> getProperties() {
 		return prop;
 	}
+	
+	@Override
+	public boolean isEnabled() {
+		return prop.getValue();
+	}	
 }
