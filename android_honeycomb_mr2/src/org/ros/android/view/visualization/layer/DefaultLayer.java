@@ -39,52 +39,57 @@ import javax.microedition.khronos.opengles.GL10;
  */
 public abstract class DefaultLayer implements Layer {
 
-  private final Collection<RenderRequestListener> renderListeners;
+	private final Collection<RenderRequestListener> renderListeners;
 
-  protected String layerName = "Unnamed Layer";
-  
-  public DefaultLayer() {
-    renderListeners = Lists.newArrayList();
-  }
-  
-  public void setName(String name) {
-	  layerName = name;
-  }
+	protected String layerName = "Unnamed Layer";
 
-  public String getName() {
-	  return layerName;
-  }
-  
-  @Override
-  public void draw(GL10 gl) {
-  }
+	public DefaultLayer() {
+		renderListeners = Lists.newArrayList();
+	}
 
-  @Override
-  public boolean onTouchEvent(VisualizationView view, MotionEvent event) {
-    return false;
-  }
+	public void setName(String name) {
+		layerName = name;
+	}
 
-  @Override
-  public void onStart(ConnectedNode connectedNode, Handler handler,
-      FrameTransformTree frameTransformTree, Camera camera) {
-  }
+	public String getName() {
+		return layerName;
+	}
 
-  @Override
-  public void onShutdown(VisualizationView view, Node node) {
-  }
+	@Override
+	public void draw(GL10 gl) {
+	}
 
-  @Override
-  public void addRenderListener(RenderRequestListener listener) {
-    renderListeners.add(listener);
-  }
+	@Override
+	public boolean onTouchEvent(VisualizationView view, MotionEvent event) {
+		return false;
+	}
 
-  @Override
-  public void removeRenderListener(RenderRequestListener listener) {
-  }
+	@Override
+	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
+	}
 
-  protected void requestRender() {
-    for (RenderRequestListener listener : renderListeners) {
-      listener.onRenderRequest();
-    }
-  }
+	@Override
+	public void onShutdown(VisualizationView view, Node node) {
+	}
+
+	@Override
+	public void addRenderListener(RenderRequestListener listener) {
+		renderListeners.add(listener);
+	}
+
+	@Override
+	public void removeRenderListener(RenderRequestListener listener) {
+	}
+
+	protected void requestRender() {
+		for(RenderRequestListener listener : renderListeners) {
+			listener.onRenderRequest();
+		}
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return true;
+	}
+
 }

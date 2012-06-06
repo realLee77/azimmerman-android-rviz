@@ -16,7 +16,20 @@
 
 package org.ros.android;
 
-import com.google.common.base.Preconditions;
+import java.net.URI;
+import java.util.Collection;
+import java.util.concurrent.ScheduledExecutorService;
+
+import org.ros.RosCore;
+import org.ros.concurrent.ListenerCollection;
+import org.ros.concurrent.ListenerCollection.SignalRunnable;
+import org.ros.exception.RosRuntimeException;
+import org.ros.node.DefaultNodeMainExecutor;
+import org.ros.node.NodeConfiguration;
+import org.ros.node.NodeListener;
+import org.ros.node.NodeMain;
+import org.ros.node.NodeMainExecutor;
+import org.ros.android.android_gingerbread_mr1.R;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -29,20 +42,8 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
-import org.ros.RosCore;
-import org.ros.android.android_gingerbread_mr1.R;
-import org.ros.concurrent.ListenerCollection;
-import org.ros.concurrent.ListenerCollection.SignalRunnable;
-import org.ros.exception.RosRuntimeException;
-import org.ros.node.DefaultNodeMainExecutor;
-import org.ros.node.NodeConfiguration;
-import org.ros.node.NodeListener;
-import org.ros.node.NodeMain;
-import org.ros.node.NodeMainExecutor;
 
-import java.net.URI;
-import java.util.Collection;
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.common.base.Preconditions;
 
 /**
  * @author damonkohler@google.com (Damon Kohler)

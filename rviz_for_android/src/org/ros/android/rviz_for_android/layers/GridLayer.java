@@ -21,23 +21,25 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
-import java.util.Arrays;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.ColorProperty;
 import org.ros.android.rviz_for_android.prop.FloatProperty;
+import org.ros.android.rviz_for_android.prop.GraphNameProperty;
 import org.ros.android.rviz_for_android.prop.IntProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.Vector3Property;
 import org.ros.android.view.visualization.layer.DefaultLayer;
+import org.ros.android.view.visualization.layer.TfLayer;
 import org.ros.android.view.visualization.shape.Color;
+import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.Vector3;
 
-public class GridLayer extends DefaultLayer implements LayerWithProperties {
+public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLayer {
 	private int nLines;
 	private float vertices[];
 	private short indices[];
@@ -55,6 +57,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties {
 		super();
 		
 		prop = new BoolProperty("enabled", true, null);
+		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
 		prop.addSubProperty(new IntProperty("xCells", xCells, new PropertyUpdateListener<Integer>() {
 			public void onPropertyChanged(Integer newval) {
 				onValueChanged();
@@ -173,4 +176,13 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties {
 	public Property<?> getProperties() {
 		return prop;
 	}
+
+	public GraphName getFrame() {
+		return (GraphName) prop.getProperty("Parent").getValue();
+	}
+	
+	@Override
+	public boolean isEnabled() {
+		return prop.getValue();
+	}	
 }

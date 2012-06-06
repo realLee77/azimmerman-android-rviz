@@ -67,4 +67,6 @@ public interface Layer extends OpenGlDrawable {
    *          the {@link RenderRequestListener} to remove
    */
   void removeRenderListener(RenderRequestListener listener);
+  
+  boolean isEnabled();
 }

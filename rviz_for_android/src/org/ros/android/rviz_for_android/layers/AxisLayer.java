@@ -20,8 +20,6 @@ package org.ros.android.rviz_for_android.layers;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -99,7 +97,7 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		super();
 		prop = new BoolProperty("enabled", true, null);
 		prop.addSubProperty(new FloatProperty("Scale", 1.0f, null));
-		prop.addSubProperty(new GraphNameProperty("Parent", new GraphName("/turtle1"), null, null));
+		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
 	}
 	
 	@Override
@@ -119,7 +117,7 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			gl.glDisableClientState(GL10.GL_COLOR_ARRAY);
 		}
 	}
-	private Timer redrawTimer;
+
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
 		((GraphNameProperty)prop.getProperty("Parent")).setTransformTree(frameTransformTree);
@@ -147,5 +145,10 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 
 	public GraphName getFrame() {
 		return (GraphName) prop.getProperty("Parent").getValue();
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return prop.getValue();
 	}	
 }

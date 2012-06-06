@@ -16,7 +16,12 @@
 
 package org.ros.android;
 
-import com.google.common.base.Preconditions;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+
+import org.ros.node.NodeConfiguration;
+import org.ros.android.android_gingerbread_mr1.R;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -28,12 +33,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
-import org.ros.android.android_gingerbread_mr1.R;
-import org.ros.node.NodeConfiguration;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
+import com.google.common.base.Preconditions;
 
 /**
  * Allows the user to configue a master {@link URI} then it returns that

@@ -31,6 +31,7 @@ import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Transform;
 
 import android.opengl.GLSurfaceView;
+import android.util.Log;
 
 /**
  * Renders all layers of a navigation view.
@@ -42,7 +43,7 @@ public class XYOrthographicRenderer implements GLSurfaceView.Renderer {
 	 * List of layers to draw. Layers are drawn in-order, i.e. the layer with index 0 is the bottom layer and is drawn first.
 	 */
 	private List<Layer> layers;
-	
+
 	private List<Layer> toAdd = new LinkedList<Layer>();
 
 	private FrameTransformTree frameTransformTree;
@@ -63,7 +64,7 @@ public class XYOrthographicRenderer implements GLSurfaceView.Renderer {
 		// Set camera location transformation
 		gl.glMatrixMode(GL10.GL_MODELVIEW);
 		gl.glLoadIdentity();
-		// Set texture rendering hints 
+		// Set texture rendering hints
 		gl.glEnable(GL10.GL_BLEND);
 		gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
 		gl.glEnable(GL10.GL_POINT_SMOOTH);
@@ -82,7 +83,7 @@ public class XYOrthographicRenderer implements GLSurfaceView.Renderer {
 		camera.apply(gl);
 		drawLayers(gl);
 		int error = gl.glGetError();
-		if (error != GL10.GL_NO_ERROR) {
+		if(error != GL10.GL_NO_ERROR) {
 			System.err.println("OpenGL error: " + error);
 		}
 	}
@@ -92,23 +93,25 @@ public class XYOrthographicRenderer implements GLSurfaceView.Renderer {
 	}
 
 	private void drawLayers(GL10 gl) {
-		if (layers == null) {
+		if(layers == null) {
 			return;
 		}
 		synchronized(layers) {
-			for (Layer layer : getLayers()) {
-				gl.glPushMatrix();
-				if (layer instanceof TfLayer) {
-					GraphName layerFrame = ((TfLayer) layer).getFrame();
-					// TODO(moesenle): throw a warning that no transform could be found and
-					// the layer has been ignored.
-					if (layerFrame != null && frameTransformTree.canTransform(camera.getFixedFrame(),layerFrame)) {
-						Transform transform = frameTransformTree.newFrameTransform(layerFrame, camera.getFixedFrame()).getTransform();
-						OpenGlTransform.apply(gl, transform);
+			for(Layer layer : getLayers()) {
+				if(layer.isEnabled()) {
+					gl.glPushMatrix();
+					if(layer instanceof TfLayer) {
+						GraphName layerFrame = ((TfLayer) layer).getFrame();
+						// TODO(moesenle): throw a warning that no transform could be found and
+						// the layer has been ignored.
+						if(layerFrame != null && frameTransformTree.canTransform(layerFrame, camera.getFixedFrame())) {
+							Transform transform = frameTransformTree.newFrameTransform(layerFrame, camera.getFixedFrame()).getTransform();
+							OpenGlTransform.apply(gl, transform);
+						}
 					}
+					layer.draw(gl);
+					gl.glPopMatrix();
 				}
-				layer.draw(gl);
-				gl.glPopMatrix();
 			}
 		}
 	}
@@ -120,7 +123,7 @@ public class XYOrthographicRenderer implements GLSurfaceView.Renderer {
 	public void setLayers(List<Layer> layers) {
 		this.layers = layers;
 	}
-	
+
 	public void addLayer(Layer layer) {
 		toAdd.add(layer);
 	}
