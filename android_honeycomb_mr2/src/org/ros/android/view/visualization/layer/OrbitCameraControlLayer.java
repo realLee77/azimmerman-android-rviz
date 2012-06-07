@@ -35,7 +35,7 @@ import android.view.ScaleGestureDetector;
 public class OrbitCameraControlLayer extends DefaultLayer {
 
 	private final Context context;
-
+	protected boolean enableScrolling = true;
 	private static final float TOUCH_ORBIT_COEFFICIENT = 0.25f;
 
 	private GestureDetector gestureDetector;
@@ -58,7 +58,7 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, final Camera camera) {
 		if(!(camera instanceof OrbitCamera))
-			throw new RuntimeException("OrbitCameraControlLayer can only be used with OrbitCamera objects!");
+			throw new IllegalArgumentException("OrbitCameraControlLayer can only be used with OrbitCamera objects!");
 		final OrbitCamera cam = (OrbitCamera) camera;
 
 		handler.post(new Runnable() {
@@ -91,7 +91,8 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 					@Override
 					public boolean onScale(ScaleGestureDetector detector) {
 						Vector3 diff = prevScaleCenter.subtract(new Vector3(detector.getFocusX(), detector.getFocusY(), 0));
-						cam.moveCameraScreenCoordinates((float) diff.getX() / 50, (float) diff.getY() / 50);
+						if(enableScrolling)
+							cam.moveCameraScreenCoordinates((float) diff.getX() / 50, (float) diff.getY() / 50);
 
 						prevScaleCenter.setX(detector.getFocusX());
 						prevScaleCenter.setY(detector.getFocusY());

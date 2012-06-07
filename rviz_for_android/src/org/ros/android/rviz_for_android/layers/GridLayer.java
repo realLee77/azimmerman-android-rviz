@@ -45,7 +45,7 @@ import org.ros.rosjava_geometry.Vector3;
 import android.os.Handler;
 
 public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLayer {
-	
+
 	private int nLines;
 	private float vertices[];
 	private short indices[];
@@ -54,14 +54,14 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 
 	private BoolProperty prop;
 	private boolean ready = false;
-	
-	private float xOffset = 0f; 
-	private float yOffset = 0f; 
-	private float zOffset = 0f; 
-	
+
+	private float xOffset = 0f;
+	private float yOffset = 0f;
+	private float zOffset = 0f;
+
 	public GridLayer(int cells, float spacing) {
 		super();
-		
+
 		prop = new BoolProperty("enabled", true, null);
 		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
 		prop.addSubProperty(new IntProperty("Cells", cells, new PropertyUpdateListener<Integer>() {
@@ -74,24 +74,24 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 				onValueChanged();
 			}
 		}).setValidRange(0.01f, 10000f));
-		prop.addSubProperty(new Vector3Property("Offset", new Vector3(0,0,0), new PropertyUpdateListener<Vector3>() {
+		prop.addSubProperty(new Vector3Property("Offset", new Vector3(0, 0, 0), new PropertyUpdateListener<Vector3>() {
 			public void onPropertyChanged(Vector3 newval) {
 				xOffset = (float) newval.getX();
 				yOffset = (float) newval.getY();
 				zOffset = (float) newval.getZ();
 			}
-			
+
 		}));
 		prop.addSubProperty(new ColorProperty("Color", new Color(1f, 1f, 1f, 1f), null));
 
 		initGrid();
 	}
-	
+
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
-		prop.<GraphNameProperty>getProperty("Parent").setTransformTree(frameTransformTree);
+		prop.<GraphNameProperty> getProperty("Parent").setTransformTree(frameTransformTree);
 	}
-	
+
 	private void onValueChanged() {
 		initGrid();
 		requestRender();
@@ -99,58 +99,58 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 
 	private void initGrid() {
 		ready = false;
-		int cells = prop.<IntProperty>getProperty("Cells").getValue();
-		float spacing = prop.<FloatProperty>getProperty("Spacing").getValue();
-		
-		nLines = 2*cells + 2 + (2*((cells+1)%2));
-		vertices = new float[3*(2*nLines)];
-		indices = new short[2*nLines];
-		
-		float max = (spacing*cells)/2f;
-		float min = -max;	
-		
+		int cells = prop.<IntProperty> getProperty("Cells").getValue();
+		float spacing = prop.<FloatProperty> getProperty("Spacing").getValue();
+
+		nLines = 2 * cells + 2 + (2 * ((cells + 1) % 2));
+		vertices = new float[3 * (2 * nLines)];
+		indices = new short[2 * nLines];
+
+		float max = (spacing * cells) / 2f;
+		float min = -max;
+
 		int idx = -1;
-		
+
 		for(float pos = min; pos <= 0; pos += spacing) {
 			// Vertical lines
 			vertices[++idx] = pos;
 			vertices[++idx] = min;
 			vertices[++idx] = 0;
-			
+
 			vertices[++idx] = pos;
 			vertices[++idx] = max;
 			vertices[++idx] = 0;
-			
+
 			vertices[++idx] = -pos;
 			vertices[++idx] = min;
 			vertices[++idx] = 0;
-			
+
 			vertices[++idx] = -pos;
 			vertices[++idx] = max;
 			vertices[++idx] = 0;
-			
+
 			// Horizontal lines
 			vertices[++idx] = min;
 			vertices[++idx] = pos;
 			vertices[++idx] = 0;
-			
+
 			vertices[++idx] = max;
 			vertices[++idx] = pos;
 			vertices[++idx] = 0;
-			
+
 			vertices[++idx] = min;
 			vertices[++idx] = -pos;
 			vertices[++idx] = 0;
-			
+
 			vertices[++idx] = max;
 			vertices[++idx] = -pos;
-			vertices[++idx] = 0;			
+			vertices[++idx] = 0;
 		}
-		
-		for(int i = 0; i < 2*nLines; i ++) {
-			indices[i] = (short)i;
+
+		for(int i = 0; i < 2 * nLines; i++) {
+			indices[i] = (short) i;
 		}
-		
+
 		// Pack the vertices into a byte array
 		ByteBuffer bb_vtx = ByteBuffer.allocateDirect(vertices.length * 4);
 		bb_vtx.order(ByteOrder.nativeOrder());
@@ -163,23 +163,23 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		ibb = bb_idx.asShortBuffer();
 		ibb.put(indices);
 		ibb.position(0);
-		
+
 		ready = true;
 		requestRender();
 	}
-	
+
 	@Override
-	public void draw(GL10 gl) {		
+	public void draw(GL10 gl) {
 		if(prop.getValue() && ready) {
-					
-			Color c = prop.<ColorProperty>getProperty("Color").getValue();
+
+			Color c = prop.<ColorProperty> getProperty("Color").getValue();
 			gl.glColor4f(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
-			
+
 			gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vbb);
 			gl.glPushMatrix();
 			gl.glTranslatef(xOffset, yOffset, zOffset);
-			gl.glDrawElements(GL10.GL_LINES, 2*nLines, GL10.GL_UNSIGNED_SHORT, ibb);
+			gl.glDrawElements(GL10.GL_LINES, 2 * nLines, GL10.GL_UNSIGNED_SHORT, ibb);
 			gl.glPopMatrix();
 			gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
 		}
@@ -190,11 +190,11 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	}
 
 	public GraphName getFrame() {
-		return prop.<GraphNameProperty>getProperty("Parent").getValue();
+		return prop.<GraphNameProperty> getProperty("Parent").getValue();
 	}
-	
+
 	@Override
 	public boolean isEnabled() {
 		return prop.getValue();
-	}	
+	}
 }

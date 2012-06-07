@@ -59,7 +59,7 @@ public class Talker extends AbstractNodeMain {
 				str.setData(toSay + " " + sequenceNumber);
 				publisher.publish(str);
 				sequenceNumber++;
-				Thread.sleep(1000);
+				Thread.sleep(5);
 			}
 		});
 	}

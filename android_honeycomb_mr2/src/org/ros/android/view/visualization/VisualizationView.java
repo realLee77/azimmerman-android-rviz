@@ -165,4 +165,8 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 	@Override
 	public void onError(Node node, Throwable throwable) {
 	}
+	
+	public FrameTransformTree getFrameTransformTree() {
+		return frameTransformTree;
+	}
 }
