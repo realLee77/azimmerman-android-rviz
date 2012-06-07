@@ -33,7 +33,7 @@ import android.os.Handler;
 public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer implements LayerWithProperties {
 
 	private ViewProperty prop = new ViewProperty("null", null, null);
-	
+
 	public ParentableOrbitCameraControlLayer(Context context) {
 		super(context);
 		prop.addSubProperty(new GraphNameProperty("Target", null, null, null));
@@ -42,15 +42,15 @@ public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer i
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, final Camera camera) {
-		GraphNameProperty subprop = prop.<GraphNameProperty>getProperty("Target");
-		
+		GraphNameProperty subprop = prop.<GraphNameProperty> getProperty("Target");
+
 		subprop.setTransformTree(frameTransformTree);
 		subprop.addUpdateListener(new PropertyUpdateListener<GraphName>() {
 			public void onPropertyChanged(GraphName newval) {
 				camera.setTargetFrame(newval);
 			}
 		});
-		
+
 		subprop = (GraphNameProperty) prop.getProperty("Fixed");
 		subprop.setDefaultItem(camera.getFixedFrame().toString(), false);
 		subprop.setValue(camera.getFixedFrame());
@@ -58,18 +58,17 @@ public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer i
 		subprop.addUpdateListener(new PropertyUpdateListener<GraphName>() {
 			public void onPropertyChanged(GraphName newval) {
 				if(newval == null)
-					camera.resetTargetFrame();
+					camera.resetFixedFrame();
 				else
-					camera.setTargetFrame(newval);
+					camera.setFixedFrame(newval);
 			}
 		});
-		
+
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
 	}
 
 	public Property<?> getProperties() {
 		return prop;
 	}
-	
-	
+
 }
