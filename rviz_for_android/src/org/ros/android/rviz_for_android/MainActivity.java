@@ -129,18 +129,10 @@ public class MainActivity extends RosActivity {
 		createLayerDialogs();
 		configureGUI();
 		
-		TextLayer tl = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);
-		GridLayer gl = new GridLayer(10, 10, 0.5f, 0.5f);
-		AxisLayer al = new AxisLayer();
+
 		ParentableOrbitCameraControlLayer cam = new ParentableOrbitCameraControlLayer(this);
 		cam.setName("Camera");
 		layers.add(cam);
-		tl.setName("Text");
-		layers.add(tl);
-		gl.setName("Grid");
-		layers.add(gl);
-		al.setName("Axis");
-		layers.add(al);
 		
 		ll = ((LinearLayout) findViewById(R.id.layer_layout));
 		ll.setVisibility(LinearLayout.GONE);
@@ -153,6 +145,10 @@ public class MainActivity extends RosActivity {
 		propAdapter = new PropertyListAdapter(layers, getApplicationContext());
 		elv.setAdapter(propAdapter);
 		elv.setItemsCanFocus(true);
+		
+		addNewLayer(0);
+		addNewLayer(1);
+		addNewLayer(2);
 	}
 
 	public static Context getAppContext() {
@@ -172,7 +168,7 @@ public class MainActivity extends RosActivity {
 			newLayer = new AxisLayer();
 			break;
 		case 1:
-			newLayer = new GridLayer(10, 10, 1, 1);
+			newLayer = new GridLayer(10, 1f);
 			break;
 		case 2:
 			newLayer = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);

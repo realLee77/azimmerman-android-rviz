@@ -59,34 +59,22 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	private float yOffset = 0f; 
 	private float zOffset = 0f; 
 	
-	public GridLayer(int xCells, int yCells, float xSpacing, float ySpacing) {
+	public GridLayer(int cells, float spacing) {
 		super();
 		
 		prop = new BoolProperty("enabled", true, null);
 		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
-		prop.addSubProperty(new IntProperty("xCells", xCells, new PropertyUpdateListener<Integer>() {
+		prop.addSubProperty(new IntProperty("Cells", cells, new PropertyUpdateListener<Integer>() {
 			public void onPropertyChanged(Integer newval) {
 				onValueChanged();
 			}
 		}).setValidRange(1, 1000));
-		prop.addSubProperty(new IntProperty("yCells", yCells, new PropertyUpdateListener<Integer>() {
-			public void onPropertyChanged(Integer newval) {
-				onValueChanged();
-			}
-		}).setValidRange(1, 1000));
-		
-		prop.addSubProperty(new FloatProperty("xSpacing", xSpacing, new PropertyUpdateListener<Float>() {
+		prop.addSubProperty(new FloatProperty("Spacing", spacing, new PropertyUpdateListener<Float>() {
 			public void onPropertyChanged(Float newval) {
 				onValueChanged();
 			}
 		}).setValidRange(0.01f, 10000f));
-		prop.addSubProperty(new FloatProperty("ySpacing", ySpacing, new PropertyUpdateListener<Float>() {
-			public void onPropertyChanged(Float newval) {
-				onValueChanged();
-			}
-		}).setValidRange(0.01f, 10000f));
-		prop.addSubProperty(new Vector3Property("offset", new Vector3(0,0,0), new PropertyUpdateListener<Vector3>() {
-
+		prop.addSubProperty(new Vector3Property("Offset", new Vector3(0,0,0), new PropertyUpdateListener<Vector3>() {
 			public void onPropertyChanged(Vector3 newval) {
 				xOffset = (float) newval.getX();
 				yOffset = (float) newval.getY();
@@ -94,7 +82,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			}
 			
 		}));
-		prop.addSubProperty(new ColorProperty("color", new Color(1f, 1f, 1f, 1f), null));
+		prop.addSubProperty(new ColorProperty("Color", new Color(1f, 1f, 1f, 1f), null));
 
 		initGrid();
 	}
@@ -111,39 +99,52 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 
 	private void initGrid() {
 		ready = false;
-		int xCells = prop.<IntProperty>getProperty("xCells").getValue();
-		int yCells = prop.<IntProperty>getProperty("yCells").getValue();
-		float xSpacing = prop.<FloatProperty>getProperty("xSpacing").getValue();
-		float ySpacing = prop.<FloatProperty>getProperty("ySpacing").getValue();
+		int cells = prop.<IntProperty>getProperty("Cells").getValue();
+		float spacing = prop.<FloatProperty>getProperty("Spacing").getValue();
 		
-		nLines = 2*xCells + 2*yCells + 2;
+		nLines = 2*cells + 2 + (2*((cells+1)%2));
 		vertices = new float[3*(2*nLines)];
 		indices = new short[2*nLines];
-		float yMin = -ySpacing*yCells;
-		float yMax = ySpacing*yCells;
-		float xMin = -xSpacing*xCells;
-		float xMax = xSpacing*xCells;		
+		
+		float max = (spacing*cells)/2f;
+		float min = -max;	
 		
 		int idx = -1;
-		for(float x = xMin; x <= xMax; x += xSpacing) {
-			// Edge start
-			vertices[++idx] = x;
-			vertices[++idx] = yMin;
+		
+		for(float pos = min; pos <= 0; pos += spacing) {
+			// Vertical lines
+			vertices[++idx] = pos;
+			vertices[++idx] = min;
 			vertices[++idx] = 0;
-			// Edge end 
-			vertices[++idx] = x;
-			vertices[++idx] = yMax;
+			
+			vertices[++idx] = pos;
+			vertices[++idx] = max;
 			vertices[++idx] = 0;
-		}
-		for(float y = yMin; y <= yMax; y += ySpacing) {
-			// Edge start
-			vertices[++idx] = xMin;
-			vertices[++idx] = y;
+			
+			vertices[++idx] = -pos;
+			vertices[++idx] = min;
 			vertices[++idx] = 0;
-			// Edge end
-			vertices[++idx] = xMax;
-			vertices[++idx] = y;
-			vertices[++idx] = 0;	
+			
+			vertices[++idx] = -pos;
+			vertices[++idx] = max;
+			vertices[++idx] = 0;
+			
+			// Horizontal lines
+			vertices[++idx] = min;
+			vertices[++idx] = pos;
+			vertices[++idx] = 0;
+			
+			vertices[++idx] = max;
+			vertices[++idx] = pos;
+			vertices[++idx] = 0;
+			
+			vertices[++idx] = min;
+			vertices[++idx] = -pos;
+			vertices[++idx] = 0;
+			
+			vertices[++idx] = max;
+			vertices[++idx] = -pos;
+			vertices[++idx] = 0;			
 		}
 		
 		for(int i = 0; i < 2*nLines; i ++) {
@@ -171,7 +172,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	public void draw(GL10 gl) {		
 		if(prop.getValue() && ready) {
 					
-			Color c = prop.<ColorProperty>getProperty("color").getValue();
+			Color c = prop.<ColorProperty>getProperty("Color").getValue();
 			gl.glColor4f(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
 			
 			gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
