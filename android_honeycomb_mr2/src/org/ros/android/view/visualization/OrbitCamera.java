@@ -44,17 +44,16 @@ public class OrbitCamera implements Camera {
 	 */
 	private static final GraphName DEFAULT_TARGET_FRAME = null;
 
-	// TODO: Make this variable (possibly changing with pinch instead of zoom?)
 	private float orbitRadius = 5.0f;
 	private static final float MAX_FLING_VELOCITY = 25;
 	private static final float MIN_FLING_VELOCITY = 0.05f;
 	private static final float MAX_TRANSLATE_SPEED = 0.18f;
-	
+
 	private float angleTheta = (float) (Math.PI / 4);
 	private float anglePhi = (float) (Math.PI / 4);
 	private Vector3 location;
 	private Vector3 lookTarget;
-	
+
 	private float vTheta = 0;
 	private float vPhi = 0;
 
@@ -78,14 +77,26 @@ public class OrbitCamera implements Camera {
 	public OrbitCamera(FrameTransformTree frameTransformTree) {
 		this.frameTransformTree = frameTransformTree;
 		fixedFrame = DEFAULT_FIXED_FRAME;
-		lookTarget = Vector3.newIdentityVector3();
 		location = Vector3.newIdentityVector3();
+		lookTarget = Vector3.newIdentityVector3();
 		updateLocation();
+		location = location.add(lookTarget);
 	}
 
 	public void apply(GL10 gl) {
 		viewport.zoom(gl);
 		velocityUpdate();
+		
+		synchronized(fixedFrame) {
+			if(targetFrame != null && frameTransformTree.canTransform(targetFrame, fixedFrame)) {
+				lookTarget = frameTransformTree.newFrameTransform(targetFrame, fixedFrame).getTransform().getTranslation();
+				lookTarget.setX(lookTarget.getX()/2);
+				lookTarget.setY(lookTarget.getY()/2);
+				lookTarget.setZ(lookTarget.getZ()/2);
+				updateLocation();
+			}
+		}
+
 		rotateOrbit(gl);
 	}
 
@@ -94,28 +105,30 @@ public class OrbitCamera implements Camera {
 		gl.glTranslatef(-(float) location.getX(), -(float) location.getY(), -(float) location.getZ());
 	}
 	
-	private void velocityUpdate() {
-		if(vTheta != 0f || vPhi != 0f) {
-			moveOrbitPosition(vPhi, vTheta);
-			vTheta *= .9f;
-			vPhi *= .9f;
-		}		
-		
-		if(Math.abs(vTheta) < MIN_FLING_VELOCITY) vTheta = 0;
-		if(Math.abs(vPhi) < MIN_FLING_VELOCITY) vPhi = 0;
-	}
-
 	private void updateLocation() {
 		location.setX((float) lookTarget.getX() + (orbitRadius * Math.sin(angleTheta) * Math.cos(anglePhi)));
 		location.setY((float) lookTarget.getY() + (orbitRadius * Math.sin(angleTheta) * Math.sin(anglePhi)));
 		location.setZ((float) lookTarget.getZ() + (orbitRadius * Math.cos(angleTheta)));
 	}
-	
-	public void flingCamera(float vX, float vY) {
-		vPhi = Utility.cap(-vX/500, -MAX_FLING_VELOCITY, MAX_FLING_VELOCITY);
-		vTheta = Utility.cap(-vY/500, -MAX_FLING_VELOCITY, MAX_FLING_VELOCITY);
+
+	private void velocityUpdate() {
+		if(vTheta != 0f || vPhi != 0f) {
+			moveOrbitPosition(vPhi, vTheta);
+			vTheta *= .9f;
+			vPhi *= .9f;
+		}
+
+		if(Math.abs(vTheta) < MIN_FLING_VELOCITY)
+			vTheta = 0;
+		if(Math.abs(vPhi) < MIN_FLING_VELOCITY)
+			vPhi = 0;
 	}
-	
+
+	public void flingCamera(float vX, float vY) {
+		vPhi = Utility.cap(-vX / 500, -MAX_FLING_VELOCITY, MAX_FLING_VELOCITY);
+		vTheta = Utility.cap(-vY / 500, -MAX_FLING_VELOCITY, MAX_FLING_VELOCITY);
+	}
+
 	public void moveOrbitPosition(float xDistance, float yDistance) {
 		anglePhi += Math.toRadians(xDistance);
 		anglePhi = Utility.angleWrap(anglePhi);
@@ -125,14 +138,15 @@ public class OrbitCamera implements Camera {
 
 		updateLocation();
 	}
-	
 
 	@Override
 	public void moveCameraScreenCoordinates(float xDistance, float yDistance) {
+		targetFrame = null;
+
 		float xDistCap = Utility.cap(xDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED);
-		float yDistCap = Utility.cap(yDistance, -MAX_TRANSLATE_SPEED,MAX_TRANSLATE_SPEED);
-			
-		lookTarget = lookTarget.subtract(new Vector3(Math.cos(anglePhi-Math.PI/2)*xDistCap - Math.sin(anglePhi+Math.PI/2)*yDistCap, Math.sin(anglePhi-Math.PI/2)*xDistCap + Math.cos(anglePhi+Math.PI/2)*yDistCap, 0));
+		float yDistCap = Utility.cap(yDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED);
+
+		lookTarget = lookTarget.subtract(new Vector3(Math.cos(anglePhi - Math.PI / 2) * xDistCap - Math.sin(anglePhi + Math.PI / 2) * yDistCap, Math.sin(anglePhi - Math.PI / 2) * xDistCap + Math.cos(anglePhi + Math.PI / 2) * yDistCap, 0));
 		updateLocation();
 	}
 
@@ -149,35 +163,6 @@ public class OrbitCamera implements Camera {
 		orbitRadius /= factor;
 	}
 
-	/**
-	 * Returns the real world equivalent of the viewport coordinates specified.
-	 * 
-	 * @return the world coordinates of the provided screen coordinates
-	 */
-	public Vector3 toWorldCoordinates(Point screenPoint) {
-		// Top left corner of the view is the origin.
-		double x = 2.0d * screenPoint.x / viewport.getWidth() - 1.0d;
-		double y = 1.0d - 2.0d * screenPoint.y / viewport.getHeight();
-		// Apply the viewport transformation.
-		x *= viewport.getWidth() / 2.0d / viewport.getZoom();
-		y *= viewport.getHeight() / 2.0d / viewport.getZoom();
-		// Exchange x and y for the rotation and add the translation.
-		// return new Vector3(y + location.getX(), -x + location.getY(), 0);
-		return new Vector3(-1, -1, -1);
-	}
-
-	/**
-	 * Returns the pose in the OpenGL world that corresponds to a screen coordinate and an orientation.
-	 * 
-	 * @param goalScreenPoint
-	 *            the point on the screen
-	 * @param orientation
-	 *            the orientation of the pose on the screen
-	 */
-	public Transform toOpenGLPose(Point goalScreenPoint, float orientation) {
-		return new Transform(toWorldCoordinates(goalScreenPoint), Quaternion.newFromAxisAngle(new Vector3(0, 0, -1), orientation + Math.PI / 2));
-	}
-
 	public GraphName getFixedFrame() {
 		return fixedFrame;
 	}
@@ -185,21 +170,20 @@ public class OrbitCamera implements Camera {
 	public void setFixedFrame(GraphName fixedFrame) {
 		Preconditions.checkNotNull(fixedFrame, "Fixed frame must be specified.");
 		this.fixedFrame = fixedFrame;
-		// To prevent camera jumps, we always center on the fixedFrame when
-		// it is reset.
-		lookTarget = Vector3.newIdentityVector3();
 	}
 
 	public void resetFixedFrame() {
-		fixedFrame = DEFAULT_FIXED_FRAME;
-	}
-
-	public void setTargetFrame(GraphName frame) {
-		targetFrame = frame;
+		synchronized(fixedFrame) {
+			fixedFrame = DEFAULT_FIXED_FRAME;
+		}
 	}
 
 	public void resetTargetFrame() {
 		targetFrame = DEFAULT_TARGET_FRAME;
+	}
+
+	public void setTargetFrame(GraphName frame) {
+		targetFrame = frame;
 	}
 
 	public GraphName getTargetFrame() {
@@ -220,5 +204,15 @@ public class OrbitCamera implements Camera {
 
 	public void setZoom(float zoom) {
 		viewport.setZoom(zoom);
+	}
+
+	// TODO: IS BROKEN! Doesn't work in three dimensions
+	public Vector3 toWorldCoordinates(Point screenPoint) {
+		return new Vector3(-1, -1, -1);
+	}
+
+	// TODO: IS BROKEN! Doesn't work in three dimensions
+	public Transform toOpenGLPose(Point goalScreenPoint, float orientation) {
+		return new Transform(toWorldCoordinates(goalScreenPoint), Quaternion.newFromAxisAngle(new Vector3(0, 0, -1), orientation + Math.PI / 2));
 	}
 }

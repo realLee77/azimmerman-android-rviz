@@ -50,6 +50,7 @@ public class MainActivity extends RosActivity {
     rosTextView.setMessageToStringCallable(new MessageCallable<String, std_msgs.String>() {
       @Override
       public String call(std_msgs.String message) {
+    	  System.out.println("Got message " + message);
         return message.getData();
       }
     });
@@ -57,14 +58,14 @@ public class MainActivity extends RosActivity {
 
   @Override
   protected void init(NodeMainExecutor nodeMainExecutor) {
-    talker = new Talker("TALKING");
-    NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress());
-    // At this point, the user has already been prompted to either enter the URI
-    // of a master to use or to start a master locally.
-    nodeConfiguration.setMasterUri(getMasterUri());
-    nodeMainExecutor.execute(talker, nodeConfiguration);
-    // The RosTextView is also a NodeMain that must be executed in order to
-    // start displaying incoming messages.
-    nodeMainExecutor.execute(rosTextView, nodeConfiguration);
+//    talker = new Talker("TALKING");
+//    NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress());
+//    // At this point, the user has already been prompted to either enter the URI
+//    // of a master to use or to start a master locally.
+//    nodeConfiguration.setMasterUri(getMasterUri());
+//    nodeMainExecutor.execute(talker, nodeConfiguration);
+//    // The RosTextView is also a NodeMain that must be executed in order to
+//    // start displaying incoming messages.
+//    nodeMainExecutor.execute(rosTextView, nodeConfiguration);
   }
 }

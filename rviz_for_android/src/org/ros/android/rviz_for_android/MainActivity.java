@@ -18,6 +18,8 @@
 package org.ros.android.rviz_for_android;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
@@ -30,11 +32,10 @@ import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.layer.DefaultLayer;
 import org.ros.android.view.visualization.layer.Layer;
-import org.ros.android.view.visualization.layer.OrbitCameraControlLayer;
-import org.ros.android.view.visualization.layer.RobotLayer;
 import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
+import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.app.ActionBar;
 import android.app.AlertDialog;
@@ -73,7 +74,7 @@ public class MainActivity extends RosActivity {
 	private CharSequence[] liveLayers;
 	private CharSequence[] availableLayers = { "Axis", "Grid", "Text" };
 	private int[] counts;
-	
+
 	// Adding and removing layers
 	private static AlertDialog.Builder addLayerDialogBuilder;
 	private static AlertDialog.Builder remLayerDialogBuilder;
@@ -82,11 +83,15 @@ public class MainActivity extends RosActivity {
 	private Button addLayer;
 	private Button remLayer;
 	private Button nameLayer;
-	
+
 	// Show and hide the layer selection panel
 	private LinearLayout ll;
 	private boolean showLayers = false;
-	
+
+	// Enable/disable following
+	boolean following = false;
+	ParentableOrbitCameraControlLayer camControl;
+
 	public MainActivity() {
 		super("Rviz", "Rviz");
 	}
@@ -95,29 +100,62 @@ public class MainActivity extends RosActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.settings_menu, menu);
-		
+
 		// Configure the action bar
 		ActionBar ab = getActionBar();
 		ab.setDisplayShowHomeEnabled(false);
 		ab.setDisplayShowTitleEnabled(false);
 		ab.setDisplayShowCustomEnabled(true);
-
+		menu.setGroupEnabled(R.id.unfollowGroup, following);
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if(item.getItemId() == R.id.menu_layertoggle) {
+		switch(item.getItemId()) {
+		case R.id.menu_layertoggle:
 			if(showLayers) {
 				ll.setVisibility(LinearLayout.GONE);
 				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 				imm.hideSoftInputFromWindow(ll.getWindowToken(), 0);
 			} else {
-				ll.setVisibility(LinearLayout.VISIBLE);				
+				ll.setVisibility(LinearLayout.VISIBLE);
 			}
 			showLayers = !showLayers;
+			break;
+		case R.id.menu_follow:
+			showTFSelectDialog();
+			break;
+		case R.id.menu_unfollow:
+			camControl.setTargetFrame(null);
+			item.setEnabled(false);
+			following = false;
+			break;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	private void showTFSelectDialog() {
+		FrameTransformTree ftt = visualizationView.getFrameTransformTree();
+
+		Set<String> frameset = ftt.getFrameTracker().getAvailableFrames();
+		final String[] tfFrames = (String[])frameset.toArray(new String[frameset.size()]);
+		
+		if(tfFrames.length > 0) {
+			AlertDialog.Builder selTfFrame = new AlertDialog.Builder(this);
+			selTfFrame.setTitle("Select a frame");
+			selTfFrame.setItems(tfFrames, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int item) {
+					camControl.setTargetFrame(tfFrames[item]);
+					following = true;
+					invalidateOptionsMenu();
+				}
+			});
+			AlertDialog dialog = selTfFrame.create();
+			dialog.show();
+		} else {
+			Toast.makeText(this, "No TF frames to follow!", Toast.LENGTH_LONG).show();
+		}
 	}
 
 	@Override
@@ -128,27 +166,25 @@ public class MainActivity extends RosActivity {
 
 		createLayerDialogs();
 		configureGUI();
-		
 
-		ParentableOrbitCameraControlLayer cam = new ParentableOrbitCameraControlLayer(this);
-		cam.setName("Camera");
-		layers.add(cam);
-		
+		camControl = new ParentableOrbitCameraControlLayer(this);
+		camControl.setName("Camera");
+		layers.add(camControl);
+
 		ll = ((LinearLayout) findViewById(R.id.layer_layout));
 		ll.setVisibility(LinearLayout.GONE);
-		
+
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
 		for(Layer l : layers)
 			visualizationView.addLayer(l);
-		
+
 		elv = (ExpandableListView) findViewById(R.id.expandableListView1);
 		propAdapter = new PropertyListAdapter(layers, getApplicationContext());
 		elv.setAdapter(propAdapter);
 		elv.setItemsCanFocus(true);
-		
+
 		addNewLayer(0);
 		addNewLayer(1);
-		addNewLayer(2);
 	}
 
 	public static Context getAppContext() {
@@ -160,7 +196,7 @@ public class MainActivity extends RosActivity {
 		NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
 		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/map_view"));
 	}
-	
+
 	private void addNewLayer(int layertype) {
 		DefaultLayer newLayer = null;
 		switch(layertype) {
@@ -186,9 +222,9 @@ public class MainActivity extends RosActivity {
 			Toast.makeText(context, "Invalid selection!", Toast.LENGTH_LONG).show();
 		}
 	}
-	
+
 	private void removeLayer(int item) {
-		Layer toRemove = layers.get(item+1);
+		Layer toRemove = layers.get(item + 1);
 
 		if(toRemove != null) {
 			visualizationView.removeLayer(toRemove);
@@ -200,9 +236,9 @@ public class MainActivity extends RosActivity {
 	}
 
 	private CharSequence[] listLiveLayers() {
-		liveLayers = new CharSequence[layers.size()-1];
+		liveLayers = new CharSequence[layers.size() - 1];
 		for(int i = 1; i < layers.size(); i++) {
-			liveLayers[i-1] = layers.get(i).getName();
+			liveLayers[i - 1] = layers.get(i).getName();
 		}
 		return liveLayers;
 	}
@@ -228,7 +264,7 @@ public class MainActivity extends RosActivity {
 		remLayerDialogBuilder = new AlertDialog.Builder(context);
 		remLayerDialogBuilder.setTitle("Select a Layer");
 	}
-	
+
 	private void configureGUI() {
 		addLayer = (Button) findViewById(R.id.add_layer);
 		remLayer = (Button) findViewById(R.id.remove_layer);
@@ -265,7 +301,7 @@ public class MainActivity extends RosActivity {
 			}
 		});
 	}
-	
+
 	private void renameLayer(int item) {
 		final int selectedItem = item;
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -273,7 +309,7 @@ public class MainActivity extends RosActivity {
 		alert.setMessage("New layer name");
 
 		final EditText input = new EditText(this);
-		input.setText(liveLayers[item+1]);
+		input.setText(liveLayers[item + 1]);
 		input.setSelectAllOnFocus(true);
 		input.setSingleLine(true);
 		alert.setView(input);
@@ -281,7 +317,7 @@ public class MainActivity extends RosActivity {
 		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				String newName = input.getText().toString();
-				((DefaultLayer)layers.get(selectedItem)).setName(newName);
+				((DefaultLayer) layers.get(selectedItem)).setName(newName);
 				propAdapter.notifyDataSetChanged();
 			}
 		});

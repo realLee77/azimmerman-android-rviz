@@ -1,13 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <item
-        android:id="@+id/options_menu"
-        android:title="Options go here"/>
+    <group android:checkableBehavior="all" >
+        <item
+            android:id="@+id/options_menu"
+            android:orderInCategory="5"
+            android:title="Options go here"/>
+    </group>
+
     <item
         android:id="@+id/menu_layertoggle"
-        android:showAsAction="withText|always"
         android:checkable="true"
         android:icon="@drawable/layers"
+        android:orderInCategory="4"
+        android:showAsAction="withText|always"
         android:title="Layers"/>
+    <!--
+         <item
+        android:id="@+id/menu_spacer"
+        android:orderInCategory="3"
+        android:showAsAction="withText|always"
+        android:enabled="false"
+        android:title="       "/>
+    -->
+    <item
+        android:id="@+id/menu_follow"
+        android:orderInCategory="2"
+        android:icon="@drawable/lock"
+        android:showAsAction="withText|always"
+        android:title="Follow"/>
+
+    <group android:id="@+id/unfollowGroup" >
+        <item
+            android:id="@+id/menu_unfollow"
+            android:orderInCategory="1"
+            android:icon="@drawable/unlock"
+            android:showAsAction="withText|always"
+            android:title="Unfollow"/>
+    </group>
+
 </menu>
