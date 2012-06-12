@@ -1,48 +1,49 @@
 /*
- * Copyright (C) 2011 Google Inc.
+ * Copyright (c) 2012, Willow Garage, Inc.
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * Willow Garage licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
-
-package org.ros.android.view.visualization;
+package org.ros.android.rviz_for_android.vis;
 
 import javax.microedition.khronos.opengles.GL10;
+import javax.vecmath.Vector3d;
 
+import org.ros.android.view.visualization.Camera;
+import org.ros.android.view.visualization.Utility;
+import org.ros.android.view.visualization.Viewport;
 import org.ros.namespace.GraphName;
+import org.ros.rosjava.tf.TransformTree;
 import org.ros.rosjava_geometry.FrameTransformTree;
-import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
-import android.graphics.Point;
-
 import com.google.common.base.Preconditions;
 
-/**
- * @author moesenle@google.com (Lorenz Moesenlechner)
- */
-public class OrbitCamera implements Camera {
+import android.graphics.Point;
+
+public class OrbitCameraTF implements Camera {
 	/**
 	 * The default reference frame.
 	 * 
 	 * TODO(moesenle): make this the root of the TF tree.
 	 */
-	private static final GraphName DEFAULT_FIXED_FRAME = new GraphName("/world");
+	private static final String DEFAULT_FIXED_FRAME = "/world";
 
 	/**
 	 * The default target frame is null which means that the renderer uses the user set camera.
 	 */
-	private static final GraphName DEFAULT_TARGET_FRAME = null;
+	private static final String DEFAULT_TARGET_FRAME = null;
 
 	private float orbitRadius = 5.0f;
 	private static final float MAX_FLING_VELOCITY = 25;
@@ -65,17 +66,17 @@ public class OrbitCamera implements Camera {
 	/**
 	 * The TF frame the camera is locked on. If set, the camera point is set to the location of this frame in fixedFrame. If the camera is set or moved, the lock is removed.
 	 */
-	private GraphName targetFrame;
+	private String targetFrame;
 
 	/**
 	 * The frame in which to render everything. The default value is /map which indicates that everything is rendered in map. If this is changed to, for instance, base_link, the view follows the robot and the robot itself is in the origin.
 	 */
-	private GraphName fixedFrame;
+	private String fixedFrame;
 
-	private FrameTransformTree frameTransformTree;
-
-	public OrbitCamera(FrameTransformTree frameTransformTree) {
-		this.frameTransformTree = frameTransformTree;
+	private TransformTree transformTree;
+	
+	public OrbitCameraTF(TransformTree transformTree) {
+		this.transformTree = transformTree;
 		fixedFrame = DEFAULT_FIXED_FRAME;
 		location = Vector3.newIdentityVector3();
 		lookTarget = Vector3.newIdentityVector3();
@@ -83,20 +84,21 @@ public class OrbitCamera implements Camera {
 		location = location.add(lookTarget);
 	}
 
+	@Override
 	public void apply(GL10 gl) {
 		viewport.zoom(gl);
 		velocityUpdate();
 		
 		synchronized(fixedFrame) {
-			if(targetFrame != null && frameTransformTree.canTransform(targetFrame, fixedFrame)) {
-				lookTarget = frameTransformTree.newFrameTransform(targetFrame, fixedFrame).getTransform().getTranslation();
-				lookTarget.setX(lookTarget.getX()/2);
-				lookTarget.setY(lookTarget.getY()/2);
-				lookTarget.setZ(lookTarget.getZ()/2);
+			if(targetFrame != null && transformTree.canTransform(fixedFrame, targetFrame)) {
+				Vector3d trans = transformTree.lookupMostRecent(fixedFrame, targetFrame).getTranslation();
+				lookTarget.setX(trans.x/2);
+				lookTarget.setY(trans.y/2);
+				lookTarget.setZ(trans.z/2);
 				updateLocation();
 			}
 		}
-
+		
 		rotateOrbit(gl);
 	}
 
@@ -124,6 +126,7 @@ public class OrbitCamera implements Camera {
 			vPhi = 0;
 	}
 
+
 	public void flingCamera(float vX, float vY) {
 		vPhi = Utility.cap(-vX / 500, -MAX_FLING_VELOCITY, MAX_FLING_VELOCITY);
 		vTheta = Utility.cap(-vY / 500, -MAX_FLING_VELOCITY, MAX_FLING_VELOCITY);
@@ -149,6 +152,7 @@ public class OrbitCamera implements Camera {
 		lookTarget = lookTarget.subtract(new Vector3(Math.cos(anglePhi - Math.PI / 2) * xDistCap - Math.sin(anglePhi + Math.PI / 2) * yDistCap, Math.sin(anglePhi - Math.PI / 2) * xDistCap + Math.cos(anglePhi + Math.PI / 2) * yDistCap, 0));
 		updateLocation();
 	}
+	
 
 	public void setCamera(Vector3 newCameraPoint) {
 		resetTargetFrame();
@@ -164,12 +168,12 @@ public class OrbitCamera implements Camera {
 	}
 
 	public GraphName getFixedFrame() {
-		return fixedFrame;
+		return new GraphName(fixedFrame);
 	}
 
 	public void setFixedFrame(GraphName fixedFrame) {
 		Preconditions.checkNotNull(fixedFrame, "Fixed frame must be specified.");
-		this.fixedFrame = fixedFrame;
+		this.fixedFrame = fixedFrame.toString();
 	}
 
 	public void resetFixedFrame() {
@@ -183,12 +187,28 @@ public class OrbitCamera implements Camera {
 	}
 
 	public void setTargetFrame(GraphName frame) {
-		targetFrame = frame;
+		targetFrame = frame.toString();
 	}
 
 	public GraphName getTargetFrame() {
+		return new GraphName(targetFrame);
+	}
+	
+	// String frame manipulation
+	public String getTargetFrameString() {
 		return targetFrame;
 	}
+	public void setTargetFrameString(String frame) {
+		targetFrame = frame;
+	}
+	public String getFixedFrameString() {
+		return fixedFrame;
+	}
+	public void setFixedFrameString(String frame) {
+		fixedFrame = frame;
+	}
+	
+	
 
 	public Viewport getViewport() {
 		return viewport;
@@ -205,7 +225,7 @@ public class OrbitCamera implements Camera {
 	public void setZoom(float zoom) {
 		viewport.setZoom(zoom);
 	}
-
+	
 	@Override
 	public Vector3 toWorldCoordinates(Point screenPoint) {
 		// TODO Auto-generated method stub

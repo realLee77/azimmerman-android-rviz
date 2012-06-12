@@ -22,6 +22,7 @@ import java.io.IOException;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.MainActivity;
+import org.ros.android.rviz_for_android.layersTF.TexFont;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;

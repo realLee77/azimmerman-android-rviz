@@ -1,23 +1,28 @@
 /*
- * Copyright (C) 2011 Google Inc.
+ * Copyright (c) 2012, Willow Garage, Inc.
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * Willow Garage licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
+package org.ros.android.rviz_for_android.vis;
 
-package org.ros.android.view.visualization;
-
+import java.util.Collection;
 import java.util.List;
 
+import org.ros.android.view.visualization.Camera;
+import org.ros.android.view.visualization.OrbitCamera;
+import org.ros.android.view.visualization.RenderRequestListener;
+import org.ros.android.view.visualization.VisViewRenderer;
 import org.ros.android.view.visualization.layer.Layer;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
@@ -25,41 +30,38 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Subscriber;
+import org.ros.rosjava.tf.StampedTransform;
+import org.ros.rosjava.tf.TransformFactory;
 import org.ros.rosjava.tf.TransformTree;
 import org.ros.rosjava.tf.pubsub.TransformListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
+
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
-import android.view.inputmethod.InputMethodManager;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-
-/**
- * @author moesenle@google.com (Lorenz Moesenlechner)
- */
-public class VisualizationView extends GLSurfaceView implements NodeMain {
+public class VisualizationViewTF extends GLSurfaceView implements NodeMain {
 
 	private RenderRequestListener renderRequestListener;
-	
-	private FrameTransformTree frameTransformTree;
-	
-	private Camera camera;
-	private VisViewRenderer renderer;
-	private List<Layer> layers;
+
+	private TransformTree transformTree;
+
+	private OrbitCameraTF camera;
+	private VisViewRendererTF renderer;
+	private List<LayerTF> layers;
 	private ConnectedNode connectedNode;
 
-	public VisualizationView(Context context) {
+	public VisualizationViewTF(Context context) {
 		super(context);
 		init();
 	}
 
-	public VisualizationView(Context context, AttributeSet attrs) {
+	public VisualizationViewTF(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		init();
 	}
@@ -71,10 +73,10 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 				requestRender();
 			}
 		};
-		frameTransformTree = new FrameTransformTree();
-		camera = new OrbitCamera(frameTransformTree);
-		renderer = new VisViewRenderer(frameTransformTree, camera);
 		layers = Lists.newArrayList();
+		transformTree = new TransformTree();
+		camera = new OrbitCameraTF(transformTree);
+		renderer = new VisViewRendererTF(transformTree, camera);
 		setEGLConfigChooser(8, 8, 8, 8, 0, 0);
 		getHolder().setFormat(PixelFormat.TRANSLUCENT);
 		setRenderer(renderer);
@@ -87,7 +89,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		for(Layer layer : Iterables.reverse(layers)) {
+		for(LayerTF layer : Iterables.reverse(layers)) {
 			if(layer != null && layer.onTouchEvent(this, event)) {
 				return true;
 			}
@@ -95,7 +97,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 		return false;
 	}
 
-	public VisViewRenderer getRenderer() {
+	public VisViewRendererTF getRenderer() {
 		return renderer;
 	}
 
@@ -105,18 +107,18 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 	 * @param layer
 	 *            layer to add
 	 */
-	public void addLayer(Layer layer) {
+	public void addLayer(LayerTF layer) {
 		synchronized(layers) {
 			layers.add(layer);
 		}
 		layer.addRenderListener(renderRequestListener);
 		if(connectedNode != null) {
-			layer.onStart(connectedNode, getHandler(), frameTransformTree, camera);
+			layer.onStart(connectedNode, getHandler(), transformTree, camera);
 		}
 		requestRender();
 	}
 
-	public void removeLayer(Layer layer) {
+	public void removeLayer(LayerTF layer) {
 		layer.onShutdown(this, connectedNode);
 		synchronized(layers) {
 			layers.remove(layer);
@@ -131,24 +133,20 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 	}
 
 	private void startTransformListener() {
-		String tfPrefix = connectedNode.getParameterTree().getString("~tf_prefix", "");
-		if(!tfPrefix.isEmpty()) {
-			frameTransformTree.setPrefix(tfPrefix);
-		}
-		Subscriber<tf.tfMessage> tfSubscriber = connectedNode.newSubscriber("tf", tf.tfMessage._TYPE);
-		tfSubscriber.addMessageListener(new MessageListener<tf.tfMessage>() {
+		Subscriber<tf.tfMessage> sub = connectedNode.newSubscriber("/tf", tf.tfMessage._TYPE);
+		sub.addMessageListener(new MessageListener<tf.tfMessage>() {
 			@Override
-			public void onNewMessage(tf.tfMessage message) {
-				for(geometry_msgs.TransformStamped transform : message.getTransforms()) {
-					frameTransformTree.updateTransform(transform);
-				}
+			public void onNewMessage(final tf.tfMessage message) {
+				// TODO: This could possibly use message.getTransforms() instead of creating a new Collection
+				Collection<StampedTransform> transforms = TransformFactory.fromTfMessage(message);
+				transformTree.add(transforms);
 			}
 		});
 	}
 
 	private void startLayers() {
-		for(Layer layer : layers) {
-			layer.onStart(connectedNode, getHandler(), frameTransformTree, camera);
+		for(LayerTF layer : layers) {
+			layer.onStart(connectedNode, getHandler(), transformTree, camera);
 		}
 		renderer.setLayers(layers);
 	}
@@ -156,7 +154,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 	@Override
 	public void onShutdown(Node node) {
 		renderer.setLayers(null);
-		for(Layer layer : layers) {
+		for(LayerTF layer : layers) {
 			layer.onShutdown(this, node);
 		}
 		this.connectedNode = null;
@@ -169,8 +167,8 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 	@Override
 	public void onError(Node node, Throwable throwable) {
 	}
-	
-	public FrameTransformTree getFrameTransformTree() {
-		return frameTransformTree;
+
+	public TransformTree getTransformTree() {
+		return transformTree;
 	}
 }
