@@ -30,12 +30,12 @@ import android.widget.BaseExpandableListAdapter;
 
 public class PropertyListAdapter extends BaseExpandableListAdapter {
 	
-	private List<LayerWithPropertiesTF> layers;
+	private List<LayerWithProperties> layers;
 	private List<ArrayList<Property<?>>> props = new ArrayList<ArrayList<Property<?>>>();
 	private final Context context;
 	private LayoutInflater inflater;
 		
-	public PropertyListAdapter(List<LayerWithPropertiesTF> layers, Context context) {
+	public PropertyListAdapter(List<LayerWithProperties> layers, Context context) {
 		super();
 		this.context = context;
 		inflater = LayoutInflater.from(context);
@@ -46,7 +46,7 @@ public class PropertyListAdapter extends BaseExpandableListAdapter {
 	private void generateContents() {
 		props.clear();
 		for(int i = 0; i < layers.size(); i++) {
-			LayerWithPropertiesTF lwp = layers.get(i);
+			LayerWithProperties lwp = layers.get(i);
 			props.add(i, new ArrayList<Property<?>>(lwp.getProperties().getPropertyCollection()));
 		}
 	}

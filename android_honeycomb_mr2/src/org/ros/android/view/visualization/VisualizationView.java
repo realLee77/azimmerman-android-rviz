@@ -25,17 +25,13 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Subscriber;
-import org.ros.rosjava.tf.TransformTree;
-import org.ros.rosjava.tf.pubsub.TransformListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
-import android.view.inputmethod.InputMethodManager;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
