@@ -63,11 +63,8 @@ public class VisViewRendererTF implements GLSurfaceView.Renderer {
 						if(layerFrame != null &&  transformTree.canTransform(camFrame, layerFrame)) {
 							Transform transform = transformTree.lookupMostRecent(camFrame, layerFrame);
 							
-							if(transform != null) {	
-								gl.glTranslatef((float)transform.getTranslation().x , (float)transform.getTranslation().y, (float)transform.getTranslation().z);
-								Quat4d rot = getAxisAngle(transform.getRotation());
-//								gl.glRotatef((float)transform.getRotation().w, (float)transform.getRotation().x, (float)transform.getRotation().y, (float)transform.getRotation().z);
-								gl.glRotatef((float)rot.getW(), (float)rot.getX(), (float)rot.getY(), (float)rot.getZ());
+							if(transform != null) {
+								applyTransformation(transform, gl);
 							} else {
 								Log.e("TF", "Transform is null in the renderer!");
 							}
@@ -80,15 +77,12 @@ public class VisViewRendererTF implements GLSurfaceView.Renderer {
 		}
 	}
 	
-	private Quat4d getAxisAngle(Quat4d quat) {
+	private void applyTransformation(Transform transform, GL10 gl) {
+		gl.glTranslatef((float)transform.getTranslation().x , (float)transform.getTranslation().y, (float)transform.getTranslation().z);
+		
+		Quat4d quat = transform.getRotation();
 		float scale = (float)Math.sqrt(quat.x*quat.x + quat.y*quat.y + quat.z*quat.z);
-		
-		quat.setX(quat.x / scale);
-		quat.setY(quat.y / scale);
-		quat.setZ(quat.z / scale);
-		quat.setW(Math.toDegrees(2*Math.acos(quat.w)));
-		
-		return quat;
+		gl.glRotatef((float)Math.toDegrees(2*Math.acos(quat.w)), (float)(quat.x / scale), (float)(quat.y / scale), (float)(quat.z / scale));
 	}
 	
 	private String fromGlobal(String frame) {

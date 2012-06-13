@@ -18,6 +18,7 @@
 package org.ros.android.rviz_for_android;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.ros.address.InetAddressFactory;
@@ -25,16 +26,24 @@ import org.ros.android.RosActivity;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
 import org.ros.android.rviz_for_android.layers.FPSLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
-import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
 import org.ros.android.rviz_for_android.layers.TextLayer;
+import org.ros.android.rviz_for_android.layersTF.AxisLayerTF;
+import org.ros.android.rviz_for_android.layersTF.FPSLayerTF;
+import org.ros.android.rviz_for_android.layersTF.GridLayerTF;
+import org.ros.android.rviz_for_android.layersTF.ParentableOrbitCameraTFControlLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
+import org.ros.android.rviz_for_android.vis.DefaultLayerTF;
+import org.ros.android.rviz_for_android.vis.LayerTF;
+import org.ros.android.rviz_for_android.vis.LayerWithPropertiesTF;
+import org.ros.android.rviz_for_android.vis.VisualizationViewTF;
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.layer.DefaultLayer;
 import org.ros.android.view.visualization.layer.Layer;
 import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
+import org.ros.rosjava.tf.TransformTree;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.app.ActionBar;
@@ -62,17 +71,17 @@ import android.widget.Toast;
  */
 public class MainActivity extends RosActivity {
 
-	private VisualizationView visualizationView;
+	private VisualizationViewTF visualizationView;
 	private static Context context;
 
 	// GUI elements
 	private ExpandableListView elv;
-	private ArrayList<LayerWithProperties> layers = new ArrayList<LayerWithProperties>();
+	private ArrayList<LayerWithPropertiesTF> layers = new ArrayList<LayerWithPropertiesTF>();
 	private PropertyListAdapter propAdapter;
 
 	// Tracking layers
 	private CharSequence[] liveLayers;
-	private CharSequence[] availableLayers = { "Axis", "Grid", "Text" };
+	private CharSequence[] availableLayers = { "Axis", "Grid" };
 	private int[] counts;
 
 	// Adding and removing layers
@@ -90,7 +99,7 @@ public class MainActivity extends RosActivity {
 
 	// Enable/disable following
 	boolean following = false;
-	ParentableOrbitCameraControlLayer camControl;
+	ParentableOrbitCameraTFControlLayer camControl;
 
 	public MainActivity() {
 		super("Rviz", "Rviz");
@@ -136,9 +145,9 @@ public class MainActivity extends RosActivity {
 	}
 
 	private void showTFSelectDialog() {
-		FrameTransformTree ftt = visualizationView.getFrameTransformTree();
+		TransformTree tt = visualizationView.getTransformTree();
 
-		Set<String> frameset = ftt.getFrameTracker().getAvailableFrames();
+		Set<String> frameset = tt.getTracker().getAvailableFrames();
 		final String[] tfFrames = (String[]) frameset.toArray(new String[frameset.size()]);
 
 		if(tfFrames.length > 0) {
@@ -167,15 +176,15 @@ public class MainActivity extends RosActivity {
 		createLayerDialogs();
 		configureGUI();
 
-		camControl = new ParentableOrbitCameraControlLayer(this);
+		camControl = new ParentableOrbitCameraTFControlLayer(this);
 		camControl.setName("Camera");
 		layers.add(camControl);
 
 		ll = ((LinearLayout) findViewById(R.id.layer_layout));
 		ll.setVisibility(LinearLayout.GONE);
 
-		visualizationView = (VisualizationView) findViewById(R.id.visualization);
-		for(Layer l : layers)
+		visualizationView = (VisualizationViewTF) findViewById(R.id.visualization);
+		for(LayerTF l : layers)
 			visualizationView.addLayer(l);
 
 		elv = (ExpandableListView) findViewById(R.id.expandableListView1);
@@ -183,10 +192,10 @@ public class MainActivity extends RosActivity {
 		elv.setAdapter(propAdapter);
 		elv.setItemsCanFocus(true);
 
+		visualizationView.addLayer(camControl);
+		visualizationView.addLayer(new FPSLayerTF());
 		addNewLayer(0);
 		addNewLayer(1);
-		
-		visualizationView.addLayer(new FPSLayer());
 	}
 
 	public static Context getAppContext() {
@@ -200,23 +209,20 @@ public class MainActivity extends RosActivity {
 	}
 
 	private void addNewLayer(int layertype) {
-		DefaultLayer newLayer = null;
+		DefaultLayerTF newLayer = null;
 		switch(layertype) {
 		case 0:
-			newLayer = new AxisLayer();
+			newLayer = new AxisLayerTF();
 			break;
 		case 1:
-			newLayer = new GridLayer(10, 1f);
-			break;
-		case 2:
-			newLayer = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);
+			newLayer = new GridLayerTF(10, 1f);
 			break;
 		}
 
 		if(newLayer != null) {
 			newLayer.setName(availableLayers[layertype] + " " + counts[layertype]++);
-			if(newLayer instanceof LayerWithProperties) {
-				layers.add((LayerWithProperties) newLayer);
+			if(newLayer instanceof LayerWithPropertiesTF) {
+				layers.add((LayerWithPropertiesTF) newLayer);
 				propAdapter.notifyDataSetChanged();
 			}
 			visualizationView.addLayer(newLayer);
@@ -226,7 +232,7 @@ public class MainActivity extends RosActivity {
 	}
 
 	private void removeLayer(int item) {
-		Layer toRemove = layers.get(item + 1);
+		LayerTF toRemove = layers.get(item + 1);
 
 		if(toRemove != null) {
 			visualizationView.removeLayer(toRemove);
