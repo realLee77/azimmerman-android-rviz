@@ -2,7 +2,9 @@ package org.ros.android.rviz_for_android.drawable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ColladaGeometry {
+import org.ros.android.view.visualization.shape.BaseShape;
+
+public class ColladaGeometry extends BaseShape {
 	public static enum GEOTYPE {
 		triangles, tristrips, trifans
 	};
