@@ -69,6 +69,15 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 			public void run() {
 				gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
 					@Override
+					public boolean onDoubleTap(MotionEvent e) {
+						cam.resetFixedFrame();
+						cam.resetTargetFrame();
+						cam.resetLookTarget();
+						cam.resetZoom();
+						return true;
+					}
+
+					@Override
 					public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX, float distanceY) {
 						cam.moveOrbitPosition(distanceX * TOUCH_ORBIT_COEFFICIENT, distanceY * TOUCH_ORBIT_COEFFICIENT);
 						requestRender();

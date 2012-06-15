@@ -1,5 +1,11 @@
 package org.ros.android.rviz_for_android.urdf;
+
 import java.util.Arrays;
+
+import org.ros.android.view.visualization.shape.Color;
+import org.ros.rosjava_geometry.Quaternion;
+import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
 
 /*
  * Copyright (c) 2012, Willow Garage, Inc.
@@ -19,8 +25,10 @@ import java.util.Arrays;
  */
 
 public class Component {
-	public static enum GEOMETRY {CYLINDER, SPHERE, BOX, MESH};
-	
+	public static enum GEOMETRY {
+		CYLINDER, SPHERE, BOX, MESH
+	};
+
 	private GEOMETRY type;
 	// Sphere & cylinder
 	private float radius;
@@ -29,20 +37,59 @@ public class Component {
 	private float[] size;
 	// Mesh
 	private String mesh;
+	private float scale;
 
 	// Origin
-	private float[] offset;
-	private float[] rotation;
+	private Transform origin;
 
 	// Material
 	private String material_name;
-	private String material_color;
+	private Color material_color;
 
-	public Component() {
-		offset = new float[]{0f,0f,0f};
-		rotation = new float[]{0f,0f,0f};
+	public GEOMETRY getType() {
+		return type;
+	}
+
+	public float getRadius() {
+		return radius;
+	}
+
+	public float getLength() {
+		return length;
+	}
+
+	public float[] getSize() {
+		return size;
+	}
+
+	public String getMesh() {
+		return mesh;
 	}
 	
+	public float getScale() {
+		return scale;
+	}
+
+	public Transform getOrigin() {
+		return origin;
+	}
+
+	public String getMaterial_name() {
+		return material_name;
+	}
+
+	public Color getMaterial_color() {
+		return material_color;
+	}
+
+	private Component() {
+	}
+
+	@Override
+	public String toString() {
+		return "Component [type=" + type + ", radius=" + radius + ", length=" + length + ", size=" + Arrays.toString(size) + ", mesh=" + mesh + ", scale=" + scale + ", origin=" + origin + ", material_name=" + material_name + ", material_color=" + material_color + "]";
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -51,9 +98,8 @@ public class Component {
 		result = prime * result + ((material_color == null) ? 0 : material_color.hashCode());
 		result = prime * result + ((material_name == null) ? 0 : material_name.hashCode());
 		result = prime * result + ((mesh == null) ? 0 : mesh.hashCode());
-		result = prime * result + Arrays.hashCode(offset);
+		result = prime * result + ((origin == null) ? 0 : origin.hashCode());
 		result = prime * result + Float.floatToIntBits(radius);
-		result = prime * result + Arrays.hashCode(rotation);
 		result = prime * result + Arrays.hashCode(size);
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
@@ -85,11 +131,12 @@ public class Component {
 				return false;
 		} else if(!mesh.equals(other.mesh))
 			return false;
-		if(!Arrays.equals(offset, other.offset))
+		if(origin == null) {
+			if(other.origin != null)
+				return false;
+		} else if(!origin.equals(other.origin))
 			return false;
 		if(Float.floatToIntBits(radius) != Float.floatToIntBits(other.radius))
-			return false;
-		if(!Arrays.equals(rotation, other.rotation))
 			return false;
 		if(!Arrays.equals(size, other.size))
 			return false;
@@ -98,28 +145,25 @@ public class Component {
 		return true;
 	}
 
-	@Override
-	public String toString() {
-		return "Component [type=" + type + ", radius=" + radius + ", length=" + length + ", size=" + Arrays.toString(size) + ", mesh=" + mesh + ", offset=" + Arrays.toString(offset) + ", rotation=" + Arrays.toString(rotation) + ", material_name=" + material_name + ", material_color=" + material_color + "]";
-	}
-
 	public static class Builder {
 		private GEOMETRY type;
 		private float radius = -1;
 		private float length = -1;
 		private float[] size;
 		private String mesh;
-		private float[] offset;
-		private float[] rotation;
+		private Transform origin = Transform.newIdentityTransform();
 		private String material_name;
-		private String material_color;
-		
+		private Color material_color;
+		private float scale = 1f;
+
 		public Builder(GEOMETRY type) {
 			this.type = type;
 		}
+
 		public Builder(String type) {
 			this.type = GEOMETRY.valueOf(type.toUpperCase());
 		}
+
 		public void setRadius(float radius) {
 			if(this.type == GEOMETRY.CYLINDER || this.type == GEOMETRY.SPHERE) {
 				this.radius = radius;
@@ -127,6 +171,7 @@ public class Component {
 				throw new IllegalArgumentException("Can't set radius!");
 			}
 		}
+
 		public void setLength(float length) {
 			if(this.type == GEOMETRY.CYLINDER) {
 				this.length = length;
@@ -134,6 +179,7 @@ public class Component {
 				throw new IllegalArgumentException("Can't set length!");
 			}
 		}
+
 		public void setSize(float[] size) {
 			if(this.type == GEOMETRY.BOX && size.length == 3) {
 				this.size = size;
@@ -141,6 +187,7 @@ public class Component {
 				throw new IllegalArgumentException("Can't set size!");
 			}
 		}
+
 		public void setMesh(String mesh) {
 			if(this.type == GEOMETRY.MESH) {
 				this.mesh = mesh;
@@ -148,30 +195,46 @@ public class Component {
 				throw new IllegalArgumentException("Can't set mesh!");
 			}
 		}
+		
+		public void setMeshScale(float scale) {
+			if(this.type == GEOMETRY.MESH) {
+				this.scale = scale;
+			} else {
+				throw new IllegalArgumentException("Can't set mesh scale!");
+			}
+		}
+
 		public void setOffset(float[] offset) {
 			if(offset.length == 3) {
-				this.offset = offset;
+				this.origin.setTranslation(new Vector3(offset[0], offset[1], offset[2]));
 			} else {
 				throw new IllegalArgumentException("Can't set offset!");
 			}
 		}
+
 		public void setRotation(float[] rotation) {
 			if(rotation.length == 3) {
-				for(int i = 0; i < 3; i ++)
-					this.rotation[i] = (float)Math.toDegrees(rotation[i]);
+				for(int i = 0; i < 3; i++)
+					this.origin.setRotation(Quaternion.newFromRPY(rotation[0], rotation[1], rotation[2]));
 			} else {
 				throw new IllegalArgumentException("Can't set rotation!");
 			}
 		}
+
 		public void setMaterialName(String material_name) {
 			this.material_name = material_name;
 		}
-		public void setMaterialColor(String material_color) {
-			this.material_color = material_color;
+
+		public void setMaterialColor(float[] color) {
+			if(color.length == 4)
+				this.material_color = new Color(color[0], color[1], color[2], color[3]);
+			else
+				throw new IllegalArgumentException("Can't set material color!");
 		}
+
 		public Component build() {
 			Component retval = new Component();
-			
+
 			switch(type) {
 			case MESH:
 				if(mesh == null)
@@ -180,30 +243,31 @@ public class Component {
 			case BOX:
 				if(size == null)
 					throw new IllegalArgumentException("Never set a box size!");
-				break;			
+				break;
 			case CYLINDER:
 				if(length < 0)
 					throw new IllegalArgumentException("Never set a proper length!");
 			case SPHERE:
 				if(radius < 0)
 					throw new IllegalArgumentException("Never set a proper radius!");
-				break;					
+				break;
 			}
-			
+
 			if(material_color != null && material_name == null)
-				throw new IllegalArgumentException("Forgot to name the color " + material_color); 
+				throw new IllegalArgumentException("Forgot to name the color " + material_color);
 			
 			retval.type = type;
 			retval.radius = radius;
 			retval.length = length;
 			retval.size = size;
 			retval.mesh = mesh;
-			retval.offset = offset;
-			retval.rotation = rotation;
+			retval.origin = origin;
 			retval.material_name = material_name;
 			retval.material_color = material_color;
+			retval.scale = scale;
 			return retval;
 		}
+
 		public GEOMETRY getType() {
 			return type;
 		}

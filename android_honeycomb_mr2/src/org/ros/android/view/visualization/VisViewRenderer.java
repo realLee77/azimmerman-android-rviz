@@ -58,24 +58,16 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		Viewport viewport = new Viewport(width, height);
 		viewport.apply(gl);
 		camera.setViewport(viewport);
+		
 		// Set camera location transformation
 		gl.glMatrixMode(GL10.GL_MODELVIEW);
 		gl.glLoadIdentity();
-		// Set texture rendering hints
-		gl.glEnable(GL10.GL_BLEND);
-		gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-		gl.glEnable(GL10.GL_POINT_SMOOTH);
-		gl.glHint(GL10.GL_POINT_SMOOTH_HINT, GL10.GL_NICEST);
-		gl.glHint(GL10.GL_POLYGON_SMOOTH_HINT, GL10.GL_NICEST);
-		gl.glDisable(GL10.GL_LIGHTING);
-		gl.glDisable(GL10.GL_DEPTH_TEST);
-		gl.glEnable(GL10.GL_COLOR_MATERIAL);
 	}
 
 	@Override
-	public void onDrawFrame(GL10 gl) {
+	public void onDrawFrame(GL10 gl) {	    
 		gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 		gl.glLoadIdentity();
 		camera.apply(gl);
 		drawLayers(gl);
@@ -85,8 +77,40 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		}
 	}
 
+	public static final int SUNLIGHT = GL10.GL_LIGHT0;
+	
 	@Override
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+		// Set texture rendering hints
+		gl.glEnable(GL10.GL_BLEND);
+		gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		gl.glEnable(GL10.GL_POINT_SMOOTH);
+		gl.glHint(GL10.GL_POINT_SMOOTH_HINT, GL10.GL_NICEST);
+		gl.glHint(GL10.GL_POLYGON_SMOOTH_HINT, GL10.GL_NICEST);
+		gl.glEnable(GL10.GL_COLOR_MATERIAL);
+        gl.glDisable(GL10.GL_DITHER);
+ 
+        // Face culling
+        gl.glEnable(GL10.GL_CULL_FACE);
+        gl.glFrontFace(GL10.GL_CW);
+        gl.glCullFace(GL10.GL_BACK);
+        
+
+		// Lighting		
+		float[] diffuse = {1f, 1f, 1f, 1f};
+		float[] location = {0f, 10f, -3f, 1f};
+		gl.glLightfv(SUNLIGHT, GL10.GL_POSITION, Vertices.toFloatBuffer(location));
+		gl.glLightfv(SUNLIGHT, GL10.GL_DIFFUSE, Vertices.toFloatBuffer(diffuse));
+		gl.glShadeModel(GL10.GL_SMOOTH);
+		gl.glLightModelf(GL10.GL_LIGHT_MODEL_TWO_SIDE, 1.0f);
+		gl.glEnable(GL10.GL_LIGHTING);
+		gl.glEnable(SUNLIGHT);
+		
+		// Depth
+		gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_FASTEST);
+		gl.glEnable(GL10.GL_DEPTH_TEST);
+		gl.glDepthFunc(GL10.GL_LEQUAL);
+        gl.glDepthMask(true);
 	}
 
 	private void drawLayers(GL10 gl) {

@@ -26,6 +26,7 @@ import org.ros.android.rviz_for_android.layers.AxisLayer;
 import org.ros.android.rviz_for_android.layers.FPSLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
+import org.ros.android.rviz_for_android.layers.RobotModel;
 import org.ros.android.rviz_for_android.layers.TextLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
@@ -72,7 +73,7 @@ public class MainActivity extends RosActivity {
 
 	// Tracking layers
 	private CharSequence[] liveLayers;
-	private CharSequence[] availableLayers = { "Axis", "Grid", "Text" };
+	private CharSequence[] availableLayers = { "Axis", "Grid", "RobotModel" };
 	private int[] counts;
 
 	// Adding and removing layers
@@ -185,8 +186,9 @@ public class MainActivity extends RosActivity {
 
 		addNewLayer(0);
 		addNewLayer(1);
+		addNewLayer(2);
 		
-		visualizationView.addLayer(new FPSLayer());
+		//visualizationView.addLayer(new FPSLayer());
 	}
 
 	public static Context getAppContext() {
@@ -209,7 +211,7 @@ public class MainActivity extends RosActivity {
 			newLayer = new GridLayer(10, 1f);
 			break;
 		case 2:
-			newLayer = new TextLayer(new GraphName("test/stuff"), std_msgs.String._TYPE);
+			newLayer = new RobotModel(null);
 			break;
 		}
 

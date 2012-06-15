@@ -20,8 +20,6 @@ package org.ros.android.rviz_for_android.prop;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ros.android.rviz_for_android.vis.LayerWithPropertiesTF;
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;

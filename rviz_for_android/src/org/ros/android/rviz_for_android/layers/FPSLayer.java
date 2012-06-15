@@ -23,7 +23,6 @@ import java.util.List;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.MainActivity;
-import org.ros.android.rviz_for_android.layersTF.TexFont;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.Utility;
 import org.ros.android.view.visualization.layer.DefaultLayer;

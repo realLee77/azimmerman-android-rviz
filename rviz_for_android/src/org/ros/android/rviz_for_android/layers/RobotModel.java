@@ -16,33 +16,168 @@
  */
 package org.ros.android.rviz_for_android.layers;
 
+import java.util.Set;
+
+import javax.microedition.khronos.opengles.GL10;
+
+import org.ros.android.rviz_for_android.MainActivity;
+import org.ros.android.rviz_for_android.drawable.Cube;
+import org.ros.android.rviz_for_android.drawable.Mesh;
+import org.ros.android.rviz_for_android.drawable.Plane;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.StringProperty;
+import org.ros.android.rviz_for_android.urdf.Component;
+import org.ros.android.rviz_for_android.urdf.MeshDownloader;
+import org.ros.android.rviz_for_android.urdf.UrdfLink;
 import org.ros.android.rviz_for_android.urdf.UrdfReader;
+import org.ros.android.view.visualization.Camera;
+import org.ros.android.view.visualization.OpenGlTransform;
 import org.ros.android.view.visualization.layer.DefaultLayer;
 import org.ros.android.view.visualization.layer.TfLayer;
+import org.ros.android.view.visualization.shape.Color;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
+import org.ros.node.parameter.ParameterListener;
+import org.ros.node.parameter.ParameterTree;
+import org.ros.rosjava_geometry.FrameTransformTree;
+
+import android.os.Handler;
+import android.util.Log;
+import android.widget.Toast;
 
 public class RobotModel extends DefaultLayer implements LayerWithProperties, TfLayer {
 
-	private BoolProperty prop = new BoolProperty("Enabled", true, null); 
+	private static final String DEFAULT_PARAM_VALUE = "/robot_description";
+	private BoolProperty prop = new BoolProperty("Enabled", true, null);
+	private FrameTransformTree ftt;
+	private Camera cam;
 	private UrdfReader reader;
+	private MeshDownloader downloader;
+	private ParameterTree params;
+
+	private Set<UrdfLink> urdf;
 	
-	public RobotModel(final ConnectedNode node) {
+	// The visual and collision draw options exist both as properties and booleans in the RobotModel layer
+	// Boolean access times are required to properly draw the model 
+	private volatile boolean drawVis = true;
+	private volatile boolean drawCol = false;
+
+	public RobotModel(MeshDownloader downloader) {
+		this.downloader = downloader;
 		reader = new UrdfReader();
-		prop.addSubProperty(new StringProperty("Parameter", "/robot_description", new PropertyUpdateListener<String>() {
+		
+		prop.addSubProperty(new StringProperty("Parameter", DEFAULT_PARAM_VALUE, new PropertyUpdateListener<String>() {
 			@Override
 			public void onPropertyChanged(String newval) {
-				reader.readUrdf(node.getParameterTree().getString(newval));
+				if(params.has(newval)) {
+					reloadUrdf(newval);
+				}
 			}
 		}));
-		reader.readUrdf(node.getParameterTree().getString("/robot_description"));
+		prop.addSubProperty(new BoolProperty("Visual", drawVis, new PropertyUpdateListener<Boolean>() {
+			@Override
+			public void onPropertyChanged(Boolean newval) {
+				drawVis = newval;
+				requestRender();
+			}
+		}));
+		prop.addSubProperty(new BoolProperty("Collision", drawCol, new PropertyUpdateListener<Boolean>() {
+			@Override
+			public void onPropertyChanged(Boolean newval) {
+				drawCol = newval;
+				requestRender();
+			}
+		}));
 	}
 	
+	private Component vis;
+	private Component col;
+
+	private Cube cube = new Cube(new Color(0, 1, 0, 1));
+	
+	
+	@Override
+	public void draw(GL10 gl) {
+		if(ftt == null || urdf == null || urdf.size() == 0) {
+			Log.e("RobotModel", "FTT or URDF is null or empty. Aborting drawing.");
+			return;
+		}
+			
+		for(UrdfLink ul : urdf) {
+//			if(!ftt.canTransform(cam.getFixedFrame(), ul.getName()))
+//				break;
+			
+			vis = ul.getVisual();
+			col = ul.getCollision();
+			
+			gl.glPushMatrix();
+			
+			// Transform to the URDF link's frame
+//			OpenGlTransform.apply(gl, ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform());
+
+			// Draw the shape
+			if(drawVis) {
+				switch(vis.getType()) {
+				case BOX:
+					cube.setColor(vis.getMaterial_color());
+					cube.draw(gl, vis.getOrigin(), vis.getSize());
+					break;
+				case CYLINDER:
+					break;
+				case SPHERE:
+					break;
+				case MESH:
+					break;
+				}
+			}
+			
+			if(drawCol) {
+				switch(col.getType()) {
+				case BOX:
+					cube.setColor(col.getMaterial_color());
+					cube.draw(gl, col.getOrigin(), col.getSize());
+					break;
+				case CYLINDER:
+					break;
+				case SPHERE:
+					break;
+				case MESH:
+					break;
+				}				
+			}
+
+			gl.glPopMatrix();
+		}
+	}
+
+	@Override
+	public void onStart(final ConnectedNode node, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
+		this.ftt = frameTransformTree;
+		this.cam = camera;
+		this.params = node.getParameterTree();
+
+		reloadUrdf(DEFAULT_PARAM_VALUE);
+	}
+
+	private void reloadUrdf(String param) {
+		String urdf_xml = null;
+		if(params.has(param))
+			urdf_xml = params.getString(param);
+		else
+			return;
+		reader.readUrdf(urdf_xml);
+		this.urdf = reader.getUrdf();
+		Log.d("RobotModel", "Parsed URDF! Size: " + urdf.size());
+	}
+	
+	@Override
+	public boolean isEnabled() {
+		return prop.getValue() && (drawVis || drawCol);
+	}
+
 	@Override
 	public Property<?> getProperties() {
 		return prop;

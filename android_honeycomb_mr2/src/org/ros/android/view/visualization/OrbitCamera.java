@@ -217,4 +217,12 @@ public class OrbitCamera implements Camera {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	public void resetLookTarget() {
+		lookTarget = Vector3.newIdentityVector3();
+	}
+
+	public void resetZoom() {
+		this.orbitRadius = 5f;
+	}
 }
