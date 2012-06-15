@@ -1,4 +1,6 @@
 package org.ros.android.rviz_for_android.urdf;
+
+import org.ros.namespace.GraphName;
 /*
  * Copyright (c) 2012, Willow Garage, Inc.
  * All rights reserved.
@@ -19,12 +21,12 @@ package org.ros.android.rviz_for_android.urdf;
 public class UrdfLink {
 	private Component visual;
 	private Component collision;
-	private String name;
+	private GraphName name;
 
 	public UrdfLink(Component visual, Component collision, String name) {
 		this.visual = visual;
 		this.collision = collision;
-		this.name = name;
+		this.name = new GraphName(name);
 	}
 
 	public Component getVisual() {
@@ -35,7 +37,7 @@ public class UrdfLink {
 		return collision;
 	}
 
-	public String getName() {
+	public GraphName getName() {
 		return name;
 	}
 
@@ -75,4 +77,10 @@ public class UrdfLink {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "UrdfLink [visual=" + visual + ", collision=" + collision + ", name=" + name + "]";
+	}
+	
 }

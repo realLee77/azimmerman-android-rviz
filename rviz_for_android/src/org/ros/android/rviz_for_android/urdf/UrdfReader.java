@@ -1,4 +1,3 @@
-package org.ros.android.rviz_for_android.urdf;
 /*
  * Copyright (c) 2012, Willow Garage, Inc.
  * All rights reserved.
@@ -16,44 +15,24 @@ package org.ros.android.rviz_for_android.urdf;
  * permissions and limitations under the License.
  */
 
-import java.io.IOException;
-import java.util.ArrayList;
+package org.ros.android.rviz_for_android.urdf;
+
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
-public class UrdfReader {
-
-	private static final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	private DocumentBuilder builder;
-	private final XPath xpath = XPathFactory.newInstance().newXPath();
+public class UrdfReader extends XmlReader {
 
 	private Set<UrdfLink> urdf = new HashSet<UrdfLink>();
 
 	public UrdfReader() {
-		factory.setNamespaceAware(true);
-		try {
-			builder = factory.newDocumentBuilder();
-		} catch(ParserConfigurationException e) {
-			e.printStackTrace();
-		}
+		super(true);
+
 	}
 	
 	public void readUrdf(String urdf) {
+		this.urdf.clear();
 		buildDocument(urdf);
 		parseUrdf();
 	}
@@ -102,6 +81,8 @@ public class UrdfReader {
 					break;
 				case MESH:
 					visBuilder.setMesh(getSingleNode(vprefix, "/mesh/@filename").getNodeValue());
+					if(nodeExists(vprefix, "/mesh/@scale"))
+						visBuilder.setMeshScale(Float.parseFloat(existResults.item(0).getNodeValue()));
 					break;
 				}
 
@@ -118,7 +99,7 @@ public class UrdfReader {
 					visBuilder.setMaterialName(existResults.item(0).getNodeValue());
 				}
 				if(nodeExists(vprefix, "/material/color/@rgba")) {
-					visBuilder.setMaterialColor(existResults.item(0).getNodeValue());
+					visBuilder.setMaterialColor(toFloatArray(existResults.item(0).getNodeValue()));
 				}					
 				visual = visBuilder.build();
 			}
@@ -168,86 +149,6 @@ public class UrdfReader {
 			
 			UrdfLink newLink = new UrdfLink(visual, collision, name);
 			urdf.add(newLink);
-			
-			System.out.println(visual);
-			System.out.println(collision);
 		}
-	}
-
-	private Document doc = null;
-
-	private void buildDocument(String toParse) {
-		try {
-			doc = builder.parse(toParse);
-		} catch(SAXException e1) {
-			e1.printStackTrace();
-		} catch(IOException e1) {
-			e1.printStackTrace();
-		}
-	}
-
-	private NodeList existResults;
-	private boolean nodeExists(String... xPathExpression) {
-		existResults = getExpression(xPathExpression); 
-		return existResults.getLength() > 0;
-	}
-
-	private <T> List<T> getValuesAsList(String... xPathExpression) {
-		List<T> retval = new ArrayList<T>();
-		NodeList nl = getExpression(xPathExpression);
-
-		for(int i = 0; i < nl.getLength(); i++) {
-			retval.add((T) nl.item(i).getNodeValue());
-		}
-		return retval;
-	}
-
-	private <T> List<T> getNamesAsList(String... xPathExpression) {
-		List<T> retval = new ArrayList<T>();
-		NodeList nl = getExpression(xPathExpression);
-
-		for(int i = 0; i < nl.getLength(); i++) {
-			retval.add((T) nl.item(i).getNodeName());
-		}
-		return retval;
-	}
-
-	private Node getSingleNode(String... xPathExpression) {
-		NodeList nl = getExpression(xPathExpression);
-		if(nl.getLength() > 1)
-			throw new IllegalArgumentException("Expression returned multiple results!");
-		return nl.item(0);
-	}
-
-	private NodeList getExpression(String... xPathExpression) {
-		try {
-			XPathExpression expr = xpath.compile(Compose(xPathExpression));
-			return (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-		} catch(XPathExpressionException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	private String Compose(String... pieces) {
-		if(pieces.length == 1)
-			return pieces[0];
-
-		StringBuilder sb = new StringBuilder();
-		for(int i = 0; i < pieces.length; i++) {
-			sb.append(pieces[i]);
-			if(i < pieces.length - 1)
-				sb.append("/");
-		}
-		return sb.toString();
-	}
-
-	private float[] toFloatArray(String str) {
-		String[] pieces = str.split(" ");
-		float[] retval = new float[pieces.length];
-		for(int i = 0; i < pieces.length; i++) {
-			retval[i] = Float.parseFloat(pieces[i]);
-		}
-		return retval;
 	}
 }

@@ -71,7 +71,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 		camera = new OrbitCamera(frameTransformTree);
 		renderer = new VisViewRenderer(frameTransformTree, camera);
 		layers = Lists.newArrayList();
-		setEGLConfigChooser(8, 8, 8, 8, 0, 0);
+		setEGLConfigChooser(8, 8, 8, 8, 8, 8);
 		getHolder().setFormat(PixelFormat.TRANSLUCENT);
 		setRenderer(renderer);
 	}

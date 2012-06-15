@@ -13,7 +13,7 @@ import javax.microedition.khronos.opengles.GL10;
  * 
  * @author damonkohler@google.com (Damon Kohler)
  */
-abstract class BaseShape implements Shape {
+public abstract class BaseShape implements Shape {
   
   private Color color;
   private Transform transform;

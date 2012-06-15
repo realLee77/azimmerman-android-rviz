@@ -25,41 +25,30 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
-/**
- * A {@link Shape} defined by vertices using OpenGl's GL_TRIANGLE_FAN method.
- * 
- * <p>
- * Note that this class is intended to be wrapped. No transformations are
- * performed in the {@link #draw(GL10)} method.
- * 
- * @author moesenle@google.com (Lorenz Moesenlechner)
- * @author damonkohler@google.com (Damon Kohler)
- */
 public class TriangleFanShape extends BaseShape {
 
-  private final FloatBuffer vertices;
+	private final FloatBuffer vertices;
 
-  /**
-   * @param vertices
-   *          an array of vertices as defined by OpenGL's GL_TRIANGLE_FAN method
-   * @param color
-   *          the {@link Color} of the {@link Shape}
-   */
-  public TriangleFanShape(float[] vertices, Color color) {
-    this.vertices = Vertices.toFloatBuffer(vertices);
-    setColor(color);
-    setTransform(new Transform(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1)));
-  }
+	/**
+	 * @param vertices
+	 *            an array of vertices as defined by OpenGL's GL_TRIANGLE_FAN method
+	 * @param color
+	 *            the {@link Color} of the {@link Shape}
+	 */
+	public TriangleFanShape(float[] vertices, Color color) {
+		this.vertices = Vertices.toFloatBuffer(vertices);
+		setColor(color);
+		setTransform(new Transform(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1)));
+	}
 
-  @Override
-  public void draw(GL10 gl) {
-    super.draw(gl);
-    gl.glDisable(GL10.GL_CULL_FACE);
-    gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-    gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertices);
-    gl.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor()
-        .getAlpha());
-    gl.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, vertices.limit() / 3);
-    gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-  }
+	@Override
+	public void draw(GL10 gl) {
+		super.draw(gl);
+		gl.glDisable(GL10.GL_CULL_FACE);
+		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertices);
+		gl.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+		gl.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, vertices.limit() / 3);
+		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+	}
 }
