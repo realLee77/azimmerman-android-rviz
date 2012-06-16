@@ -20,10 +20,8 @@ import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import org.ros.android.rviz_for_android.MainActivity;
+import org.ros.android.rviz_for_android.drawable.ColladaMesh;
 import org.ros.android.rviz_for_android.drawable.Cube;
-import org.ros.android.rviz_for_android.drawable.Mesh;
-import org.ros.android.rviz_for_android.drawable.Plane;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
@@ -40,13 +38,11 @@ import org.ros.android.view.visualization.layer.TfLayer;
 import org.ros.android.view.visualization.shape.Color;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
-import org.ros.node.parameter.ParameterListener;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.os.Handler;
 import android.util.Log;
-import android.widget.Toast;
 
 public class RobotModel extends DefaultLayer implements LayerWithProperties, TfLayer {
 
@@ -91,13 +87,16 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 				requestRender();
 			}
 		}));
+		
+		
+		test = ColladaMesh.newFromFile("/sdcard/cube2.dae");
 	}
 	
 	private Component vis;
 	private Component col;
 
 	private Cube cube = new Cube(new Color(0, 1, 0, 1));
-	
+	private ColladaMesh test;
 	
 	@Override
 	public void draw(GL10 gl) {
@@ -106,24 +105,25 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 			return;
 		}
 			
-		for(UrdfLink ul : urdf) {
-//			if(!ftt.canTransform(cam.getFixedFrame(), ul.getName()))
-//				break;
-			
+		for(UrdfLink ul : urdf) {			
 			vis = ul.getVisual();
 			col = ul.getCollision();
 			
 			gl.glPushMatrix();
 			
 			// Transform to the URDF link's frame
-//			OpenGlTransform.apply(gl, ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform());
+			if(ftt.canTransform(cam.getFixedFrame(), ul.getName()))
+				OpenGlTransform.apply(gl, ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform());
 
 			// Draw the shape
 			if(drawVis) {
 				switch(vis.getType()) {
 				case BOX:
-					cube.setColor(vis.getMaterial_color());
-					cube.draw(gl, vis.getOrigin(), vis.getSize());
+					test.setColor(vis.getMaterial_color());
+					test.draw(gl, vis.getOrigin(), vis.getSize());
+					
+//					cube.setColor(vis.getMaterial_color());
+//					cube.draw(gl, vis.getOrigin(), vis.getSize());
 					break;
 				case CYLINDER:
 					break;
