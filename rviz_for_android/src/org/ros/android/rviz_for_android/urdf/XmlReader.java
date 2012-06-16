@@ -16,6 +16,7 @@
  */
 
 package org.ros.android.rviz_for_android.urdf;
+
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -38,17 +39,15 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public abstract class XmlReader {
-	
+
 	private static final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 	private DocumentBuilder builder;
 	protected final XPath xpath = XPathFactory.newInstance().newXPath();
 	private Document doc = null;
-	
-	protected boolean useNamespaces = false;
+
 	protected NodeList existResults;
-	
+
 	protected XmlReader(boolean namespaces) {
-		this.useNamespaces = namespaces;
 		factory.setNamespaceAware(namespaces);
 		try {
 			builder = factory.newDocumentBuilder();
@@ -56,23 +55,24 @@ public abstract class XmlReader {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
-	 * @param contents The contents of the XML file in String form 
+	 * @param contents
+	 *            The contents of the XML file in String form
 	 */
 	protected void buildDocument(String contents) {
-		try {	        
+		try {
 			Reader reader = new CharArrayReader(contents.toCharArray());
-	        doc = builder.parse(new InputSource(reader));
+			doc = builder.parse(new InputSource(reader));
 		} catch(SAXException e1) {
 			e1.printStackTrace();
 		} catch(IOException e1) {
 			e1.printStackTrace();
 		}
 	}
-	
+
 	protected boolean nodeExists(String... xPathExpression) {
-		existResults = getExpression(xPathExpression); 
+		existResults = getExpression(xPathExpression);
 		return existResults.getLength() > 0;
 	}
 
@@ -121,10 +121,7 @@ public abstract class XmlReader {
 		for(int i = 0; i < pieces.length; i++) {
 			sb.append(pieces[i]);
 			if(i < pieces.length - 1) {
-				if(!useNamespaces)
-					sb.append("/");
-				else if(i > 0)
-					sb.append("/");
+				sb.append("/");
 			}
 		}
 		return sb.toString();
@@ -138,7 +135,7 @@ public abstract class XmlReader {
 		}
 		return retval;
 	}
-	
+
 	protected float[] toFloatArray(String str) {
 		String[] pieces = str.split(" ");
 		float[] retval = new float[pieces.length];

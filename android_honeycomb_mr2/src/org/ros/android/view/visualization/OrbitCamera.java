@@ -224,5 +224,6 @@ public class OrbitCamera implements Camera {
 
 	public void resetZoom() {
 		this.orbitRadius = 5f;
+		updateLocation();
 	}
 }

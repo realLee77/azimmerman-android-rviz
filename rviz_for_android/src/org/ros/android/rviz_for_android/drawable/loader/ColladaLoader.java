@@ -24,6 +24,8 @@ import org.ros.android.rviz_for_android.drawable.ColladaGeometry;
 import org.ros.android.rviz_for_android.urdf.XmlReader;
 import org.w3c.dom.NodeList;
 
+import android.util.Log;
+
 public class ColladaLoader extends XmlReader {
 	
 	private Set<ColladaGeometry> geometries = new HashSet<ColladaGeometry>();
@@ -33,6 +35,8 @@ public class ColladaLoader extends XmlReader {
 	}
 	
 	public void readDae(String contents) {
+		if(contents == null)
+			throw new IllegalArgumentException("Invalid DAE file contents passed to ColladaLoader");
 		this.geometries.clear();
 		buildDocument(contents);
 		parseDae();
@@ -48,10 +52,11 @@ public class ColladaLoader extends XmlReader {
 
 		for(int i = 0; i<nodes.getLength();i++) {
 			String ID = nodes.item(i).getNodeValue();
-			System.out.println("Parsing geometry " + ID);
+			Log.d("DAE", "Parsing geometry " + ID);
 			ColladaGeometry retval = parseGeometry(ID);
 			if(retval != null)
 				geometries.add(retval);
+			Log.d("DAE", "Success!");
 		}
 	}
 
@@ -71,6 +76,7 @@ public class ColladaLoader extends XmlReader {
 			}
 		}
 		if(!acceptableGeometry) {
+			Log.e("DAE", "No acceptable geometry found!");
 			return null;
 		}
 		
@@ -82,13 +88,21 @@ public class ColladaLoader extends XmlReader {
 		
 		// Find the ID of the vertices tag pointing to the POSITION and NORMAL locations
 		String verticesID = getSingleNode(prefix,"vertices/@id").getNodeValue();
-		String positionID = getSingleNode(prefix,"vertices/input[@semantic='POSITION']/@source").getNodeValue().substring(1);
-		String normalID = getSingleNode(prefix,"vertices/input[@semantic='NORMAL']/@source").getNodeValue().substring(1);
+//		String positionID = getSingleNode(prefix,"vertices/input[@semantic='POSITION']/@source").getNodeValue().substring(1);
+//		String normalID = getSingleNode(prefix,"vertices/input[@semantic='NORMAL']/@source").getNodeValue().substring(1);
+
+		String positionID = getSingleNode(prefix,"/input[@semantic='POSITION']/@source").getNodeValue().substring(1);
+		String normalID = getSingleNode(prefix,"/input[@semantic='NORMAL']/@source").getNodeValue().substring(1);
+		Log.i("DAE", "Position ID: " + positionID + "   Normal ID: " + normalID);
+		
 		
 		// Fetch the vertex and normal data
 		vertices = toFloatArray(getSingleNode(prefix,"source[@id='"+positionID+"']/float_array").getTextContent());
 		normals = toFloatArray(getSingleNode(prefix,"source[@id='"+normalID+"']/float_array").getTextContent());
 
+		Log.i("DAE", "Loaded " + vertices.length + " vertices for drawable #");
+		Log.i("DAE", "Loaded " + normals.length + " normals for drawable #");
+		
 		retval = new ColladaGeometry(normals, vertices);
 		
 		// For each type of drawing, add a part to the geometry with the corresponding indices
@@ -98,8 +112,8 @@ public class ColladaLoader extends XmlReader {
 				String inputSource = getSingleNode(prefix,type + "[" + i + "]/input[@semantic='VERTEX']/@source").getNodeValue().substring(1);
 				if(!inputSource.equals(verticesID))
 					throw new RuntimeException("DAE format error. Encountered drawables in the same geometry tag which reference different sets of vertices!");
-				
 				indices = toShortArray(getSingleNode(prefix,type + "[" + i + "]/p").getTextContent());
+				Log.i("DAE", "Loaded " + indices.length + " indices for drawable #" + i);
 				retval.addPart(indices, type);
 			}			
 		}		
