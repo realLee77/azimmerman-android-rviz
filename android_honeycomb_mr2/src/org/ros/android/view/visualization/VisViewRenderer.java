@@ -16,6 +16,7 @@
 
 package org.ros.android.view.visualization;
 
+import java.nio.FloatBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -70,11 +71,34 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 		gl.glLoadIdentity();
 		camera.apply(gl);
+		
+		initLighting(gl);
+		
 		drawLayers(gl);
 		int error = gl.glGetError();
 		if(error != GL10.GL_NO_ERROR) {
 			System.err.println("OpenGL error: " + error);
 		}
+	}
+
+	FloatBuffer white = Vertices.toFloatBuffer(new float[] {1f, 1f, 1f, 1f});
+	FloatBuffer location = Vertices.toFloatBuffer(new float[] {5f, 5f, 5f, 1f});
+	
+	private void initLighting(GL10 gl) {
+		// Lighting
+		gl.glLightfv(SUNLIGHT, GL10.GL_POSITION, location);
+		gl.glLightfv(SUNLIGHT, GL10.GL_DIFFUSE, white);
+		gl.glShadeModel(GL10.GL_SMOOTH);
+		
+		gl.glLightModelf(GL10.GL_LIGHT_MODEL_TWO_SIDE, 1.0f);
+		
+		//gl.glLightModelfv(GL10.GL_LIGHT_MODEL_AMBIENT, Vertices.toFloatBuffer(new float[] {1.0f,1.0f,1.0f,1.0f}));
+		//gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, white);
+		//gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_SPECULAR, white);
+		//gl.glMaterialf(GL10.GL_FRONT_AND_BACK, GL10.GL_SHININESS, 25);	
+		
+		gl.glEnable(GL10.GL_LIGHTING);
+		gl.glEnable(SUNLIGHT);
 	}
 
 	public static final int SUNLIGHT = GL10.GL_LIGHT0;
@@ -92,19 +116,8 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
  
         // Face culling
         gl.glEnable(GL10.GL_CULL_FACE);
-        gl.glFrontFace(GL10.GL_CW);
+        gl.glFrontFace(GL10.GL_CCW);
         gl.glCullFace(GL10.GL_BACK);
-        
-
-		// Lighting		
-		float[] diffuse = {1f, 1f, 1f, 1f};
-		float[] location = {0f, 10f, -3f, 1f};
-		gl.glLightfv(SUNLIGHT, GL10.GL_POSITION, Vertices.toFloatBuffer(location));
-		gl.glLightfv(SUNLIGHT, GL10.GL_DIFFUSE, Vertices.toFloatBuffer(diffuse));
-		gl.glShadeModel(GL10.GL_SMOOTH);
-		gl.glLightModelf(GL10.GL_LIGHT_MODEL_TWO_SIDE, 1.0f);
-		gl.glEnable(GL10.GL_LIGHTING);
-		gl.glEnable(SUNLIGHT);
 		
 		// Depth
 		gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_FASTEST);

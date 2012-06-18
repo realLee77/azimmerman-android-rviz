@@ -19,59 +19,70 @@ package org.ros.android.rviz_for_android.drawable;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.view.visualization.shape.Color;
-import org.ros.android.view.visualization.shape.TriangleStripShape;
 import org.ros.android.view.visualization.shape.TrianglesShape;
 import org.ros.rosjava_geometry.Transform;
 
 public class Cube extends TrianglesShape {
 	private static final float cubeVertices[] = {
 		 -1.0f, -1.0f,  1.0f,	//[0]
-		 -1.0f,  1.0f,  1.0f,	//[2]
 		 1.0f, -1.0f,  1.0f,	//[1]
+		 -1.0f,  1.0f,  1.0f,	//[2]
+		 
 
 	    1.0f, -1.0f,  1.0f,		//[1]
-	    -1.0f,  1.0f,  1.0f,	//[2]
 	    1.0f,  1.0f,  1.0f,		//[3]
+	    -1.0f,  1.0f,  1.0f,	//[2]
+	    
 	    
 	    -1.0f,  1.0f,  1.0f,	//[2]
-	    1.0f,  1.0f, -1.0f,		//[7]
 	    1.0f,  1.0f,  1.0f,		//[3]
+	    1.0f,  1.0f, -1.0f,		//[7]
+	    
  
 	    1.0f,  1.0f,  1.0f,		//[3]
-	    1.0f,  1.0f, -1.0f,		//[7]
 	    1.0f, -1.0f,  1.0f,		//[1]
+	    1.0f,  1.0f, -1.0f,		//[7]
+	    
     
 	    1.0f,  1.0f, -1.0f,		//[7]
-	    1.0f, -1.0f, -1.0f,		//[5]
 	    1.0f, -1.0f,  1.0f,		//[1]
+	    1.0f, -1.0f, -1.0f,		//[5]
+	    
 
 	    1.0f, -1.0f,  1.0f,		//[1]	
-	    1.0f, -1.0f, -1.0f,		//[5]
 	    -1.0f, -1.0f, -1.0f,	//[4]
+	    1.0f, -1.0f, -1.0f,		//[5]
+	    
 	    
 	    1.0f, -1.0f, -1.0f,		//[5]
-	    1.0f,  1.0f, -1.0f,		//[7]
 	    -1.0f, -1.0f, -1.0f,	//[4]
+	    1.0f,  1.0f, -1.0f,		//[7]
+	    
 
 	    -1.0f, -1.0f, -1.0f,	//[4]
-	    1.0f,  1.0f, -1.0f,		//[7]
 	    -1.0f,  1.0f, -1.0f,	//[6]
+	    1.0f,  1.0f, -1.0f,		//[7]
+	    
 	    
 	    1.0f,  1.0f, -1.0f,		//[7]		
+	    -1.0f,  1.0f, -1.0f,	//[6]
 	    -1.0f,  1.0f,  1.0f,	//[2]
-	    -1.0f,  1.0f, -1.0f,	//[6]		
+	    		
 	    
 	    -1.0f,  1.0f, -1.0f,	//[6]		
-	    -1.0f,  1.0f,  1.0f,	//[2]	
 	    -1.0f, -1.0f, -1.0f,	//[4]
+	    -1.0f,  1.0f,  1.0f,	//[2]	
+	    
 	    
 	    -1.0f,  1.0f,  1.0f,	//[2]		
+	    -1.0f, -1.0f, -1.0f,	//[4]
 	    -1.0f, -1.0f,  1.0f,	//[0]
-	    -1.0f, -1.0f, -1.0f,	//[4]		
+	    		
 	    
 	    -1.0f, -1.0f, -1.0f,	//[4]		
-	    -1.0f, -1.0f,  1.0f,	//[0]		
 	    1.0f, -1.0f,  1.0f,		//[1]
+	    -1.0f, -1.0f,  1.0f,	//[0]		
+	    
 	};
 
 	private static final float cubeNormals[] = {
@@ -96,9 +107,11 @@ public class Cube extends TrianglesShape {
 	private float[] scale;
 	
 	public void draw(GL10 gl, Transform transform, float[] scale) {
+		gl.glPushMatrix();
 		this.setTransform(transform);
 		this.scale = scale;
 		super.draw(gl);
+		gl.glPopMatrix();
 	}
 
 	@Override
