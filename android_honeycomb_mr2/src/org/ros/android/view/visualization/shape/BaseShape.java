@@ -15,8 +15,8 @@ import javax.microedition.khronos.opengles.GL10;
  */
 public abstract class BaseShape implements Shape {
   
-  private Color color;
-  private Transform transform;
+  protected Color color;
+  protected Transform transform;
   
   @Override
   public void draw(GL10 gl) {

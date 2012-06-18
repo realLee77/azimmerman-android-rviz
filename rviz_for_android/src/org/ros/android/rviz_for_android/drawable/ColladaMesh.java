@@ -19,27 +19,29 @@ package org.ros.android.rviz_for_android.drawable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.drawable.loader.ColladaLoader;
 import org.ros.android.view.visualization.shape.BaseShape;
+import org.ros.android.view.visualization.shape.Color;
+import org.ros.android.view.visualization.shape.TrianglesShape;
 import org.ros.rosjava_geometry.Transform;
 
 import com.google.common.io.Files;
 
 public class ColladaMesh extends BaseShape {
-	private static final ColladaLoader loader = new ColladaLoader();
+	protected static final ColladaLoader loader = new ColladaLoader();
 
 	public static ColladaMesh newFromFile(String filename) {
-		Set<ColladaGeometry> retval = null;
+		List<BaseShape> retval = null;
 		synchronized(loader) {
 			String contents = null;
 			try {
 				contents = Files.toString(new File(filename), Charset.defaultCharset());
 			} catch(IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			loader.readDae(contents);
@@ -48,23 +50,29 @@ public class ColladaMesh extends BaseShape {
 		return new ColladaMesh(retval);
 	}
 	
-	private Set<ColladaGeometry> geometries;
-	private ColladaMesh(Set<ColladaGeometry> geometries) {
+	protected List<BaseShape> geometries;
+	protected ColladaMesh(List<BaseShape> geometries) {
 		this.geometries = geometries;
 	}
 	
 	private float[] scale;
 	
 	public void draw(GL10 gl, Transform transform, float[] scale) {
+		gl.glPushMatrix();
 		this.setTransform(transform);
 		this.scale = scale;
-		
+
 		super.draw(gl);
-		gl.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
 		
-		for(ColladaGeometry g : geometries) {
+		for(BaseShape g : geometries) {
+			g.setColor(super.color);
 			g.draw(gl);
+			// TODO: Remove normal drawing code
+//			if(g instanceof TrianglesShape)
+//				((TrianglesShape) g).drawNormals(gl);
 		}
+
+		gl.glPopMatrix();
 	}
 	
 	@Override

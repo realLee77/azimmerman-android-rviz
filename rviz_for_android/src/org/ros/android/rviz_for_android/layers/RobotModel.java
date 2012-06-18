@@ -22,6 +22,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.drawable.ColladaMesh;
 import org.ros.android.rviz_for_android.drawable.Cube;
+import org.ros.android.rviz_for_android.drawable.Sphere;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
@@ -40,6 +41,7 @@ import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.rosjava_geometry.FrameTransformTree;
+import org.ros.rosjava_geometry.Transform;
 
 import android.os.Handler;
 import android.util.Log;
@@ -87,9 +89,9 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 				requestRender();
 			}
 		}));
+		 
 		
-		
-		test = ColladaMesh.newFromFile("/sdcard/cube2.dae");
+		test = ColladaMesh.newFromFile("/sdcard/base.dae");
 	}
 	
 	private Component vis;
@@ -122,8 +124,8 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 					test.setColor(vis.getMaterial_color());
 					test.draw(gl, vis.getOrigin(), vis.getSize());
 					
-//					cube.setColor(vis.getMaterial_color());
-//					cube.draw(gl, vis.getOrigin(), vis.getSize());
+					cube.setColor(vis.getMaterial_color());
+					cube.draw(gl, vis.getOrigin().invert(), vis.getSize());
 					break;
 				case CYLINDER:
 					break;
@@ -134,7 +136,7 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 				}
 			}
 			
-			if(drawCol) {
+/*			if(drawCol) {
 				switch(col.getType()) {
 				case BOX:
 					cube.setColor(col.getMaterial_color());
@@ -147,7 +149,7 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 				case MESH:
 					break;
 				}				
-			}
+			}*/
 
 			gl.glPopMatrix();
 		}
