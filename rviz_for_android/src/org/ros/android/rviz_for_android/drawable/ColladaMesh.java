@@ -67,9 +67,6 @@ public class ColladaMesh extends BaseShape {
 		for(BaseShape g : geometries) {
 			g.setColor(super.color);
 			g.draw(gl);
-			// TODO: Remove normal drawing code
-//			if(g instanceof TrianglesShape)
-//				((TrianglesShape) g).drawNormals(gl);
 		}
 
 		gl.glPopMatrix();
