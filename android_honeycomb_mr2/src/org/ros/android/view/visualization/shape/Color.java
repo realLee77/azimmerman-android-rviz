@@ -25,63 +25,100 @@ import com.google.common.base.Preconditions;
  */
 public class Color {
 
-  private float red;
-  private float green;
-  private float blue;
-  private float alpha;
-  
-  public static Color copyOf(Color color) {
-    return new Color(color.red, color.green, color.blue, color.alpha);
-  }
-  
-  public static Color fromHexAndAlpha(String hex, float alpha) {
-    Preconditions.checkArgument(hex.length() == 6);
-    float red = Integer.parseInt(hex.substring(0, 2), 16) / 255.0f;
-    float green = Integer.parseInt(hex.substring(2, 4), 16) / 255.0f;
-    float blue = Integer.parseInt(hex.substring(4), 16) / 255.0f;
-    return new Color(red, green, blue, alpha);
-  }
-  
-  public Color(float red, float green, float blue, float alpha) {
-    Preconditions.checkArgument(0.0f <= red && red <= 1.0f);
-    Preconditions.checkArgument(0.0f <= green && green <= 1.0f);
-    Preconditions.checkArgument(0.0f <= blue && blue <= 1.0f);
-    Preconditions.checkArgument(0.0f <= alpha && alpha <= 1.0f);
-    this.red = red;
-    this.green = green;
-    this.blue = blue;
-    this.alpha = alpha;
-  }
+	private float red;
+	private float green;
+	private float blue;
+	private float alpha;
 
-  public float getRed() {
-    return red;
-  }
+	public static Color copyOf(Color color) {
+		return new Color(color.red, color.green, color.blue, color.alpha);
+	}
 
-  public void setRed(float red) {
-    this.red = red;
-  }
+	public static Color fromHexAndAlpha(String hex, float alpha) {
+		Preconditions.checkArgument(hex.length() == 6);
+		float red = Integer.parseInt(hex.substring(0, 2), 16) / 255.0f;
+		float green = Integer.parseInt(hex.substring(2, 4), 16) / 255.0f;
+		float blue = Integer.parseInt(hex.substring(4), 16) / 255.0f;
+		return new Color(red, green, blue, alpha);
+	}
 
-  public float getGreen() {
-    return green;
-  }
+	public Color(float red, float green, float blue, float alpha) {
+		Preconditions.checkArgument(0.0f <= red && red <= 1.0f);
+		Preconditions.checkArgument(0.0f <= green && green <= 1.0f);
+		Preconditions.checkArgument(0.0f <= blue && blue <= 1.0f);
+		Preconditions.checkArgument(0.0f <= alpha && alpha <= 1.0f);
+		this.red = red;
+		this.green = green;
+		this.blue = blue;
+		this.alpha = alpha;
+	}
 
-  public void setGreen(float green) {
-    this.green = green;
-  }
+	public float getRed() {
+		return red;
+	}
 
-  public float getBlue() {
-    return blue;
-  }
+	public void setRed(float red) {
+		this.red = red;
+	}
 
-  public void setBlue(float blue) {
-    this.blue = blue;
-  }
+	public float getGreen() {
+		return green;
+	}
 
-  public float getAlpha() {
-    return alpha;
-  }
+	public void setGreen(float green) {
+		this.green = green;
+	}
 
-  public void setAlpha(float alpha) {
-    this.alpha = alpha;
-  }
+	public float getBlue() {
+		return blue;
+	}
+
+	public void setBlue(float blue) {
+		this.blue = blue;
+	}
+
+	public float getAlpha() {
+		return alpha;
+	}
+
+	public void setAlpha(float alpha) {
+		this.alpha = alpha;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Float.floatToIntBits(alpha);
+		result = prime * result + Float.floatToIntBits(blue);
+		result = prime * result + Float.floatToIntBits(green);
+		result = prime * result + Float.floatToIntBits(red);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(this == obj)
+			return true;
+		if(obj == null)
+			return false;
+		if(getClass() != obj.getClass())
+			return false;
+		Color other = (Color) obj;
+		if(Float.floatToIntBits(alpha) != Float.floatToIntBits(other.alpha))
+			return false;
+		if(Float.floatToIntBits(blue) != Float.floatToIntBits(other.blue))
+			return false;
+		if(Float.floatToIntBits(green) != Float.floatToIntBits(other.green))
+			return false;
+		if(Float.floatToIntBits(red) != Float.floatToIntBits(other.red))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "RGBA: (" + red + ", " + green + ", " + blue + ", " + alpha + ")";
+	}
+
 }

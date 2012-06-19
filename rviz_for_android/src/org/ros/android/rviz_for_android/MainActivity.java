@@ -188,7 +188,7 @@ public class MainActivity extends RosActivity {
 		addNewLayer(1);
 		addNewLayer(2);
 		
-		//visualizationView.addLayer(new FPSLayer());
+		visualizationView.addLayer(new FPSLayer());
 	}
 
 	public static Context getAppContext() {

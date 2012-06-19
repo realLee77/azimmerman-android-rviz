@@ -17,27 +17,50 @@
 
 package org.ros.android.rviz_for_android.urdf;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.ros.android.view.visualization.shape.Color;
 import org.w3c.dom.NodeList;
 
 public class UrdfReader extends XmlReader {
 
-	private Set<UrdfLink> urdf = new HashSet<UrdfLink>();
+	private List<UrdfLink> urdf = new ArrayList<UrdfLink>();
 
 	public UrdfReader() {
 		super(true);
 
 	}
-	
+
 	public void readUrdf(String urdf) {
 		this.urdf.clear();
 		buildDocument(urdf);
 		parseUrdf();
+		buildColors();
 	}
-	
-	public Set<UrdfLink> getUrdf() {
+
+	private void buildColors() {
+		Map<String, Color> colors = new HashMap<String, Color>();
+		for(UrdfLink ul : urdf) {
+			for(Component c : ul.getComponents()) {
+				if(c.getMaterial_color() != null) {
+					colors.put(c.getMaterial_name(), c.getMaterial_color());
+				}
+			}
+		}
+
+		for(UrdfLink ul : urdf) {
+			for(Component c : ul.getComponents()) {
+				if(c.getMaterial_name() != null && c.getMaterial_color() == null) {				
+					c.setMaterial_color(colors.get(c.getMaterial_name()));	
+				}
+			}
+		}
+	}	
+
+	public List<UrdfLink> getUrdf() {
 		return urdf;
 	}
 
@@ -51,7 +74,7 @@ public class UrdfReader extends XmlReader {
 
 			Component visual = null;
 			Component collision = null;
-			
+
 			// Check for visual component
 			if(nodeExists(prefix, "visual")) {
 				String vprefix = prefix + "/visual";
@@ -100,10 +123,10 @@ public class UrdfReader extends XmlReader {
 				}
 				if(nodeExists(vprefix, "/material/color/@rgba")) {
 					visBuilder.setMaterialColor(toFloatArray(existResults.item(0).getNodeValue()));
-				}					
+				}
 				visual = visBuilder.build();
 			}
-			
+
 			// Check for collision component
 			if(nodeExists(prefix, "collision")) {
 				String vprefix = prefix + "/collision";
@@ -142,11 +165,11 @@ public class UrdfReader extends XmlReader {
 				}
 				if(nodeExists(vprefix, "/origin/@rpy")) {
 					colBuilder.setRotation(toFloatArray(existResults.item(0).getNodeValue()));
-				}	
-				
+				}
+
 				collision = colBuilder.build();
-			}	
-			
+			}
+
 			UrdfLink newLink = new UrdfLink(visual, collision, name);
 			urdf.add(newLink);
 		}

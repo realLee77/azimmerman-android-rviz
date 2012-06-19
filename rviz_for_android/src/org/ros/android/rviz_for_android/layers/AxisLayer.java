@@ -57,20 +57,20 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	};
 	
 	private static final float COLORS[] = {
-		1,0,0,1,
-		1,0,0,1,
-		1,0,0,1,
-		1,0,0,1,
+		0,0,1,1,
+		0,0,1,1,
+		0,0,1,1,
+		0,0,1,1,
 		
 		0,1,0,1,
 		0,1,0,1,
 		0,1,0,1,
 		0,1,0,1,
 		
-		0,0,1,1,
-		0,0,1,1,
-		0,0,1,1,
-		0,0,1,1
+		1,0,0,1,
+		1,0,0,1,
+		1,0,0,1,
+		1,0,0,1,
 	};
 	
 	private static final byte INDEX[] = {

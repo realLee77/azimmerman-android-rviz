@@ -23,7 +23,7 @@ import org.ros.android.view.visualization.shape.Color;
 import org.ros.android.view.visualization.shape.TrianglesShape;
 import org.ros.rosjava_geometry.Transform;
 
-public class Mesh extends TrianglesShape {
+public class Mesh extends TrianglesShape implements UrdfDrawable {
 
 	private static final StlLoader loader = new StlLoader();
 	
