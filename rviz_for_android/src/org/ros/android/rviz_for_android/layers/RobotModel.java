@@ -98,6 +98,7 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 	private Component col;
 
 	private Cube cube = new Cube(new Color(0, 1, 0, 1));
+	private Sphere sphere = new Sphere();
 	private ColladaMesh test;
 	
 	@Override
@@ -118,38 +119,28 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 				OpenGlTransform.apply(gl, ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform());
 
 			// Draw the shape
-			if(drawVis) {
+			if(drawVis && vis != null) {
 				switch(vis.getType()) {
-				case BOX:
-					test.setColor(vis.getMaterial_color());
-					test.draw(gl, vis.getOrigin(), vis.getSize());
-					
+				case BOX:					
 					cube.setColor(vis.getMaterial_color());
-					cube.draw(gl, vis.getOrigin().invert(), vis.getSize());
+					cube.draw(gl, Transform.newIdentityTransform(), vis.getSize());
 					break;
 				case CYLINDER:
 					break;
 				case SPHERE:
+					sphere.setColor(vis.getMaterial_color());
+					sphere.draw(gl, vis.getOrigin(), vis.getSize());
 					break;
 				case MESH:
+					test.setColor(vis.getMaterial_color());
+					test.draw(gl, vis.getOrigin(), vis.getSize());
 					break;
 				}
 			}
 			
-/*			if(drawCol) {
-				switch(col.getType()) {
-				case BOX:
-					cube.setColor(col.getMaterial_color());
-					cube.draw(gl, col.getOrigin(), col.getSize());
-					break;
-				case CYLINDER:
-					break;
-				case SPHERE:
-					break;
-				case MESH:
-					break;
-				}				
-			}*/
+			if(drawCol && col != null) {
+				// TODO: Duplicate the vis drawing code for col		
+			}
 
 			gl.glPopMatrix();
 		}

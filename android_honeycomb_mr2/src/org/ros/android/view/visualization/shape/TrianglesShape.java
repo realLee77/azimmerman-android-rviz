@@ -12,11 +12,11 @@ import org.ros.rosjava_geometry.Vector3;
 
 public class TrianglesShape extends BaseShape {
 
-	private final FloatBuffer normals;
-	private final FloatBuffer vertices;
-	private final ShortBuffer indices;
+	protected final FloatBuffer normals;
+	protected final FloatBuffer vertices;
+	protected final ShortBuffer indices;
 	private boolean useIndices = false;
-	private int count;
+	protected int count;
 
 	private FloatBuffer drawNormalsBuffer;
 

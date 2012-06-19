@@ -22,18 +22,36 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ros.android.rviz_for_android.MainActivity;
 import org.ros.android.rviz_for_android.urdf.XmlReader;
 import org.ros.android.view.visualization.shape.BaseShape;
 import org.ros.android.view.visualization.shape.Color;
+import org.ros.android.view.visualization.shape.TexturedTrianglesShape;
 import org.ros.android.view.visualization.shape.TrianglesShape;
-import org.ros.rosjava_geometry.Vector3;
 import org.w3c.dom.NodeList;
 
+import com.tiffdecoder.TiffDecoder;
+
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.util.Log;
 
 public class ColladaLoader extends XmlReader {
 	private static enum semanticType {
-		POSITION, NORMAL, TEXCOORD
+		POSITION(3), NORMAL(3), TEXCOORD(2);
+
+		private int mul;
+
+		semanticType(int mul) {
+			this.mul = mul;
+		}
+
+		public int numElements(int vertexCount) {
+			return mul * vertexCount;
+		}
+
 	};
 
 	private List<BaseShape> geometries;
@@ -105,8 +123,8 @@ public class ColladaLoader extends XmlReader {
 			}
 		}
 	}
-	
-	private static Color defaultColor = new Color(1,1,0,1);
+
+	private static Color defaultColor = new Color(1, 1, 0, 1);
 
 	private BaseShape parseSubMesh(String prefix, TYPES type, int submeshIndex) {
 		// Load all necessary data (vertices, normals, texture coordinates, etc
@@ -120,25 +138,89 @@ public class ColladaLoader extends XmlReader {
 
 		Log.d("DAE", "I'm expecting " + triCount + " triangles.");
 
-		// If the normals and positions are the only values included AND they have the same offset, there's no need to deindex
-		if(data.size() == 2 && data.containsKey("NORMAL") && data.containsKey("POSITION") && (data.get("NORMAL").getOffset() == data.get("POSITION").getOffset())) {
+		boolean textured = false;
+		Map<String, Bitmap> textures = null;
+
+		// Load the images if the mesh is textured. Otherwise, if the normals and positions are the only
+		// values included AND they have the same offset, there's no need to deindex, can return a mesh immediately
+		if(data.containsKey("TEXCOORD")) {
+			Log.d("DAE", "Mesh is textured!");
+			textures = getTextures(prefix);
+			textured = true;
+		} else if(data.size() == 2 && data.containsKey("NORMAL") && data.containsKey("POSITION") && (data.get("NORMAL").getOffset() == data.get("POSITION").getOffset())) {
 			Log.d("DAE", "I've detected that deindexing is not necessary for this dataset!");
 			return new TrianglesShape(data.get("POSITION").getData().getArray(), data.get("NORMAL").getData().getArray(), indices, defaultColor);
 		}
-		
+
 		// Deindex
 		Map<String, FloatVector> results = deindex(data, indices, type.getVertexCount(triCount));
 
 		Log.i("DAE", "For each vertex, I have the following information: " + results.keySet());
 
-		switch(type) {
-		case triangles:
-			return new TrianglesShape(results.get("POSITION").getArray(), results.get("NORMAL").getArray(), defaultColor);
-		case tristrips:
-		case trifans:
-		default:
-			return null;
+		if(!textured) {
+			switch(type) {
+			case triangles:
+				return new TrianglesShape(results.get("POSITION").getArray(), results.get("NORMAL").getArray(), defaultColor);
+			case tristrips:
+			case trifans:
+			default:
+				return null;
+			}
+		} else {
+			switch(type) {
+			case triangles:
+				return new TexturedTrianglesShape(results.get("POSITION").getArray(), results.get("NORMAL").getArray(), results.get("TEXCOORD").getArray(), textures);
+			case tristrips:
+			case trifans:
+			default:
+				return null;
+			}
 		}
+	}
+
+	private enum textureType {
+		diffuse, bump
+	};
+
+	private Map<String, Bitmap> getTextures(String prefix) {
+		Map<String, Bitmap> retval = new HashMap<String, Bitmap>();
+
+		// Find which types of textures are present (diffuse, bump, etc)
+		for(textureType t : textureType.values()) {
+			if(nodeExists("/COLLADA/library_effects/", t.toString(), "texture/@texture")) {
+				Log.i("DAE", "  Mesh has " + t.toString() + " texture component.");
+				String texPointer = existResults.item(0).getNodeValue();
+
+				System.out.println(t.toString() + " " + texPointer);
+
+				// Locate the image ID from the texture pointer
+				String imgID = getSingleNode("/COLLADA/library_effects//newparam[@sid='" + texPointer + "']/sampler2D/source").getTextContent();
+
+				System.out.println(imgID);
+
+				// Locate the image name
+				String imgName = getSingleNode("/COLLADA/library_effects//newparam[@sid='" + imgID + "']/surface/init_from").getTextContent();
+				System.out.println(imgName);
+
+				// Locate the filename
+				String filename = getSingleNode("/COLLADA/library_images/image[@id='" + imgName + "']/init_from").getTextContent();
+				System.out.println(filename);
+
+				// TODO: genericize path
+				retval.put(t.toString(), loadTextureFile("/sdcard/", filename));
+			}
+		}
+
+		return retval;
+	}
+
+	private Bitmap loadTextureFile(String path, String filename) {
+		Log.d("DAE", "Loading TIF image: " + path + filename);
+		TiffDecoder.nativeTiffOpen(path + filename);
+		int[] pixels = TiffDecoder.nativeTiffGetBytes();
+		Bitmap retval = Bitmap.createBitmap(pixels, TiffDecoder.nativeTiffGetWidth(), TiffDecoder.nativeTiffGetHeight(), Bitmap.Config.ARGB_8888);
+		TiffDecoder.nativeTiffClose();
+		return retval;
 	}
 
 	private Map<String, FloatVector> deindex(Map<String, InputData> data, short[] indices, int vertexCount) {
@@ -149,7 +231,7 @@ public class ColladaLoader extends XmlReader {
 		int inputCount = -99;
 		for(InputData id : sources) {
 			inputCount = Math.max(inputCount, id.getOffset());
-			retval.put(id.getSemantic(), new FloatVector(3 * vertexCount));
+			retval.put(id.getSemantic(), new FloatVector(id.getFloatElements(vertexCount)));
 		}
 
 		Log.d("DAE", "BEGINNING DEINDEXING");
@@ -245,11 +327,15 @@ public class ColladaLoader extends XmlReader {
 			return data;
 		}
 
+		public int getFloatElements(int vertexCount) {
+			return sType.numElements(vertexCount);
+		}
+
 		@Override
 		public String toString() {
 			return "InputData [semantic=" + sType.toString() + ", offset=" + offset + ", data size=" + data.getIdx() + "]";
 		}
-				
+
 		public void appendData(FloatVector destination, int idx) {
 			switch(sType) {
 			case TEXCOORD:
@@ -262,23 +348,18 @@ public class ColladaLoader extends XmlReader {
 				break;
 			case NORMAL:
 				// Normalize the loaded normal
-				int offset = idx*3;
+				int offset = idx * 3;
 				float x = data.get(offset++);
 				float y = data.get(offset++);
 				float z = data.get(offset++);
-				float len = (float)Math.sqrt(x*x + y*y + z*z);
+				float len = (float) Math.sqrt(x * x + y * y + z * z);
 
-				destination.add(x/len);
-				destination.add(y/len);
-				destination.add(z/len);
+				destination.add(x / len);
+				destination.add(y / len);
+				destination.add(z / len);
 				break;
 			}
 		}
-
-		private ColladaLoader getOuterType() {
-			return ColladaLoader.this;
-		}
-
 	}
 
 	public List<BaseShape> getGeometries() {
