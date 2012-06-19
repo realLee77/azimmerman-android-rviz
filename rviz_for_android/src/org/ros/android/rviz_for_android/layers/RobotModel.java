@@ -126,10 +126,8 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 //				Log.i("RobotModel", t.toString());
 //				OpenGlTransform.apply(gl, t);
 //			}
-			
-			Transform t = ftt.newTransformIfPossible(cam.getFixedFrame(), ul.getName());
-			Log.i("RobotModel", t.toString());
-			OpenGlTransform.apply(gl, t);
+		
+			OpenGlTransform.apply(gl, ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
 
 			// Draw the shape
 			if(drawVis && vis != null) {

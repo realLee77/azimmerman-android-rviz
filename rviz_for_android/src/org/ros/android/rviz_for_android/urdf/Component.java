@@ -204,7 +204,7 @@ public class Component {
 
 		public void setOffset(float[] offset) {
 			if(offset.length == 3) {
-				this.origin.setTranslation(new Vector3(-offset[0], -offset[1], -offset[2]));
+				this.origin.setTranslation(new Vector3(offset[0], offset[1], offset[2]));
 			} else {
 				throw new IllegalArgumentException("Can't set offset!");
 			}
