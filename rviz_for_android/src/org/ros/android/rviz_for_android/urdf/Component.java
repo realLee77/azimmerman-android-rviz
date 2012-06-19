@@ -37,7 +37,6 @@ public class Component {
 	private float[] size;
 	// Mesh
 	private String mesh;
-	private float scale;
 
 	// Origin
 	private Transform origin;
@@ -65,10 +64,6 @@ public class Component {
 	public String getMesh() {
 		return mesh;
 	}
-	
-	public float getScale() {
-		return scale;
-	}
 
 	public Transform getOrigin() {
 		return origin;
@@ -81,13 +76,17 @@ public class Component {
 	public Color getMaterial_color() {
 		return material_color;
 	}
+	
+	public void setMaterial_color(Color color) {
+		material_color = color;
+	}
 
 	private Component() {
 	}
 
 	@Override
 	public String toString() {
-		return "Component [type=" + type + ", radius=" + radius + ", length=" + length + ", size=" + Arrays.toString(size) + ", mesh=" + mesh + ", scale=" + scale + ", origin=" + origin + ", material_name=" + material_name + ", material_color=" + material_color + "]";
+		return "Component [type=" + type + ", radius=" + radius + ", length=" + length + ", size=" + Arrays.toString(size) + ", mesh=" + mesh + ", scale=" + size[0] + ", origin=" + origin + ", material_name=" + material_name + ", material_color=" + material_color + "]";
 	}
 
 	@Override
@@ -149,12 +148,11 @@ public class Component {
 		private GEOMETRY type;
 		private float radius = -1;
 		private float length = -1;
-		private float[] size;
+		private float[] size = new float[] { 1f, 1f, 1f };
 		private String mesh;
 		private Transform origin = Transform.newIdentityTransform();
 		private String material_name;
 		private Color material_color;
-		private float scale = 1f;
 
 		public Builder(GEOMETRY type) {
 			this.type = type;
@@ -195,10 +193,10 @@ public class Component {
 				throw new IllegalArgumentException("Can't set mesh!");
 			}
 		}
-		
+
 		public void setMeshScale(float scale) {
 			if(this.type == GEOMETRY.MESH) {
-				this.scale = scale;
+				this.size = new float[] { scale, scale, scale };
 			} else {
 				throw new IllegalArgumentException("Can't set mesh scale!");
 			}
@@ -206,7 +204,7 @@ public class Component {
 
 		public void setOffset(float[] offset) {
 			if(offset.length == 3) {
-				this.origin.setTranslation(new Vector3(offset[0], offset[1], offset[2]));
+				this.origin.setTranslation(new Vector3(-offset[0], -offset[1], -offset[2]));
 			} else {
 				throw new IllegalArgumentException("Can't set offset!");
 			}
@@ -256,6 +254,9 @@ public class Component {
 			if(material_color != null && material_name == null)
 				throw new IllegalArgumentException("Forgot to name the color " + material_color);
 			
+			if(material_color == null)
+				material_color = new Color(1f, .5f, 0.15f, 1f);
+
 			retval.type = type;
 			retval.radius = radius;
 			retval.length = length;
@@ -264,7 +265,6 @@ public class Component {
 			retval.origin = origin;
 			retval.material_name = material_name;
 			retval.material_color = material_color;
-			retval.scale = scale;
 			return retval;
 		}
 

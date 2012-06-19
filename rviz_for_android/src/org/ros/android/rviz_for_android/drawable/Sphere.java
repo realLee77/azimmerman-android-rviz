@@ -22,7 +22,7 @@ import org.ros.android.view.visualization.shape.BaseShape;
 import org.ros.android.view.visualization.shape.Color;
 import org.ros.rosjava_geometry.Transform;
 
-public class Sphere extends BaseShape {
+public class Sphere extends BaseShape implements UrdfDrawable {
 
 	private ColladaMesh sphere;
 	
@@ -30,8 +30,10 @@ public class Sphere extends BaseShape {
 		sphere = ColladaMesh.newFromFile("/sdcard/sphere.dae");
 	}
 
-	public void draw(GL10 gl, Transform transform, float[] scale) {
-		sphere.draw(gl, transform, scale);
+	public void draw(GL10 gl, Transform transform, float radius) {
+		gl.glFrontFace(GL10.GL_CW);
+		sphere.draw(gl, transform, 2*radius);
+		gl.glFrontFace(GL10.GL_CCW);
 	}
 
 	@Override
@@ -53,6 +55,11 @@ public class Sphere extends BaseShape {
 	public void setTransform(Transform pose) {
 		sphere.setTransform(pose);
 	}
-	
-	
+
+	@Override
+	public void draw(GL10 gl, Transform transform, float[] scale) {
+		gl.glFrontFace(GL10.GL_CW);
+		sphere.draw(gl, transform, scale);
+		gl.glFrontFace(GL10.GL_CCW);
+	}
 }

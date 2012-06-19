@@ -16,13 +16,18 @@
  */
 package org.ros.android.rviz_for_android.layers;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.drawable.ColladaMesh;
 import org.ros.android.rviz_for_android.drawable.Cube;
+import org.ros.android.rviz_for_android.drawable.Cylinder;
 import org.ros.android.rviz_for_android.drawable.Sphere;
+import org.ros.android.rviz_for_android.drawable.UrdfDrawable;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
@@ -35,9 +40,7 @@ import org.ros.android.rviz_for_android.urdf.UrdfReader;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.OpenGlTransform;
 import org.ros.android.view.visualization.layer.DefaultLayer;
-import org.ros.android.view.visualization.layer.TfLayer;
 import org.ros.android.view.visualization.shape.Color;
-import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.rosjava_geometry.FrameTransformTree;
@@ -46,7 +49,7 @@ import org.ros.rosjava_geometry.Transform;
 import android.os.Handler;
 import android.util.Log;
 
-public class RobotModel extends DefaultLayer implements LayerWithProperties, TfLayer {
+public class RobotModel extends DefaultLayer implements LayerWithProperties {
 
 	private static final String DEFAULT_PARAM_VALUE = "/robot_description";
 	private BoolProperty prop = new BoolProperty("Enabled", true, null);
@@ -56,7 +59,8 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 	private MeshDownloader downloader;
 	private ParameterTree params;
 
-	private Set<UrdfLink> urdf;
+	private volatile boolean readyToDraw = false;
+	private List<UrdfLink> urdf;
 	
 	// The visual and collision draw options exist both as properties and booleans in the RobotModel layer
 	// Boolean access times are required to properly draw the model 
@@ -97,65 +101,89 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 	private Component vis;
 	private Component col;
 
-	private Cube cube = new Cube(new Color(0, 1, 0, 1));
+	private Cylinder cyl = new Cylinder();
+	private Cube cube = new Cube();
 	private Sphere sphere = new Sphere();
 	private ColladaMesh test;
 	
+	private Map<String, UrdfDrawable> meshes = new HashMap<String, UrdfDrawable>();
+	
 	@Override
 	public void draw(GL10 gl) {
-		if(ftt == null || urdf == null || urdf.size() == 0) {
-			Log.e("RobotModel", "FTT or URDF is null or empty. Aborting drawing.");
+		if(!readyToDraw || ftt == null || urdf == null) {
 			return;
 		}
 			
-		for(UrdfLink ul : urdf) {			
+		for(UrdfLink ul : urdf) {
 			vis = ul.getVisual();
 			col = ul.getCollision();
 			
 			gl.glPushMatrix();
 			
 			// Transform to the URDF link's frame
-			if(ftt.canTransform(cam.getFixedFrame(), ul.getName()))
-				OpenGlTransform.apply(gl, ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform());
+//			if(ftt.canTransform(cam.getFixedFrame(), ul.getName())) {
+//				Transform t = ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform();
+//				Log.i("RobotModel", t.toString());
+//				OpenGlTransform.apply(gl, t);
+//			}
+			
+			Transform t = ftt.newTransformIfPossible(cam.getFixedFrame(), ul.getName());
+			Log.i("RobotModel", t.toString());
+			OpenGlTransform.apply(gl, t);
 
 			// Draw the shape
 			if(drawVis && vis != null) {
-				switch(vis.getType()) {
-				case BOX:					
-					cube.setColor(vis.getMaterial_color());
-					cube.draw(gl, Transform.newIdentityTransform(), vis.getSize());
-					break;
-				case CYLINDER:
-					break;
-				case SPHERE:
-					sphere.setColor(vis.getMaterial_color());
-					sphere.draw(gl, vis.getOrigin(), vis.getSize());
-					break;
-				case MESH:
-					test.setColor(vis.getMaterial_color());
-					test.draw(gl, vis.getOrigin(), vis.getSize());
-					break;
-				}
+				drawComponent(gl, vis);
 			}
-			
 			if(drawCol && col != null) {
-				// TODO: Duplicate the vis drawing code for col		
+				drawComponent(gl, col);		
 			}
 
 			gl.glPopMatrix();
 		}
 	}
+	
+	private void drawComponent(GL10 gl, Component com) {
+		switch(com.getType()) {
+		case BOX:		
+			cube.setColor(com.getMaterial_color());
+			cube.draw(gl, com.getOrigin(), com.getSize());
+			break;
+		case CYLINDER:
+			cyl.setColor(com.getMaterial_color());
+			cyl.draw(gl, com.getOrigin(), com.getLength(), com.getRadius());
+			break;
+		case SPHERE:
+			sphere.setColor(com.getMaterial_color());
+			sphere.draw(gl, com.getOrigin(), com.getRadius());
+			break;
+		case MESH:
+			UrdfDrawable ud = meshes.get(com.getMesh());
+			if(ud != null)						
+				ud.draw(gl, com.getOrigin(), com.getSize());
+			else
+				loadMesh(com.getMesh());
+			break;
+		}
+	}
 
+	private void loadMesh(String meshResourceName) {
+		meshes.put(meshResourceName, test);
+	}
+	
 	@Override
 	public void onStart(final ConnectedNode node, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
 		this.ftt = frameTransformTree;
 		this.cam = camera;
 		this.params = node.getParameterTree();
-
+		
+		readyToDraw = false;
 		reloadUrdf(DEFAULT_PARAM_VALUE);
+		readyToDraw = true;
 	}
 
 	private void reloadUrdf(String param) {
+		readyToDraw = false;
 		String urdf_xml = null;
 		if(params.has(param))
 			urdf_xml = params.getString(param);
@@ -164,6 +192,7 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 		reader.readUrdf(urdf_xml);
 		this.urdf = reader.getUrdf();
 		Log.d("RobotModel", "Parsed URDF! Size: " + urdf.size());
+		readyToDraw = true;
 	}
 	
 	@Override
@@ -174,11 +203,6 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties, TfL
 	@Override
 	public Property<?> getProperties() {
 		return prop;
-	}
-
-	@Override
-	public GraphName getFrame() {
-		return null;
 	}
 
 }

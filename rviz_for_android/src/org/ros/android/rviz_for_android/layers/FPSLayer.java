@@ -35,7 +35,7 @@ import android.util.Log;
 public class FPSLayer extends DefaultLayer {
 
 	private boolean isLoaded = false;
-	private TexFont txt;
+//	private TexFont txt;
 
 	private int width, height;
 	private long now = 0l;
@@ -64,22 +64,23 @@ public class FPSLayer extends DefaultLayer {
 		ratecount++;
 
 		if(!isLoaded) {
-			txt = new TexFont(MainActivity.getAppContext(), gl);
-			try {
-				txt.LoadFont("TestFont.bff", gl);
-				isLoaded = true;
-			} catch(IOException e) {
-				e.printStackTrace();
-			}
+//			txt = new TexFont(MainActivity.getAppContext(), gl);
+//			try {
+//				txt.LoadFont("TestFont.bff", gl);
+//				isLoaded = true;
+//			} catch(IOException e) {
+//				e.printStackTrace();
+//			}
+//			txt.SetScale(1);
 		}
 		if(ratecount == windowLimit) {
-			txt.SetScale(1);
 			toDraw = Utility.cap((int)Math.round(avgRate / ratecount),99);
 			avgRate = 0;
 			ratecount = 0;
 			windowLimit = Utility.cap(toDraw / FPS_RECALCULATIONS_PER_SECOND, 5, 50);
+			Log.d("FPS", "FPS: " + toDraw);
 		}
-		txt.PrintAt(gl, "FPS: " + toDraw, width - 50, height - 26);
+//		txt.PrintAt(gl, "FPS: " + toDraw, width - 50, height - 26);
 	}
 
 	@Override
