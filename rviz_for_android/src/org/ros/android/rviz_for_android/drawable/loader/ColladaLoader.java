@@ -215,11 +215,16 @@ public class ColladaLoader extends XmlReader {
 	}
 
 	private Bitmap loadTextureFile(String path, String filename) {
-		Log.d("DAE", "Loading TIF image: " + path + filename);
-		TiffDecoder.nativeTiffOpen(path + filename);
-		int[] pixels = TiffDecoder.nativeTiffGetBytes();
-		Bitmap retval = Bitmap.createBitmap(pixels, TiffDecoder.nativeTiffGetWidth(), TiffDecoder.nativeTiffGetHeight(), Bitmap.Config.ARGB_8888);
-		TiffDecoder.nativeTiffClose();
+		Bitmap retval = null;
+		if(filename.toLowerCase().endsWith(".tif")) {
+			Log.d("DAE", "Loading TIF image: " + path + filename);
+			TiffDecoder.nativeTiffOpen(path + filename);
+			int[] pixels = TiffDecoder.nativeTiffGetBytes();
+			retval = Bitmap.createBitmap(pixels, TiffDecoder.nativeTiffGetWidth(), TiffDecoder.nativeTiffGetHeight(), Bitmap.Config.ARGB_8888);
+			TiffDecoder.nativeTiffClose();
+		} else {
+			retval = BitmapFactory.decodeFile(path + filename);
+		}
 		return retval;
 	}
 
