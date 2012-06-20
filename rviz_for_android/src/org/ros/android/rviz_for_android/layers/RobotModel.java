@@ -95,7 +95,7 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 		}));
 		 
 		
-		test = ColladaMesh.newFromFile("/sdcard/base.dae");
+		//test = ColladaMesh.newFromFile("/sdcard/base.dae");
 	}
 	
 	private Component vis;
@@ -104,7 +104,7 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 	private Cylinder cyl = new Cylinder();
 	private Cube cube = new Cube();
 	private Sphere sphere = new Sphere();
-	private ColladaMesh test;
+	//private ColladaMesh test;
 	
 	private Map<String, UrdfDrawable> meshes = new HashMap<String, UrdfDrawable>();
 	
@@ -166,7 +166,7 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 	}
 
 	private void loadMesh(String meshResourceName) {
-		meshes.put(meshResourceName, test);
+		//meshes.put(meshResourceName, test);
 	}
 	
 	@Override
