@@ -44,7 +44,7 @@ public class Cylinder implements Shape {
 	private Color color = new Color(1, 1, 0, 1);
 
 	public Cylinder() {
-		initGeometry(30);
+		initGeometry(14);
 	}
 
 	private void initGeometry(int sides) {
@@ -77,7 +77,7 @@ public class Cylinder implements Shape {
 		bottomNormals[1] = 0f;
 		bottomNormals[2] = -1f;
 		
-		for(double theta = 0; theta <= (2.0 * Math.PI + dTheta); theta += dTheta) {
+		for(double theta = 0; theta <= (2.0 * Math.PI); theta += dTheta) {
 			sideVertices[sideVidx++] = (float) Math.cos(theta); // X
 			sideVertices[sideVidx++] = (float) Math.sin(theta); // Y
 			sideVertices[sideVidx++] = 0.5f; // Z

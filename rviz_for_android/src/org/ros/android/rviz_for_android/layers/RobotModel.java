@@ -93,9 +93,6 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 				requestRender();
 			}
 		}));
-		 
-		
-		//test = ColladaMesh.newFromFile("/sdcard/base.dae");
 	}
 	
 	private Component vis;
@@ -104,7 +101,6 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 	private Cylinder cyl = new Cylinder();
 	private Cube cube = new Cube();
 	private Sphere sphere = new Sphere();
-	//private ColladaMesh test;
 	
 	private Map<String, UrdfDrawable> meshes = new HashMap<String, UrdfDrawable>();
 	
@@ -166,6 +162,7 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 	}
 
 	private void loadMesh(String meshResourceName) {
+		//test = ColladaMesh.newFromFile("/sdcard/base.dae");
 		//meshes.put(meshResourceName, test);
 	}
 	
@@ -174,10 +171,8 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 		this.ftt = frameTransformTree;
 		this.cam = camera;
 		this.params = node.getParameterTree();
-		
-		readyToDraw = false;
+
 		reloadUrdf(DEFAULT_PARAM_VALUE);
-		readyToDraw = true;
 	}
 
 	private void reloadUrdf(String param) {

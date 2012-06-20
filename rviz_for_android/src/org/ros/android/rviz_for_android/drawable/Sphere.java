@@ -37,8 +37,8 @@ public class Sphere extends BaseShape {
 	int m_Stacks, m_Slices, elementsToDraw;
 
 	public Sphere() {
-		init(10, 10, 1.0f, 1.0f);
-		elementsToDraw = (m_Slices+1)*2*(m_Stacks-1)+2;
+		init(14, 14, 1.0f, 1.0f);
+		elementsToDraw = (m_Slices + 1) * 2 * (m_Stacks - 1) + 2;
 	}
 
 	private void init(int stacks, int slices, float radius, float squash) {
@@ -133,21 +133,22 @@ public class Sphere extends BaseShape {
 	}
 
 	private float radius;
+
 	public void draw(GL10 gl, Transform transform, float radius) {
 		this.radius = radius;
 		super.setTransform(transform);
 		super.draw(gl);
 		gl.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
-		gl.glNormalPointer(GL10.GL_FLOAT, 0, m_NormalData);                   
-        gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);             
-           
-        gl.glVertexPointer(3, GL10.GL_FLOAT, 0, m_VertexData);                     
-        gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+		gl.glNormalPointer(GL10.GL_FLOAT, 0, m_NormalData);
+		gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
 
-        gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, elementsToDraw);
-        
-        gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-        gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
+		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, m_VertexData);
+		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+
+		gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, elementsToDraw);
+
+		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+		gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
 	}
 
 	@Override
@@ -155,5 +156,4 @@ public class Sphere extends BaseShape {
 		gl.glScalef(radius, radius, radius);
 	}
 
-	
 }
