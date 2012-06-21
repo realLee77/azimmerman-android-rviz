@@ -59,45 +59,9 @@ public class MeshFileDownloader {
 	public static MeshFileDownloader getMeshFileDownloader(String host, Activity context) {
 		if(instance == null) {
 			// Initialize the new instance
-			if(isDownloadManagerAvailable(context))
-				instance = new MeshFileDownloader(host, context);
-			else
-				throw new RuntimeException("Download manager not available!");
+			instance = new MeshFileDownloader(host, context);
 		}
 		return instance;
-	}
-
-	public static boolean isDownloadManagerAvailable(Context context) {
-		try {
-			if(Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
-				return false;
-			}
-			Intent intent = new Intent(Intent.ACTION_MAIN);
-			intent.addCategory(Intent.CATEGORY_LAUNCHER);
-			intent.setClassName("com.android.providers.downloads.ui", "com.android.providers.downloads.ui.DownloadList");
-			List<ResolveInfo> list = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-			return list.size() > 0;
-		} catch(Exception e) {
-			return false;
-		}
-	}
-
-	public String queryServerBackground(String url, String filename) {
-		DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-		request.setDescription("Some descrition");
-		request.setTitle("Some title");
-		// in order for this if to run, you must use the android 3.2 to compile your app
-		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			request.allowScanningByMediaScanner();
-			request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-		}
-		request.setDestinationUri(Uri.parse(context.getFilesDir().toString() + "/" + filename));
-		// request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "name-of-the-file.ext");
-
-		// get download service and enqueue file
-		DownloadManager manager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-		manager.enqueue(request);
-		return filename;
 	}
 
 	public MeshFileDownloader(String host, final Activity context) {
@@ -106,12 +70,12 @@ public class MeshFileDownloader {
 		this.context = context;
 		this.host = host;
 
-		clearCache();
+//		clearCache();
 
 		context.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				mProgressDialog = new ProgressDialog(context);
+				mProgressDialog = new ProgressDialog(MainActivity.getAppContext());
 				mProgressDialog.setMessage("Download progress");
 				mProgressDialog.setIndeterminate(false);
 				mProgressDialog.setMax(100);
@@ -130,7 +94,7 @@ public class MeshFileDownloader {
 		}
 	}
 
-	public Context getContext() {
+	public Activity getContext() {
 		return context;
 	}
 
@@ -246,7 +210,10 @@ public class MeshFileDownloader {
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
-			mProgressDialog.show();
+			if(!context.isFinishing())
+				mProgressDialog.show();
+			else
+				Log.e("Downloader", "Context is not ready to display a dialog");
 			mProgressDialog.setProgress(0);
 		}
 

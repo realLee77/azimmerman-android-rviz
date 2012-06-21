@@ -25,7 +25,7 @@ import org.ros.android.RosActivity;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
-import org.ros.android.rviz_for_android.layers.RobotModel;
+import org.ros.android.rviz_for_android.layers.RobotModelLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
@@ -222,7 +222,7 @@ public class MainActivity extends RosActivity {
 			newLayer = new GridLayer(10, 1f);
 			break;
 		case 2:
-			newLayer = new RobotModel(this, mfd);
+			newLayer = new RobotModelLayer(mfd);
 			break;
 		}
 

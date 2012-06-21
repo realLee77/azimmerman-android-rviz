@@ -19,6 +19,7 @@ package org.ros.android.rviz_for_android.drawable.loader;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -164,6 +165,18 @@ public class ColladaLoader extends XmlReader {
 			return new TrianglesShape(data.get("POSITION").getData().getArray(), data.get("NORMAL").getData().getArray(), indices, defaultColor);
 		}
 
+		// Find the scale of the mesh (if present)
+		if(nodeExists("/COLLADA/library_visual_scenes//scale")) {
+			float[] scales = toFloatArray(existResults.item(0).getTextContent());
+			Log.d("DAE", "Scale factor: " + Arrays.toString(scales));
+			float[] vertices = data.get("POSITION").getData().getArray();
+			long now = System.nanoTime();
+			for(int i = 0; i < vertices.length; i++) {
+				vertices[i] = vertices[i] * scales[i%3];
+			}
+			Log.d("DAE", "Applying scales took " + (System.nanoTime()-now)/(1000000.0) + " sec");
+		}
+		
 		// Deindex
 		Map<String, FloatVector> results = deindex(data, indices, type.getVertexCount(triCount));
 
@@ -203,20 +216,14 @@ public class ColladaLoader extends XmlReader {
 				Log.i("DAE", "  Mesh has " + t.toString() + " texture component.");
 				String texPointer = existResults.item(0).getNodeValue();
 
-				System.out.println(t.toString() + " " + texPointer);
-
 				// Locate the image ID from the texture pointer
 				String imgID = getSingleNode("/COLLADA/library_effects//newparam[@sid='" + texPointer + "']/sampler2D/source").getTextContent();
 
-				System.out.println(imgID);
-
 				// Locate the image name
 				String imgName = getSingleNode("/COLLADA/library_effects//newparam[@sid='" + imgID + "']/surface/init_from").getTextContent();
-				System.out.println(imgName);
 
 				// Locate the filename
 				String filename = getSingleNode("/COLLADA/library_images/image[@id='" + imgName + "']/init_from").getTextContent();
-				System.out.println(filename);
 
 				retval.put(t.toString(), loadTextureFile(imgPrefix, filename));
 			}
@@ -228,14 +235,6 @@ public class ColladaLoader extends XmlReader {
 	private Bitmap loadTextureFile(String prefix, String filename) {
 		Log.d("DAE", "Need to load an image: " + prefix + "   " + filename);
 		return openTextureFile(mfd.getContext().getFilesDir().toString() + "/", mfd.getFile(prefix + filename));
-//		if(mfd.fileExists(prefix + filename)) {
-//			Log.d("DAE", "File already exists! Opening and returning the contents.");
-//		
-//		} else {
-//			Log.d("DAE", "File doesn't exist! Downloading it from the server");
-//			mfd.getFile(prefix + filename);
-//		}
-//		return null;
 	}
 	
 	private Bitmap openTextureFile(String path, String filename) {
