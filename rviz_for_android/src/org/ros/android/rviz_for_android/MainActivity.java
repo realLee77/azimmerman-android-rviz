@@ -30,6 +30,7 @@ import org.ros.android.rviz_for_android.layers.RobotModel;
 import org.ros.android.rviz_for_android.layers.TextLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
+import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.layer.DefaultLayer;
 import org.ros.android.view.visualization.layer.Layer;
@@ -43,6 +44,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -92,6 +94,9 @@ public class MainActivity extends RosActivity {
 	// Enable/disable following
 	boolean following = false;
 	ParentableOrbitCameraControlLayer camControl;
+	
+	// Mesh downloader
+	MeshFileDownloader mfd;
 
 	public MainActivity() {
 		super("Rviz", "Rviz");
@@ -183,12 +188,13 @@ public class MainActivity extends RosActivity {
 		propAdapter = new PropertyListAdapter(layers, getApplicationContext());
 		elv.setAdapter(propAdapter);
 		elv.setItemsCanFocus(true);
-
+		
+		// TODO: Add default layers. MAKE THESE LOADED FROM A CONFIG FILE
 		addNewLayer(0);
 		addNewLayer(1);
-		addNewLayer(2);
+//		addNewLayer(2);
 		
-		visualizationView.addLayer(new FPSLayer());
+//		visualizationView.addLayer(new FPSLayer());
 	}
 
 	public static Context getAppContext() {
@@ -197,6 +203,23 @@ public class MainActivity extends RosActivity {
 
 	@Override
 	protected void init(NodeMainExecutor nodeMainExecutor) {
+		mfd = MeshFileDownloader.getMeshFileDownloader("http://" + getMasterUri().getHost().toString() + ":44644", this);
+		// TODO: Downloader test
+		for(int i = 0; i < 20; i++) {
+			String result = mfd.getFile("package://pr2_description/meshes/gripper_v0/l_finger.dae");
+			Log.d("MainActivity", "Did it work? " + result);
+			Log.d("MainActivity", "Do we have it?" + mfd.fileExists(result));
+			Log.d("MainActivity", "Are we really sure?" + mfd.fileExists("package://pr2_description/meshes/gripper_v0/l_finger.dae"));
+			Log.d("MainActivity", "What's the prefix? " + mfd.getPrefix("package://pr2_description/meshes/gripper_v0/l_finger.dae"));
+			try {
+				Thread.sleep(100);
+			} catch(InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			mfd.clearCache();
+		}
+		
 		NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
 		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/map_view"));
 	}
@@ -211,7 +234,7 @@ public class MainActivity extends RosActivity {
 			newLayer = new GridLayer(10, 1f);
 			break;
 		case 2:
-			newLayer = new RobotModel(null);
+			newLayer = new RobotModel(this, mfd);
 			break;
 		}
 

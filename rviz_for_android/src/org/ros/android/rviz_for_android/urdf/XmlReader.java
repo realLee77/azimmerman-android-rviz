@@ -19,6 +19,7 @@ package org.ros.android.rviz_for_android.urdf;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,10 +61,9 @@ public abstract class XmlReader {
 	 * @param contents
 	 *            The contents of the XML file in String form
 	 */
-	protected void buildDocument(String contents) {
+	protected void buildDocument(InputStream file) {
 		try {
-			Reader reader = new CharArrayReader(contents.toCharArray());
-			doc = builder.parse(new InputSource(reader));
+			doc = builder.parse(file);
 		} catch(SAXException e1) {
 			e1.printStackTrace();
 		} catch(IOException e1) {
