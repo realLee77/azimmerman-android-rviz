@@ -19,7 +19,6 @@ package org.ros.android.rviz_for_android.layers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -34,18 +33,17 @@ import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.rviz_for_android.urdf.Component;
-import org.ros.android.rviz_for_android.urdf.MeshDownloader;
+import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfLink;
 import org.ros.android.rviz_for_android.urdf.UrdfReader;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.OpenGlTransform;
 import org.ros.android.view.visualization.layer.DefaultLayer;
-import org.ros.android.view.visualization.shape.Color;
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.rosjava_geometry.FrameTransformTree;
-import org.ros.rosjava_geometry.Transform;
 
+import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
@@ -56,7 +54,6 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 	private FrameTransformTree ftt;
 	private Camera cam;
 	private UrdfReader reader;
-	private MeshDownloader downloader;
 	private ParameterTree params;
 
 	private volatile boolean readyToDraw = false;
@@ -66,9 +63,17 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 	// Boolean access times are required to properly draw the model 
 	private volatile boolean drawVis = true;
 	private volatile boolean drawCol = false;
+	
+	private Context context;
+	private MeshFileDownloader mfd;
 
-	public RobotModel(MeshDownloader downloader) {
-		this.downloader = downloader;
+	public RobotModel(Context context, MeshFileDownloader mfd) {
+		if(mfd == null)
+			throw new IllegalArgumentException("MFD is null!");
+		
+		this.context = context;
+		this.mfd = mfd;
+
 		reader = new UrdfReader();
 		
 		prop.addSubProperty(new StringProperty("Parameter", DEFAULT_PARAM_VALUE, new PropertyUpdateListener<String>() {
@@ -162,8 +167,7 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 	}
 
 	private void loadMesh(String meshResourceName) {
-		//test = ColladaMesh.newFromFile("/sdcard/base.dae");
-		//meshes.put(meshResourceName, test);
+		meshes.put(meshResourceName, ColladaMesh.newFromFile(meshResourceName, mfd));
 	}
 	
 	@Override

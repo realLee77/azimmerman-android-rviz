@@ -17,12 +17,13 @@
 
 package org.ros.android.rviz_for_android.drawable.loader;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.ros.android.rviz_for_android.MainActivity;
+import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.XmlReader;
 import org.ros.android.view.visualization.shape.BaseShape;
 import org.ros.android.view.visualization.shape.Color;
@@ -30,13 +31,12 @@ import org.ros.android.view.visualization.shape.TexturedTrianglesShape;
 import org.ros.android.view.visualization.shape.TrianglesShape;
 import org.w3c.dom.NodeList;
 
-import com.tiffdecoder.TiffDecoder;
-
-import android.content.Intent;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.util.Log;
+
+import com.tiffdecoder.TiffDecoder;
 
 public class ColladaLoader extends XmlReader {
 	private static enum semanticType {
@@ -55,15 +55,27 @@ public class ColladaLoader extends XmlReader {
 	};
 
 	private List<BaseShape> geometries;
+	
+	private MeshFileDownloader mfd;
+	private String imgPrefix;
+	private Context context;
 
 	public ColladaLoader() {
 		super(false);
 	}
 
-	public void readDae(String contents) {
-		if(contents == null)
+	public void setDownloader(MeshFileDownloader mfd) {
+		if(mfd == null)
+			throw new IllegalArgumentException("Passed a null MeshFileDownloader! Just what do you think you're doing?");
+		this.mfd = mfd;
+		this.context = mfd.getContext();
+	}
+	
+	public void readDae(InputStream fileStream, String imgPrefix) {
+		if(fileStream == null)
 			throw new IllegalArgumentException("Invalid DAE file contents passed to ColladaLoader");
-		buildDocument(contents);
+		this.imgPrefix = imgPrefix;
+		buildDocument(fileStream);
 		parseDae();
 	}
 
@@ -206,15 +218,27 @@ public class ColladaLoader extends XmlReader {
 				String filename = getSingleNode("/COLLADA/library_images/image[@id='" + imgName + "']/init_from").getTextContent();
 				System.out.println(filename);
 
-				// TODO: genericize path
-				retval.put(t.toString(), loadTextureFile("/sdcard/", filename));
+				retval.put(t.toString(), loadTextureFile(imgPrefix, filename));
 			}
 		}
 
 		return retval;
 	}
-
-	private Bitmap loadTextureFile(String path, String filename) {
+	
+	private Bitmap loadTextureFile(String prefix, String filename) {
+		Log.d("DAE", "Need to load an image: " + prefix + "   " + filename);
+		return openTextureFile(mfd.getContext().getFilesDir().toString() + "/", mfd.getFile(prefix + filename));
+//		if(mfd.fileExists(prefix + filename)) {
+//			Log.d("DAE", "File already exists! Opening and returning the contents.");
+//		
+//		} else {
+//			Log.d("DAE", "File doesn't exist! Downloading it from the server");
+//			mfd.getFile(prefix + filename);
+//		}
+//		return null;
+	}
+	
+	private Bitmap openTextureFile(String path, String filename) {
 		Bitmap retval = null;
 		if(filename.toLowerCase().endsWith(".tif")) {
 			Log.d("DAE", "Loading TIF image: " + path + filename);

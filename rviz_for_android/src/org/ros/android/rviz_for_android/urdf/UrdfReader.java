@@ -17,6 +17,7 @@
 
 package org.ros.android.rviz_for_android.urdf;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +37,7 @@ public class UrdfReader extends XmlReader {
 
 	public void readUrdf(String urdf) {
 		this.urdf.clear();
-		buildDocument(urdf);
+		buildDocument(new ByteArrayInputStream(urdf.getBytes()));
 		parseUrdf();
 		buildColors();
 	}

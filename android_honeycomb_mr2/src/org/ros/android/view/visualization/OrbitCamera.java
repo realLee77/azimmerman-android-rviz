@@ -20,7 +20,6 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
-import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
