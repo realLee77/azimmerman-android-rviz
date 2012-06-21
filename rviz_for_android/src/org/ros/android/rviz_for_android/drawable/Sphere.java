@@ -37,7 +37,7 @@ public class Sphere extends BaseShape {
 	int m_Stacks, m_Slices, elementsToDraw;
 
 	public Sphere() {
-		init(14, 14, 1.0f, 1.0f);
+		init(17, 14, 0.98f, 1.0f);
 		elementsToDraw = (m_Slices + 1) * 2 * (m_Stacks - 1) + 2;
 	}
 

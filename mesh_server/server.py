@@ -4,6 +4,7 @@ import rospkg
 from os import curdir, sep, path
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
     
+rp = rospkg.RosPack()
 class MyHandler( BaseHTTPRequestHandler):            
     def do_GET(self):
         try:
@@ -12,7 +13,6 @@ class MyHandler( BaseHTTPRequestHandler):
                 if len(splitPath) > 2:
                     splitPath.remove('');
                     try:
-                        rp = rospkg.RosPack()
                         pkg_path = rp.get_path(splitPath[1])
                         subdir = self.path.replace('/PKG/' + splitPath[1], '')
                         filePath = pkg_path + subdir
@@ -29,16 +29,6 @@ class MyHandler( BaseHTTPRequestHandler):
                 else:
                     self.send_error(404,'Not enough information supplied: %s' % self.path)
             return
-#            if self.path.endswith(".esp"):
-#                self.send_response(200)
-#                self.send_header('Content-type', 'text/html')
-#                self.end_headers()
-#                rp = rospkg.RosPack()
-#                self.wfile.write("rviz is at" + str(rp.get_path('rospy')))
-#                self.wfile.write("hey, today is the " + str(time.localtime()[7]))
-#                self.wfile.write(" day in the year " + str(time.localtime()[0]))
-#                return
-#            return
         except IOError:
             self.send_error(404,'File Not Found: %s' % self.path)
 

@@ -43,11 +43,13 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
-public class RobotModel extends DefaultLayer implements LayerWithProperties {
+public class RobotModelLayer extends DefaultLayer implements LayerWithProperties {
 
 	private static final String DEFAULT_PARAM_VALUE = "/robot_description";
 	private BoolProperty prop = new BoolProperty("Enabled", true, null);
@@ -64,14 +66,14 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 	private volatile boolean drawVis = true;
 	private volatile boolean drawCol = false;
 	
-	private Context context;
+	private Activity context;
 	private MeshFileDownloader mfd;
 
-	public RobotModel(Context context, MeshFileDownloader mfd) {
+	public RobotModelLayer(MeshFileDownloader mfd) {
 		if(mfd == null)
 			throw new IllegalArgumentException("MFD is null!");
 		
-		this.context = context;
+		this.context = mfd.getContext();
 		this.mfd = mfd;
 
 		reader = new UrdfReader();
@@ -180,6 +182,7 @@ public class RobotModel extends DefaultLayer implements LayerWithProperties {
 	}
 
 	private void reloadUrdf(String param) {
+		Toast.makeText(context, "Parsing URDF...", Toast.LENGTH_LONG).show();
 		readyToDraw = false;
 		String urdf_xml = null;
 		if(params.has(param))
