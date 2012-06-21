@@ -85,7 +85,6 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable {
 		super.draw(gl);
 		
 		for(BaseShape g : geometries) {
-			g.setColor(super.color);
 			g.draw(gl);
 		}
 
