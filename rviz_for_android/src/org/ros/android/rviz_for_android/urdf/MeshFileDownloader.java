@@ -41,6 +41,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 public class MeshFileDownloader {
@@ -120,6 +121,11 @@ public class MeshFileDownloader {
 		return filename;
 	}
 
+	/**
+	 * Download a file on the current thread. This will block until the file has been downloaded. No progress dialog is shown
+	 * @param path the URL (http or package) to download
+	 * @return the name of the file accessible through the context-private file space
+	 */
 	public String getFile(final String path) {
 		synchronized(lock) {
 			if(fileExists(path))
@@ -129,15 +135,36 @@ public class MeshFileDownloader {
 				if(path.startsWith("http://"))
 					return queryServer(new URL(path), filename);
 				else if(path.toLowerCase().startsWith("package://")) {
+					return queryServer(new URL(host + "/PKG" + path.substring(9)), filename);
+				} else {
+					Log.e("Downloader", "Unexpected scheme: " + path);
+					return null;
+				}
+			} catch(MalformedURLException e) {
+				Log.e("Downloader", "Path and URL are malformed: " + host + "    " + path);
+				e.printStackTrace();
+			}
+			return null;
+		}		
+	}
+	
+	/**
+	 * Download a file in a background thread using an AsyncTask. This will show a download progress dialog
+	 * @param path the URL (http or package) to download
+	 * @return the name of the file accessible through the context-private file space
+	 */
+	public String getFileBackground(final String path) {
+		synchronized(lock) {
+			if(fileExists(path))
+				return sanitizeFilename(path);
+			final String filename = sanitizeFilename(path);
+			try {
+				if(path.startsWith("http://"))
+					return queryServer(new URL(path), filename);
+				else if(path.toLowerCase().startsWith("package://")) {
 					qs = new QueryServer();
-					context.runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							qs.execute(host + "/PKG" + path.substring(9), filename, path.substring(path.lastIndexOf('/') + 1, path.length()));
-						}
-					});
+					qs.execute(host + "/PKG" + path.substring(9), filename, path.substring(path.lastIndexOf('/') + 1, path.length()));
 					return qs.get(10, TimeUnit.SECONDS);
-					// return queryServer(new URL(host + "/PKG" + path.substring(9)), filename);
 				} else {
 					Log.e("Downloader", "Unexpected scheme: " + path);
 					return null;

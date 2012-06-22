@@ -22,9 +22,9 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.view.visualization.Vertices;
 import org.ros.android.view.visualization.shape.BaseShape;
-import org.ros.android.view.visualization.shape.Color;
-import org.ros.android.view.visualization.shape.TriangleStripShape;
 import org.ros.rosjava_geometry.Transform;
+
+import android.util.FloatMath;
 
 public class Sphere extends BaseShape {
 
@@ -41,6 +41,7 @@ public class Sphere extends BaseShape {
 		elementsToDraw = (m_Slices + 1) * 2 * (m_Stacks - 1) + 2;
 	}
 
+	// Sphere generation code from the book OpenGL ES 2.0 Programming in Android
 	private void init(int stacks, int slices, float radius, float squash) {
 		float[] vertexData;
 		float[] normalData;
@@ -76,10 +77,10 @@ public class Sphere extends BaseShape {
 
 			float phi1 = (float) Math.PI * ((float) (phiIdx + 1) * (1.0f / (float) (m_Stacks)) - 0.5f);
 
-			float cosPhi0 = (float) Math.cos(phi0);
-			float sinPhi0 = (float) Math.sin(phi0);
-			float cosPhi1 = (float) Math.cos(phi1);
-			float sinPhi1 = (float) Math.sin(phi1);
+			float cosPhi0 = FloatMath.cos(phi0);
+			float sinPhi0 = FloatMath.sin(phi0);
+			float cosPhi1 = FloatMath.cos(phi1);
+			float sinPhi1 = FloatMath.sin(phi1);
 
 			float cosTheta, sinTheta;
 
@@ -89,8 +90,8 @@ public class Sphere extends BaseShape {
 				// increment along the longitude circle each "slice"
 
 				float theta = (float) (2.0f * (float) Math.PI * ((float) thetaIdx) * (1.0 / (float) (m_Slices - 1)));
-				cosTheta = (float) Math.cos(theta);
-				sinTheta = (float) Math.sin(theta);
+				cosTheta = FloatMath.cos(theta);
+				sinTheta = FloatMath.sin(theta);
 
 				// we're generating a vertical pair of points, such
 				// as the first point of stack 0 and the first point of stack 1

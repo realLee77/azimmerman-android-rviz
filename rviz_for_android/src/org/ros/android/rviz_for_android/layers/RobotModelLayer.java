@@ -22,9 +22,11 @@ import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.rviz_for_android.MainActivity;
 import org.ros.android.rviz_for_android.drawable.ColladaMesh;
 import org.ros.android.rviz_for_android.drawable.Cube;
 import org.ros.android.rviz_for_android.drawable.Cylinder;
+import org.ros.android.rviz_for_android.drawable.StlMesh;
 import org.ros.android.rviz_for_android.drawable.Sphere;
 import org.ros.android.rviz_for_android.drawable.UrdfDrawable;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
@@ -45,8 +47,10 @@ import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 public class RobotModelLayer extends DefaultLayer implements LayerWithProperties {
@@ -60,24 +64,24 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 	private volatile boolean readyToDraw = false;
 	private List<UrdfLink> urdf;
-	
+
 	// The visual and collision draw options exist both as properties and booleans in the RobotModel layer
-	// Boolean access times are required to properly draw the model 
+	// Boolean access times are required to properly draw the model
 	private volatile boolean drawVis = true;
 	private volatile boolean drawCol = false;
-	
+
 	private Activity context;
 	private MeshFileDownloader mfd;
 
 	public RobotModelLayer(MeshFileDownloader mfd) {
 		if(mfd == null)
 			throw new IllegalArgumentException("MFD is null!");
-		
+
 		this.context = mfd.getContext();
 		this.mfd = mfd;
 
 		reader = new UrdfReader();
-		
+
 		prop.addSubProperty(new StringProperty("Parameter", DEFAULT_PARAM_VALUE, new PropertyUpdateListener<String>() {
 			@Override
 			public void onPropertyChanged(String newval) {
@@ -101,35 +105,35 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			}
 		}));
 	}
-	
+
 	private Component vis;
 	private Component col;
 
 	private Cylinder cyl = new Cylinder();
 	private Cube cube = new Cube();
 	private Sphere sphere = new Sphere();
-	
+
 	private Map<String, UrdfDrawable> meshes = new HashMap<String, UrdfDrawable>();
-	
+
 	@Override
 	public void draw(GL10 gl) {
 		if(!readyToDraw || ftt == null || urdf == null) {
 			return;
 		}
-			
+
 		for(UrdfLink ul : urdf) {
 			vis = ul.getVisual();
 			col = ul.getCollision();
-			
+
 			gl.glPushMatrix();
-			
+
 			// Transform to the URDF link's frame
-//			if(ftt.canTransform(cam.getFixedFrame(), ul.getName())) {
-//				Transform t = ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform();
-//				Log.i("RobotModel", t.toString());
-//				OpenGlTransform.apply(gl, t);
-//			}
-		
+			// if(ftt.canTransform(cam.getFixedFrame(), ul.getName())) {
+			// Transform t = ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform();
+			// Log.i("RobotModel", t.toString());
+			// OpenGlTransform.apply(gl, t);
+			// }
+
 			OpenGlTransform.apply(gl, ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
 
 			// Draw the shape
@@ -137,16 +141,16 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 				drawComponent(gl, vis);
 			}
 			if(drawCol && col != null) {
-				drawComponent(gl, col);		
+				drawComponent(gl, col);
 			}
 
 			gl.glPopMatrix();
 		}
 	}
-	
+
 	private void drawComponent(GL10 gl, Component com) {
 		switch(com.getType()) {
-		case BOX:		
+		case BOX:
 			cube.setColor(com.getMaterial_color());
 			cube.draw(gl, com.getOrigin(), com.getSize());
 			break;
@@ -160,7 +164,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			break;
 		case MESH:
 			UrdfDrawable ud = meshes.get(com.getMesh());
-			if(ud != null)						
+			if(ud != null)
 				ud.draw(gl, com.getOrigin(), com.getSize());
 			else
 				loadMesh(com.getMesh());
@@ -169,9 +173,14 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	}
 
 	private void loadMesh(String meshResourceName) {
-		meshes.put(meshResourceName, ColladaMesh.newFromFile(meshResourceName, mfd));
+		if(meshResourceName.toLowerCase().endsWith(".dae"))
+			meshes.put(meshResourceName, ColladaMesh.newFromFile(meshResourceName, mfd));
+		else if(meshResourceName.toLowerCase().endsWith(".stl"))
+			meshes.put(meshResourceName, StlMesh.newFromFile(meshResourceName, mfd));
+		else
+			Log.e("Downloader", "Unknown mesh type! " + meshResourceName);
 	}
-	
+
 	@Override
 	public void onStart(final ConnectedNode node, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
 		this.ftt = frameTransformTree;
@@ -181,20 +190,16 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		reloadUrdf(DEFAULT_PARAM_VALUE);
 	}
 
-	private void reloadUrdf(String param) {
-		Toast.makeText(context, "Parsing URDF...", Toast.LENGTH_LONG).show();
-		readyToDraw = false;
-		String urdf_xml = null;
-		if(params.has(param))
-			urdf_xml = params.getString(param);
-		else
-			return;
-		reader.readUrdf(urdf_xml);
-		this.urdf = reader.getUrdf();
-		Log.d("RobotModel", "Parsed URDF! Size: " + urdf.size());
-		readyToDraw = true;
+	private void reloadUrdf(final String param) {
+		final LoadUrdf lu = new LoadUrdf();
+		context.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				lu.execute(param);
+			}
+		});
 	}
-	
+
 	@Override
 	public boolean isEnabled() {
 		return prop.getValue() && (drawVis || drawCol);
@@ -205,4 +210,51 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		return prop;
 	}
 
+	private class LoadUrdf extends AsyncTask<String, String, Void> {
+
+		@Override
+		protected void onProgressUpdate(String... values) {
+			super.onProgressUpdate(values);
+			Toast.makeText(context, values[0], Toast.LENGTH_SHORT).show();
+		}
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			readyToDraw = false;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			super.onPostExecute(result);
+			readyToDraw = true;
+		}
+
+		@Override
+		protected Void doInBackground(String... parameters) {
+			publishProgress("Parsing URDF...");
+			String param = parameters[0];
+			
+			// Parse the URDF
+			String urdf_xml = null;
+			if(params.has(param))
+				urdf_xml = params.getString(param);
+			else
+				return null;
+			reader.readUrdf(urdf_xml);
+			urdf = reader.getUrdf();
+			publishProgress("Downloading geometry...");
+			// Load any referenced models
+			for(UrdfLink ul : urdf) {
+				for(Component c : ul.getComponents()) {
+					if(c.getType() == Component.GEOMETRY.MESH) {
+						loadMesh(c.getMesh());
+					}
+				}
+			}
+			publishProgress("Done!");
+			return null;
+		}
+
+	}
 }

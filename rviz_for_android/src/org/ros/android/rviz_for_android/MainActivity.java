@@ -23,6 +23,7 @@ import java.util.Set;
 import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
+import org.ros.android.rviz_for_android.layers.FPSLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
 import org.ros.android.rviz_for_android.layers.RobotModelLayer;
@@ -56,6 +57,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 /**
@@ -176,7 +178,7 @@ public class MainActivity extends RosActivity {
 
 		createLayerDialogs();
 		configureGUI();
-
+		
 		camControl = new ParentableOrbitCameraControlLayer(this);
 		camControl.setName("Camera");
 		layers.add(camControl);
@@ -196,9 +198,8 @@ public class MainActivity extends RosActivity {
 		// TODO: Add default layers. MAKE THESE LOADED FROM A CONFIG FILE
 		addNewLayer(0);
 		addNewLayer(1);
-//		addNewLayer(2);		
 		
-//		visualizationView.addLayer(new FPSLayer());
+		visualizationView.addLayer(new FPSLayer());
 	}
 
 	public static Context getAppContext() {

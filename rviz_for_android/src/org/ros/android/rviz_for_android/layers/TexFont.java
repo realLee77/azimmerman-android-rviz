@@ -358,6 +358,9 @@ public class TexFont
 	// Print a line of text to screen at specified co-ords
 	public void PrintAt(GL10 gl, String text, int x, int y)
 	{
+		// Lighting must be disabled for glDrawTexfOES to work
+		gl.glDisable(GL10.GL_LIGHTING);
+		
 		int glyph, col, row;
 		float xPos = x;
 		
@@ -400,6 +403,9 @@ public class TexFont
 		
 		// Clean up by disabling texture
 		gl.glDisable(GL10.GL_TEXTURE_2D);
+		
+		// Re-enable lighting
+		gl.glEnable(GL10.GL_LIGHTING);
 	}
 	
 	// Return the length (pixels) of a string
