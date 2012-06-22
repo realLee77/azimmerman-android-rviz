@@ -17,7 +17,6 @@
 package org.ros.android.rviz_for_android.drawable;
 
 import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -27,6 +26,8 @@ import org.ros.android.view.visualization.shape.Color;
 import org.ros.android.view.visualization.shape.Shape;
 import org.ros.rosjava_geometry.Transform;
 
+import android.util.FloatMath;
+
 public class Cylinder implements Shape {
 
 	private FloatBuffer sideVertices;
@@ -34,13 +35,15 @@ public class Cylinder implements Shape {
 
 	private FloatBuffer topVertices;
 	private FloatBuffer topNormals;
-	
+
 	private FloatBuffer bottomVertices;
 	private FloatBuffer bottomNormals;
 
 	private int stripTriangleCount = 0;
 	private int fanTriangleCount = 0;
 
+	private static final float TWO_PI = (float)(2*Math.PI);
+	
 	private Color color = new Color(1, 1, 0, 1);
 
 	public Cylinder() {
@@ -48,7 +51,7 @@ public class Cylinder implements Shape {
 	}
 
 	private void initGeometry(int sides) {
-		double dTheta = (2.0 * Math.PI) / sides;
+		double dTheta = TWO_PI / sides;
 
 		float[] sideVertices = new float[(sides + 1) * 6];
 		float[] sideNormals = new float[(sides + 1) * 6];
@@ -76,35 +79,34 @@ public class Cylinder implements Shape {
 		bottomNormals[0] = 0f;
 		bottomNormals[1] = 0f;
 		bottomNormals[2] = -1f;
-		
-		for(double theta = 0; theta <= (2.0 * Math.PI); theta += dTheta) {
-			sideVertices[sideVidx++] = (float) Math.cos(theta); // X
-			sideVertices[sideVidx++] = (float) Math.sin(theta); // Y
+
+		for(float theta = 0; theta <= (TWO_PI+dTheta); theta += dTheta) {
+			sideVertices[sideVidx++] = FloatMath.cos(theta); // X
+			sideVertices[sideVidx++] = FloatMath.sin(theta); // Y
 			sideVertices[sideVidx++] = 0.5f; // Z
 
-			sideVertices[sideVidx++] = (float) Math.cos(theta); // X
-			sideVertices[sideVidx++] = (float) Math.sin(theta); // Y
+			sideVertices[sideVidx++] = FloatMath.cos(theta); // X
+			sideVertices[sideVidx++] = FloatMath.sin(theta); // Y
 			sideVertices[sideVidx++] = -0.5f; // Z
 
-			sideNormals[sideNidx++] = (float) Math.cos(theta); // X
-			sideNormals[sideNidx++] = (float) Math.sin(theta); // Y
+			sideNormals[sideNidx++] = FloatMath.cos(theta); // X
+			sideNormals[sideNidx++] = FloatMath.sin(theta); // Y
 			sideNormals[sideNidx++] = 0f; // Z
 
-			sideNormals[sideNidx++] = (float) Math.cos(theta); // X
-			sideNormals[sideNidx++] = (float) Math.sin(theta); // Y
+			sideNormals[sideNidx++] = FloatMath.cos(theta); // X
+			sideNormals[sideNidx++] = FloatMath.sin(theta); // Y
 			sideNormals[sideNidx++] = 0f; // Z
-			
-			
+
 			// X
-			topVertices[capVidx] = (float) Math.cos(theta);
-			bottomVertices[capVidx++] = (float) Math.cos((2*Math.PI) - theta);//Math.sin(theta+(dTheta/2.0));
+			topVertices[capVidx] =FloatMath.cos(theta);
+			bottomVertices[capVidx++] = FloatMath.cos(TWO_PI - theta);
 			// Y
-			topVertices[capVidx] = (float) Math.sin(theta);
-			bottomVertices[capVidx++] = (float) Math.sin((2*Math.PI) - theta);//Math.cos(theta+(dTheta/2.0));
+			topVertices[capVidx] = FloatMath.sin(theta);
+			bottomVertices[capVidx++] = FloatMath.sin(TWO_PI - theta);
 			// Z
 			topVertices[capVidx] = 0.5f;
 			bottomVertices[capVidx++] = -0.5f;
-			
+
 			// Normals
 			topNormals[capNidx] = 0f;
 			bottomNormals[capNidx++] = 0f;
@@ -157,19 +159,19 @@ public class Cylinder implements Shape {
 
 		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 		gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
-		
+
 		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, sideVertices);
 		gl.glNormalPointer(GL10.GL_FLOAT, 0, sideNormals);
 		gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, stripTriangleCount);
-		
+
 		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, topVertices);
 		gl.glNormalPointer(GL10.GL_FLOAT, 0, topNormals);
 		gl.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, fanTriangleCount);
-		
+
 		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, bottomVertices);
-		gl.glNormalPointer(GL10.GL_FLOAT, 0, topNormals);
+		gl.glNormalPointer(GL10.GL_FLOAT, 0, bottomNormals);
 		gl.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, fanTriangleCount);
-		
+
 		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
 		gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
 		gl.glPopMatrix();

@@ -3,11 +3,13 @@ package org.ros.android.rviz_for_android.drawable.loader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
+import org.apache.commons.io.IOUtils;
 import org.ros.rosjava_geometry.Vector3;
 
 import android.util.Log;
@@ -45,9 +47,10 @@ public class StlLoader {
 	private Vector3 normalVec = Vector3.newIdentityVector3();
 	private Vector3[] vertexVec = { Vector3.newIdentityVector3(), Vector3.newIdentityVector3(), Vector3.newIdentityVector3(), Vector3.newIdentityVector3() };
 
-	public void load(String filename) {
+	public void load(InputStream stream) {
 		try {
-			in = new ByteArrayInputStream(Files.toByteArray(new File(filename)));
+			byte[] data = IOUtils.toByteArray(stream);
+			in = new ByteArrayInputStream(data);
 		} catch(IOException e) {
 			e.printStackTrace();
 		}

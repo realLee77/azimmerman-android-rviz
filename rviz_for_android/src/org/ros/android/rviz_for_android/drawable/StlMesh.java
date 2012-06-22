@@ -16,29 +16,40 @@
  */
 package org.ros.android.rviz_for_android.drawable;
 
+import java.io.FileNotFoundException;
+
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.drawable.loader.StlLoader;
+import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.view.visualization.shape.Color;
 import org.ros.android.view.visualization.shape.TrianglesShape;
 import org.ros.rosjava_geometry.Transform;
 
-public class Mesh extends TrianglesShape implements UrdfDrawable {
+public class StlMesh extends TrianglesShape implements UrdfDrawable {
 
 	private static final StlLoader loader = new StlLoader();
 	
-	public static Mesh newFromFile(String filename) {
+	public static StlMesh newFromFile(String filename, MeshFileDownloader mfd) {
 		float[] v;
 		float[] n;
+		
+		// Download the .DAE file if it doesn't exist
+		String loadedFilename = mfd.getFile(filename);
+		
 		synchronized(loader) {
-			loader.load(filename);
+			try {
+				loader.load(mfd.getContext().openFileInput(loadedFilename));
+			} catch(FileNotFoundException e) {
+				e.printStackTrace();
+			}
 			v = loader.getVertices();
 			n = loader.getNormals();
 		}
-		return new Mesh(v, n, new Color(0,1,1,1));
+		return new StlMesh(v, n, new Color(0,1,1,1));
 	}
 	
-	private Mesh(float[] vertices, float[] normals, Color color) {
+	private StlMesh(float[] vertices, float[] normals, Color color) {
 		super(vertices, normals, color);
 	}
 	

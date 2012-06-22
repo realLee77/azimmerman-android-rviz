@@ -56,11 +56,7 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable {
 		
 		synchronized(loader) {			
 			loader.setDownloader(mfd);	
-			try {
-				//mfd.getContext().openFileInput(loadedFilename);
-				// TODO: Read from an input stream to a string!!
-				//String contents = Files.toString(new File(mfd.getContext().getFilesDir().toString() + "/" + loadedFilename), Charset.defaultCharset());
-				
+			try {				
 				loader.readDae(mfd.getContext().openFileInput(loadedFilename), imgPrefix);
 			} catch(IOException e) {
 				e.printStackTrace();

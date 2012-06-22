@@ -170,11 +170,9 @@ public class ColladaLoader extends XmlReader {
 			float[] scales = toFloatArray(existResults.item(0).getTextContent());
 			Log.d("DAE", "Scale factor: " + Arrays.toString(scales));
 			float[] vertices = data.get("POSITION").getData().getArray();
-			long now = System.nanoTime();
 			for(int i = 0; i < vertices.length; i++) {
 				vertices[i] = vertices[i] * scales[i%3];
 			}
-			Log.d("DAE", "Applying scales took " + (System.nanoTime()-now)/(1000000.0) + " sec");
 		}
 		
 		// Deindex

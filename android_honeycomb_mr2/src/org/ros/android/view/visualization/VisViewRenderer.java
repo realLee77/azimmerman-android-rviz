@@ -92,7 +92,7 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		
 		gl.glLightModelf(GL10.GL_LIGHT_MODEL_TWO_SIDE, 1.0f);
 		
-		gl.glLightModelfv(GL10.GL_LIGHT_MODEL_AMBIENT, Vertices.toFloatBuffer(new float[] {.4f,.4f,.4f,.4f}));
+		gl.glLightModelfv(GL10.GL_LIGHT_MODEL_AMBIENT, Vertices.toFloatBuffer(new float[] {.35f,.35f,.35f,.35f}));
 		//gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, white);
 		//gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_SPECULAR, white);
 		//gl.glMaterialf(GL10.GL_FRONT_AND_BACK, GL10.GL_SHININESS, 25);	
