@@ -14,7 +14,7 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.ros.android.rviz_for_android.drawable;
+package org.ros.android.rviz_for_android.urdf;
 
 import javax.microedition.khronos.opengles.GL10;
 
