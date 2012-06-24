@@ -16,22 +16,17 @@
  */
 package org.ros.android.rviz_for_android.drawable;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.List;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.drawable.loader.ColladaLoader;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.android.view.visualization.OpenGlTransform;
 import org.ros.android.view.visualization.shape.BaseShape;
 import org.ros.rosjava_geometry.Transform;
-
-import android.content.Context;
-
-import com.google.common.io.Files;
 
 public class ColladaMesh extends BaseShape implements UrdfDrawable {
 	protected static final ColladaLoader loader = new ColladaLoader();
