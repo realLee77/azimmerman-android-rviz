@@ -71,8 +71,6 @@ public class MeshFileDownloader {
 		this.context = context;
 		this.host = host;
 
-//		clearCache();
-
 		context.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {

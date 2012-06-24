@@ -26,6 +26,8 @@ import java.util.Map;
 import org.ros.android.view.visualization.shape.Color;
 import org.w3c.dom.NodeList;
 
+import android.util.Log;
+
 public class UrdfReader extends XmlReader {
 
 	private List<UrdfLink> urdf = new ArrayList<UrdfLink>();
@@ -67,8 +69,12 @@ public class UrdfReader extends XmlReader {
 
 	private void parseUrdf() {
 		NodeList nodes = getExpression("/robot/link/@name");
-
-		for(int i = 0; i < nodes.getLength(); i++) {
+		
+		int nodeLength = nodes.getLength();
+		
+		for(int i = 0; i < nodeLength; i++) {
+			Log.i("URDF", "Parsing node " + i + " of " + nodeLength);
+			
 			// Link name
 			String name = nodes.item(i).getNodeValue();
 			String prefix = "/robot/link[@name='" + name + "']";

@@ -22,6 +22,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.drawable.loader.StlLoader;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.android.view.visualization.shape.Color;
 import org.ros.android.view.visualization.shape.TrianglesShape;
 import org.ros.rosjava_geometry.Transform;

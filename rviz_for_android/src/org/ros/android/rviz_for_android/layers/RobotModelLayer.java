@@ -28,7 +28,6 @@ import org.ros.android.rviz_for_android.drawable.Cube;
 import org.ros.android.rviz_for_android.drawable.Cylinder;
 import org.ros.android.rviz_for_android.drawable.StlMesh;
 import org.ros.android.rviz_for_android.drawable.Sphere;
-import org.ros.android.rviz_for_android.drawable.UrdfDrawable;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
@@ -36,6 +35,7 @@ import org.ros.android.rviz_for_android.prop.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.rviz_for_android.urdf.Component;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.android.rviz_for_android.urdf.UrdfLink;
 import org.ros.android.rviz_for_android.urdf.UrdfReader;
 import org.ros.android.view.visualization.Camera;
@@ -212,16 +212,20 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 	private class LoadUrdf extends AsyncTask<String, String, Void> {
 
+		private Toast progressToast;
+		
 		@Override
 		protected void onProgressUpdate(String... values) {
 			super.onProgressUpdate(values);
-			Toast.makeText(context, values[0], Toast.LENGTH_SHORT).show();
+			progressToast.setText(values[0]);
+			progressToast.show();
 		}
 
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
 			readyToDraw = false;
+			progressToast = Toast.makeText(context, "", Toast.LENGTH_SHORT);
 		}
 
 		@Override
@@ -239,8 +243,10 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			String urdf_xml = null;
 			if(params.has(param))
 				urdf_xml = params.getString(param);
-			else
+			else {
+				publishProgress("Invalid parameter " + param);
 				return null;
+			}
 			reader.readUrdf(urdf_xml);
 			urdf = reader.getUrdf();
 			publishProgress("Downloading geometry...");
@@ -252,7 +258,6 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 					}
 				}
 			}
-			publishProgress("Done!");
 			return null;
 		}
 

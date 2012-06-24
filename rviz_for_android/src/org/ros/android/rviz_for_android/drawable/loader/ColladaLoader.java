@@ -18,6 +18,7 @@
 package org.ros.android.rviz_for_android.drawable.loader;
 
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,6 +36,9 @@ import org.w3c.dom.NodeList;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.opengl.ETC1Util;
+import android.opengl.ETC1Util.ETC1Texture;
 import android.util.Log;
 
 import com.tiffdecoder.TiffDecoder;
@@ -59,7 +63,6 @@ public class ColladaLoader extends XmlReader {
 	
 	private MeshFileDownloader mfd;
 	private String imgPrefix;
-	private Context context;
 
 	public ColladaLoader() {
 		super(false);
@@ -69,7 +72,6 @@ public class ColladaLoader extends XmlReader {
 		if(mfd == null)
 			throw new IllegalArgumentException("Passed a null MeshFileDownloader! Just what do you think you're doing?");
 		this.mfd = mfd;
-		this.context = mfd.getContext();
 	}
 	
 	public void readDae(InputStream fileStream, String imgPrefix) {
@@ -152,7 +154,7 @@ public class ColladaLoader extends XmlReader {
 		Log.d("DAE", "I'm expecting " + triCount + " triangles.");
 
 		boolean textured = false;
-		Map<String, Bitmap> textures = null;
+		Map<String, ETC1Texture> textures = null;
 
 		// Load the images if the mesh is textured. Otherwise, if the normals and positions are the only
 		// values included AND they have the same offset, there's no need to deindex, can return a mesh immediately
@@ -202,11 +204,11 @@ public class ColladaLoader extends XmlReader {
 	}
 
 	private enum textureType {
-		diffuse, bump
+		diffuse//, bump
 	};
 
-	private Map<String, Bitmap> getTextures(String prefix) {
-		Map<String, Bitmap> retval = new HashMap<String, Bitmap>();
+	private Map<String, ETC1Texture> getTextures(String prefix) {
+		Map<String, ETC1Texture> retval = new HashMap<String, ETC1Texture>();
 
 		// Find which types of textures are present (diffuse, bump, etc)
 		for(textureType t : textureType.values()) {
@@ -223,10 +225,38 @@ public class ColladaLoader extends XmlReader {
 				// Locate the filename
 				String filename = getSingleNode("/COLLADA/library_images/image[@id='" + imgName + "']/init_from").getTextContent();
 
-				retval.put(t.toString(), loadTextureFile(imgPrefix, filename));
+				// Load the uncompressed image
+				Bitmap uncompressed = loadTextureFile(imgPrefix, filename);
+				
+				// Flip the image
+				Matrix flip = new Matrix();
+				flip.postScale(1f, -1f);
+				Bitmap uncompressed_two = Bitmap.createBitmap(uncompressed, 0, 0, uncompressed.getWidth(), uncompressed.getHeight(), flip, true);
+				uncompressed.recycle();
+				
+				// Compress the image
+				ETC1Texture compressed = compressBitmap(uncompressed_two);
+				
+				retval.put(t.toString(), compressed);
 			}
 		}
 
+		return retval;
+	}
+	
+	private ETC1Texture compressBitmap(Bitmap uncompressed) {
+		// Move the bitmap to a byte buffer
+		ByteBuffer imgBytes = ByteBuffer.allocateDirect(uncompressed.getByteCount());
+		uncompressed.copyPixelsToBuffer(imgBytes);
+		int width = uncompressed.getWidth();
+		int height = uncompressed.getHeight();
+		
+		// We're done with the uncompressed bitmap, release it
+		uncompressed.recycle();
+		
+		// Generate a compressed texture
+		ETC1Texture retval = ETC1Util.compressTexture(imgBytes, width, height, 3, 3*width);
+		
 		return retval;
 	}
 	
