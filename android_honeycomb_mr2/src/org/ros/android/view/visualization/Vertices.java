@@ -49,4 +49,11 @@ public class Vertices {
 		shortBuffer.position(0);
 		return shortBuffer;
 	}
+	
+	public static ByteBuffer toByteBuffer(byte[] data) {
+		ByteBuffer byteBuffer = ByteBuffer.allocateDirect(data.length).order(ByteOrder.nativeOrder());
+		byteBuffer.put(data);
+		byteBuffer.position(0);
+		return byteBuffer;
+	}
 }

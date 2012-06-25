@@ -1,7 +1,7 @@
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from os import path
 import rospkg
-
+import Image
     
 rp = rospkg.RosPack()
 class MyHandler(BaseHTTPRequestHandler):            
