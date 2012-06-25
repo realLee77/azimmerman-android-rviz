@@ -140,8 +140,8 @@ public class MainActivity extends RosActivity {
 			following = false;
 			break;
 		case R.id.clear_model_cache:
-			mfd.clearCache();
-			Toast.makeText(this, "Cleared model cache", Toast.LENGTH_LONG).show();
+			int clearedCount = mfd.clearCache();
+			Toast.makeText(this, "Cleared " + clearedCount + " items in model cache", Toast.LENGTH_LONG).show();
 			break;
 		}
 		return super.onOptionsItemSelected(item);

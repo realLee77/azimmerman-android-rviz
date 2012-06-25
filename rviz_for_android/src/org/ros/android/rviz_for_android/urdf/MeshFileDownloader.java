@@ -76,14 +76,17 @@ public class MeshFileDownloader {
 	/**
 	 * Clear the local cache of downloaded models and textures
 	 */
-	public void clearCache() {
+	public int clearCache() {
+		int deletedFiles = 0;
 		synchronized(lock) {
 			for(String file : context.fileList()) {
 				Log.i("Downloader", "Cleared file " + file);
 				context.deleteFile(file);
+				deletedFiles ++;
 			}
 			Log.d("Downloader", "Cleared cache");
 		}
+		return deletedFiles;
 	}
 
 	public Activity getContext() {
