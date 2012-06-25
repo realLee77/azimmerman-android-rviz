@@ -19,6 +19,7 @@ package org.ros.android.rviz_for_android.drawable.loader;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.opengl.ETC1;
 import android.opengl.ETC1Util;
 import android.opengl.ETC1Util.ETC1Texture;
 import android.util.Log;
@@ -244,18 +246,28 @@ public class ColladaLoader extends XmlReader {
 		return retval;
 	}
 	
-	private ETC1Texture compressBitmap(Bitmap uncompressed) {
-		// Move the bitmap to a byte buffer
-		ByteBuffer imgBytes = ByteBuffer.allocateDirect(uncompressed.getByteCount());
-		uncompressed.copyPixelsToBuffer(imgBytes);
-		int width = uncompressed.getWidth();
-		int height = uncompressed.getHeight();
+	private ETC1Texture compressBitmap(Bitmap uncompressedBitmap) {
+		// Copy the bitmap to a byte buffer
+		ByteBuffer uncompressedBytes = ByteBuffer.allocateDirect(uncompressedBitmap.getByteCount()).order(ByteOrder.nativeOrder());
+		uncompressedBitmap.copyPixelsToBuffer(uncompressedBytes);
+		uncompressedBytes.position(0);		
+		
+		Log.i("DAE", "Uncompressed image has " + uncompressedBytes.capacity() + " bytes.");
+		int width = uncompressedBitmap.getWidth();
+		int height = uncompressedBitmap.getHeight();
+		
+		// Compress the texture
+		int encodedSize = ETC1.getEncodedDataSize(width, height);
+		Log.i("DAE", "Compressed image has " + encodedSize + " bytes.");
+		ByteBuffer compressed = ByteBuffer.allocateDirect(encodedSize).order(ByteOrder.nativeOrder());
+		ETC1.encodeImage(uncompressedBytes, width, height, 2, 2*width, compressed);
+		
+		ETC1Texture retval = new ETC1Texture(width, height, compressed);
 		
 		// We're done with the uncompressed bitmap, release it
-		uncompressed.recycle();
+		uncompressedBitmap.recycle();
 		
-		// Generate a compressed texture
-		ETC1Texture retval = ETC1Util.compressTexture(imgBytes, width, height, 3, 3*width);
+		Log.d("DAE", "Texture generation done");
 		
 		return retval;
 	}
@@ -271,7 +283,10 @@ public class ColladaLoader extends XmlReader {
 			Log.d("DAE", "Loading TIF image: " + path + filename);
 			TiffDecoder.nativeTiffOpen(path + filename);
 			int[] pixels = TiffDecoder.nativeTiffGetBytes();
-			retval = Bitmap.createBitmap(pixels, TiffDecoder.nativeTiffGetWidth(), TiffDecoder.nativeTiffGetHeight(), Bitmap.Config.ARGB_8888);
+			int width = TiffDecoder.nativeTiffGetWidth();
+			int height = TiffDecoder.nativeTiffGetHeight();
+			Log.i("DAE", "TIF image contains " + pixels.length + " bytes in a " + width + " x " + height + " image");
+			retval = Bitmap.createBitmap(pixels, TiffDecoder.nativeTiffGetWidth(), TiffDecoder.nativeTiffGetHeight(), Bitmap.Config.RGB_565);//Bitmap.Config.ARGB_8888);
 			TiffDecoder.nativeTiffClose();
 		} else {
 			retval = BitmapFactory.decodeFile(path + filename);

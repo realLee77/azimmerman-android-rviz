@@ -35,7 +35,9 @@ import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
+import android.opengl.ETC1Util;
 import android.os.Handler;
+import android.util.Log;
 
 public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLayer {
 
