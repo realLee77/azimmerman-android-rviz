@@ -17,6 +17,9 @@
 
 package org.ros.android.rviz_for_android.drawable.loader;
 
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -26,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.XmlReader;
 import org.ros.android.view.visualization.shape.BaseShape;
@@ -34,12 +38,10 @@ import org.ros.android.view.visualization.shape.TexturedTrianglesShape;
 import org.ros.android.view.visualization.shape.TrianglesShape;
 import org.w3c.dom.NodeList;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.opengl.ETC1;
-import android.opengl.ETC1Util;
 import android.opengl.ETC1Util.ETC1Texture;
 import android.util.Log;
 
@@ -62,7 +64,7 @@ public class ColladaLoader extends XmlReader {
 	};
 
 	private List<BaseShape> geometries;
-	
+
 	private MeshFileDownloader mfd;
 	private String imgPrefix;
 
@@ -75,7 +77,7 @@ public class ColladaLoader extends XmlReader {
 			throw new IllegalArgumentException("Passed a null MeshFileDownloader! Just what do you think you're doing?");
 		this.mfd = mfd;
 	}
-	
+
 	public void readDae(InputStream fileStream, String imgPrefix) {
 		if(fileStream == null)
 			throw new IllegalArgumentException("Invalid DAE file contents passed to ColladaLoader");
@@ -165,7 +167,7 @@ public class ColladaLoader extends XmlReader {
 			textures = getTextures(prefix);
 			textured = true;
 		} else if(data.size() == 2 && data.containsKey("NORMAL") && data.containsKey("POSITION") && (data.get("NORMAL").getOffset() == data.get("POSITION").getOffset())) {
-			Log.d("DAE", "I've detected that deindexing is not necessary for this dataset!");
+			Log.d("DAE", "I've detected that deindexing is not necessary for this mesh!");
 			return new TrianglesShape(data.get("POSITION").getData().getArray(), data.get("NORMAL").getData().getArray(), indices, defaultColor);
 		}
 
@@ -175,10 +177,10 @@ public class ColladaLoader extends XmlReader {
 			Log.d("DAE", "Scale factor: " + Arrays.toString(scales));
 			float[] vertices = data.get("POSITION").getData().getArray();
 			for(int i = 0; i < vertices.length; i++) {
-				vertices[i] = vertices[i] * scales[i%3];
+				vertices[i] = vertices[i] * scales[i % 3];
 			}
 		}
-		
+
 		// Deindex
 		Map<String, FloatVector> results = deindex(data, indices, type.getVertexCount(triCount));
 
@@ -206,13 +208,13 @@ public class ColladaLoader extends XmlReader {
 	}
 
 	private enum textureType {
-		diffuse//, bump
+		diffuse// , bump
 	};
 
 	private Map<String, ETC1Texture> getTextures(String prefix) {
 		Map<String, ETC1Texture> retval = new HashMap<String, ETC1Texture>();
 
-		// Find which types of textures are present (diffuse, bump, etc)
+		// Find which types of acceptable textures are present (diffuse, bump, etc)
 		for(textureType t : textureType.values()) {
 			if(nodeExists("/COLLADA/library_effects/", t.toString(), "texture/@texture")) {
 				Log.i("DAE", "  Mesh has " + t.toString() + " texture component.");
@@ -227,56 +229,114 @@ public class ColladaLoader extends XmlReader {
 				// Locate the filename
 				String filename = getSingleNode("/COLLADA/library_images/image[@id='" + imgName + "']/init_from").getTextContent();
 
-				// Load the uncompressed image
-				Bitmap uncompressed = loadTextureFile(imgPrefix, filename);
+				// If a cached compressed copy exists, load that. Otherwise, download, compress, and save the image
+				Log.d("DAE", "------------------");
+				Log.d("DAE", "Image prefix: " + imgPrefix);
+				Log.d("DAE", "Image filename: " + filename);
+				Log.d("DAE", "GetPrefix: " + mfd.getPrefix(imgPrefix));
+				Log.d("DAE", "Sanitized prefix: " + mfd.getSanitizedPrefix(imgPrefix));
+
+				String compressedFilename = "COMPRESSED_" + mfd.getSanitizedPrefix(imgPrefix) + filename;
+				Log.d("DAE", "CompFilename: " + compressedFilename);
+				Log.d("DAE", "------------------");
 				
-				// Flip the image
-				Matrix flip = new Matrix();
-				flip.postScale(1f, -1f);
-				Bitmap uncompressed_two = Bitmap.createBitmap(uncompressed, 0, 0, uncompressed.getWidth(), uncompressed.getHeight(), flip, true);
-				uncompressed.recycle();
 				
-				// Compress the image
-				ETC1Texture compressed = compressBitmap(uncompressed_two);
-				
-				retval.put(t.toString(), compressed);
+				if(!mfd.fileExists(compressedFilename)) {
+					Log.i("DAE", "No compressed cached copy exists.");
+
+					// Load the uncompressed image
+					Bitmap uncompressed = openTextureFile(mfd.getContext().getFilesDir().toString() + "/", mfd.getFile(imgPrefix + filename));
+
+					// Flip the image
+					Matrix flip = new Matrix();
+					flip.postScale(1f, -1f);
+					Bitmap uncompressed_two = Bitmap.createBitmap(uncompressed, 0, 0, uncompressed.getWidth(), uncompressed.getHeight(), flip, true);
+					uncompressed.recycle();
+
+					// Compress the image
+					Log.d("DAE", "Starting compression");
+					long now = System.nanoTime();
+					ETC1Texture compressed = compressBitmap(uncompressed_two);
+					Log.d("DAE", "Compression time: " + (System.nanoTime() - now) / 1000000000.0);
+					
+					// Save the compressed texture
+					try {
+						Log.d("DAE", "Writing compressed data to file: " + compressedFilename);
+						BufferedOutputStream bout = new BufferedOutputStream(mfd.getContext().openFileOutput(compressedFilename, mfd.getContext().MODE_WORLD_READABLE));
+						bout.write(compressed.getData().array());
+						bout.close();
+					} catch(FileNotFoundException e) {
+						Log.e("DAE", "FNF for output?");
+						e.printStackTrace();
+					} catch(IOException e) {
+						Log.e("DAE", "IOException!");
+						e.printStackTrace();
+					}
+
+					// Add the compressed texture to the return map
+					retval.put(t.toString(), compressed);
+				} else {
+					Log.i("DAE", "A compressed cached copy exists!");
+					// Load the existing compressed texture
+					try {
+						byte[] dataArray = IOUtils.toByteArray(mfd.getContext().openFileInput(compressedFilename));
+						// Determine the dimensions of the image (2 bytes per pixel, compressed by 6x)
+						int bytes = 2*dataArray.length;
+						Log.i("DAE", "Determining dimensions: " + bytes + " from " + dataArray.length);
+						int width = 1024;
+						int height = 1024;
+
+						while((width * height) > bytes && (width * height) >= 1) {
+							width /= 2;
+							height /= 2;
+						}
+
+						Log.i("DAE", "Compressed size is " + width + " x " + height);
+
+						ByteBuffer dataBuffer = ByteBuffer.allocateDirect(dataArray.length).order(ByteOrder.nativeOrder());
+						dataBuffer.put(dataArray);
+						dataBuffer.position(0);
+						ETC1Texture compressed = new ETC1Texture(width, height, dataBuffer);
+						retval.put(t.toString(), compressed);
+					} catch(FileNotFoundException e) {
+						Log.e("DAE", "Compressed texture not found!");
+						e.printStackTrace();
+					} catch(IOException e) {
+						Log.e("DAE", "IOException!");
+						e.printStackTrace();
+					}
+				}
 			}
 		}
-
 		return retval;
 	}
-	
+
 	private ETC1Texture compressBitmap(Bitmap uncompressedBitmap) {
 		// Copy the bitmap to a byte buffer
 		ByteBuffer uncompressedBytes = ByteBuffer.allocateDirect(uncompressedBitmap.getByteCount()).order(ByteOrder.nativeOrder());
 		uncompressedBitmap.copyPixelsToBuffer(uncompressedBytes);
-		uncompressedBytes.position(0);		
-		
+		uncompressedBytes.position(0);
+
 		Log.i("DAE", "Uncompressed image has " + uncompressedBytes.capacity() + " bytes.");
 		int width = uncompressedBitmap.getWidth();
 		int height = uncompressedBitmap.getHeight();
-		
+
 		// Compress the texture
 		int encodedSize = ETC1.getEncodedDataSize(width, height);
 		Log.i("DAE", "Compressed image has " + encodedSize + " bytes.");
 		ByteBuffer compressed = ByteBuffer.allocateDirect(encodedSize).order(ByteOrder.nativeOrder());
-		ETC1.encodeImage(uncompressedBytes, width, height, 2, 2*width, compressed);
-		
+		ETC1.encodeImage(uncompressedBytes, width, height, 2, 2 * width, compressed);
+
 		ETC1Texture retval = new ETC1Texture(width, height, compressed);
-		
+
 		// We're done with the uncompressed bitmap, release it
 		uncompressedBitmap.recycle();
-		
+
 		Log.d("DAE", "Texture generation done");
-		
+
 		return retval;
 	}
-	
-	private Bitmap loadTextureFile(String prefix, String filename) {
-		Log.d("DAE", "Need to load an image: " + prefix + "   " + filename);
-		return openTextureFile(mfd.getContext().getFilesDir().toString() + "/", mfd.getFile(prefix + filename));
-	}
-	
+
 	private Bitmap openTextureFile(String path, String filename) {
 		Bitmap retval = null;
 		if(filename.toLowerCase().endsWith(".tif")) {
@@ -286,9 +346,10 @@ public class ColladaLoader extends XmlReader {
 			int width = TiffDecoder.nativeTiffGetWidth();
 			int height = TiffDecoder.nativeTiffGetHeight();
 			Log.i("DAE", "TIF image contains " + pixels.length + " bytes in a " + width + " x " + height + " image");
-			retval = Bitmap.createBitmap(pixels, TiffDecoder.nativeTiffGetWidth(), TiffDecoder.nativeTiffGetHeight(), Bitmap.Config.RGB_565);//Bitmap.Config.ARGB_8888);
+			retval = Bitmap.createBitmap(pixels, TiffDecoder.nativeTiffGetWidth(), TiffDecoder.nativeTiffGetHeight(), Bitmap.Config.RGB_565);
 			TiffDecoder.nativeTiffClose();
 		} else {
+			Log.d("DAE", "Loading non-TIF image: " + path + filename);
 			retval = BitmapFactory.decodeFile(path + filename);
 		}
 		return retval;
