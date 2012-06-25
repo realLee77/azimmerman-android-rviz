@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -31,17 +29,9 @@ import java.util.concurrent.TimeoutException;
 import org.ros.android.rviz_for_android.MainActivity;
 
 import android.app.Activity;
-import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
 public class MeshFileDownloader {
@@ -83,6 +73,9 @@ public class MeshFileDownloader {
 		});
 	}
 
+	/**
+	 * Clear the local cache of downloaded models and textures
+	 */
 	public void clearCache() {
 		synchronized(lock) {
 			for(String file : context.fileList()) {
@@ -97,7 +90,11 @@ public class MeshFileDownloader {
 		return context;
 	}
 
-	// Given a package name, give the string prefix to attach to prepend to image names when fetching them from the server
+	/**
+	 * @param filename
+	 *            the complete package and mesh filename string
+	 * @return the 'package://' prefix to prepend to image names when fetching them from the server
+	 */
 	public String getPrefix(String filename) {
 		if(filename != null)
 			return filename.substring(0, filename.lastIndexOf("/") + 1);
@@ -105,10 +102,34 @@ public class MeshFileDownloader {
 			return null;
 	}
 
+	/**
+	 * @param filename
+	 *            the complete package and mesh filename string
+	 * @return the sanitized prefix to prepend to image names when loading them from local storage
+	 */
+	public String getSanitizedPrefix(String filename) {
+		if(filename != null) {
+			return sanitizeFilename(getPrefix(filename));
+		} else
+			return null;
+	}
+
+	/**
+	 * Check to see if a file exists in the local cache
+	 * 
+	 * @param filename
+	 *            The name of the file to search for
+	 * @return true if the file is present in local storage, false otherwise
+	 */
 	public boolean fileExists(String filename) {
-		if(filename != null)
-			return Arrays.binarySearch(context.fileList(), sanitizeFilename(filename)) >= 0;
-		else
+		if(filename != null) {
+			// Arrays.binarySearch doesn't work
+			for(String s : context.fileList()) {
+				if(s.equals(filename))
+					return true;
+			}
+			return false;
+		} else
 			throw new IllegalArgumentException("Filename can't be null!");
 	}
 
@@ -121,14 +142,16 @@ public class MeshFileDownloader {
 
 	/**
 	 * Download a file on the current thread. This will block until the file has been downloaded. No progress dialog is shown
-	 * @param path the URL (http or package) to download
+	 * 
+	 * @param path
+	 *            the URL (http or package) to download
 	 * @return the name of the file accessible through the context-private file space
 	 */
 	public String getFile(final String path) {
 		synchronized(lock) {
-			if(fileExists(path))
-				return sanitizeFilename(path);
 			final String filename = sanitizeFilename(path);
+			if(fileExists(filename))
+				return filename;
 			try {
 				if(path.startsWith("http://"))
 					return queryServer(new URL(path), filename);
@@ -143,9 +166,9 @@ public class MeshFileDownloader {
 				e.printStackTrace();
 			}
 			return null;
-		}		
+		}
 	}
-	
+
 	/**
 	 * Download a file in a background thread using an AsyncTask. This will show a download progress dialog
 	 * @param path the URL (http or package) to download
@@ -186,12 +209,12 @@ public class MeshFileDownloader {
 
 	private String queryServer(URL url, String filename) {
 		Log.i("Downloader", "Fetching file with URL " + url.toString() + " to save to " + filename);
-
+		HttpURLConnection conn = null;
 		int retries = 0;
-		while(retries < 5) {
+		while(retries < 10) {
 			try {
 				Log.d("Downloader", "Connecting...");
-				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn = (HttpURLConnection) url.openConnection();
 
 				int bytesRead = 0;
 				BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
@@ -217,8 +240,10 @@ public class MeshFileDownloader {
 				}
 			} catch(IOException e) {
 				Log.e("Downloader", "IO Error!");
-				retries++;
 				e.printStackTrace();
+				retries++;
+			} finally {
+				conn.disconnect();
 			}
 		}
 		return null;
