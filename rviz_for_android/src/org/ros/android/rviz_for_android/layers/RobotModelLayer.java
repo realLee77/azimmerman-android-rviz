@@ -249,7 +249,8 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			}
 			reader.readUrdf(urdf_xml);
 			urdf = reader.getUrdf();
-			publishProgress("Downloading geometry...");
+			publishProgress("Loading geometry...");
+			
 			// Load any referenced models
 			for(UrdfLink ul : urdf) {
 				for(Component c : ul.getComponents()) {

@@ -230,17 +230,7 @@ public class ColladaLoader extends XmlReader {
 				String filename = getSingleNode("/COLLADA/library_images/image[@id='" + imgName + "']/init_from").getTextContent();
 
 				// If a cached compressed copy exists, load that. Otherwise, download, compress, and save the image
-				Log.d("DAE", "------------------");
-				Log.d("DAE", "Image prefix: " + imgPrefix);
-				Log.d("DAE", "Image filename: " + filename);
-				Log.d("DAE", "GetPrefix: " + mfd.getPrefix(imgPrefix));
-				Log.d("DAE", "Sanitized prefix: " + mfd.getSanitizedPrefix(imgPrefix));
-
 				String compressedFilename = "COMPRESSED_" + mfd.getSanitizedPrefix(imgPrefix) + filename;
-				Log.d("DAE", "CompFilename: " + compressedFilename);
-				Log.d("DAE", "------------------");
-				
-				
 				if(!mfd.fileExists(compressedFilename)) {
 					Log.i("DAE", "No compressed cached copy exists.");
 
@@ -254,14 +244,10 @@ public class ColladaLoader extends XmlReader {
 					uncompressed.recycle();
 
 					// Compress the image
-					Log.d("DAE", "Starting compression");
-					long now = System.nanoTime();
 					ETC1Texture compressed = compressBitmap(uncompressed_two);
-					Log.d("DAE", "Compression time: " + (System.nanoTime() - now) / 1000000000.0);
 					
 					// Save the compressed texture
 					try {
-						Log.d("DAE", "Writing compressed data to file: " + compressedFilename);
 						BufferedOutputStream bout = new BufferedOutputStream(mfd.getContext().openFileOutput(compressedFilename, mfd.getContext().MODE_WORLD_READABLE));
 						bout.write(compressed.getData().array());
 						bout.close();
@@ -277,12 +263,12 @@ public class ColladaLoader extends XmlReader {
 					retval.put(t.toString(), compressed);
 				} else {
 					Log.i("DAE", "A compressed cached copy exists!");
+					
 					// Load the existing compressed texture
 					try {
 						byte[] dataArray = IOUtils.toByteArray(mfd.getContext().openFileInput(compressedFilename));
-						// Determine the dimensions of the image (2 bytes per pixel, compressed by 6x)
+						// Determine the dimensions of the image
 						int bytes = 2*dataArray.length;
-						Log.i("DAE", "Determining dimensions: " + bytes + " from " + dataArray.length);
 						int width = 1024;
 						int height = 1024;
 
@@ -291,7 +277,7 @@ public class ColladaLoader extends XmlReader {
 							height /= 2;
 						}
 
-						Log.i("DAE", "Compressed size is " + width + " x " + height);
+						Log.i("DAE", "Compressed size determined to be " + width + " x " + height);
 
 						ByteBuffer dataBuffer = ByteBuffer.allocateDirect(dataArray.length).order(ByteOrder.nativeOrder());
 						dataBuffer.put(dataArray);
@@ -312,14 +298,18 @@ public class ColladaLoader extends XmlReader {
 	}
 
 	private ETC1Texture compressBitmap(Bitmap uncompressedBitmap) {
+		// Rescale the bitmap to be half it's current size
+		Bitmap uncompressedBitmapResize = Bitmap.createScaledBitmap(uncompressedBitmap, uncompressedBitmap.getWidth()/4, uncompressedBitmap.getHeight()/4, true);
+		uncompressedBitmap.recycle();
+		
 		// Copy the bitmap to a byte buffer
-		ByteBuffer uncompressedBytes = ByteBuffer.allocateDirect(uncompressedBitmap.getByteCount()).order(ByteOrder.nativeOrder());
-		uncompressedBitmap.copyPixelsToBuffer(uncompressedBytes);
+		ByteBuffer uncompressedBytes = ByteBuffer.allocateDirect(uncompressedBitmapResize.getByteCount()).order(ByteOrder.nativeOrder());
+		uncompressedBitmapResize.copyPixelsToBuffer(uncompressedBytes);
 		uncompressedBytes.position(0);
 
 		Log.i("DAE", "Uncompressed image has " + uncompressedBytes.capacity() + " bytes.");
-		int width = uncompressedBitmap.getWidth();
-		int height = uncompressedBitmap.getHeight();
+		int width = uncompressedBitmapResize.getWidth();
+		int height = uncompressedBitmapResize.getHeight();
 
 		// Compress the texture
 		int encodedSize = ETC1.getEncodedDataSize(width, height);
@@ -330,9 +320,7 @@ public class ColladaLoader extends XmlReader {
 		ETC1Texture retval = new ETC1Texture(width, height, compressed);
 
 		// We're done with the uncompressed bitmap, release it
-		uncompressedBitmap.recycle();
-
-		Log.d("DAE", "Texture generation done");
+		uncompressedBitmapResize.recycle();
 
 		return retval;
 	}
@@ -345,7 +333,6 @@ public class ColladaLoader extends XmlReader {
 			int[] pixels = TiffDecoder.nativeTiffGetBytes();
 			int width = TiffDecoder.nativeTiffGetWidth();
 			int height = TiffDecoder.nativeTiffGetHeight();
-			Log.i("DAE", "TIF image contains " + pixels.length + " bytes in a " + width + " x " + height + " image");
 			retval = Bitmap.createBitmap(pixels, TiffDecoder.nativeTiffGetWidth(), TiffDecoder.nativeTiffGetHeight(), Bitmap.Config.RGB_565);
 			TiffDecoder.nativeTiffClose();
 		} else {
@@ -366,10 +353,10 @@ public class ColladaLoader extends XmlReader {
 			retval.put(id.getSemantic(), new FloatVector(id.getFloatElements(vertexCount)));
 		}
 
-		Log.d("DAE", "BEGINNING DEINDEXING");
+/*		Log.d("DAE", "BEGINNING DEINDEXING");
 		Log.d("DAE", "The indices point to " + sources.size() + " sources.");
 		Log.d("DAE", "There are " + (inputCount + 1) + " pieces of information per vertex, " + vertexCount + " vertices");
-		Log.d("DAE", "There are " + indices.length + " mixed type indices");
+		Log.d("DAE", "There are " + indices.length + " mixed type indices");*/
 
 		int curOffset = 0;
 		for(Short s : indices) {
