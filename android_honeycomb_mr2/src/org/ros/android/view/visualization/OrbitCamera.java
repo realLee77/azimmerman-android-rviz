@@ -87,8 +87,8 @@ public class OrbitCamera implements Camera {
 		velocityUpdate();
 		
 		synchronized(fixedFrame) {
-			if(targetFrame != null && frameTransformTree.canTransform(targetFrame, fixedFrame)) {
-				lookTarget = frameTransformTree.newFrameTransform(targetFrame, fixedFrame).getTransform().getTranslation();
+			if(targetFrame != null) {
+				lookTarget = frameTransformTree.newTransformIfPossible(targetFrame, fixedFrame).getTranslation();
 				lookTarget.setX(lookTarget.getX()/2);
 				lookTarget.setY(lookTarget.getY()/2);
 				lookTarget.setZ(lookTarget.getZ()/2);
@@ -218,6 +218,7 @@ public class OrbitCamera implements Camera {
 	}
 
 	public void resetLookTarget() {
+		//frameTransformTree.getMap().get(fixedFrame).getTransform().getTranslation();
 		lookTarget = Vector3.newIdentityVector3();
 	}
 

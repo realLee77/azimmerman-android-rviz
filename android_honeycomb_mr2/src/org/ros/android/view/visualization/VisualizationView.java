@@ -131,7 +131,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 		if(!tfPrefix.isEmpty()) {
 			frameTransformTree.setPrefix(tfPrefix);
 		}
-		Subscriber<tf.tfMessage> tfSubscriber = connectedNode.newSubscriber("tf_throttle", tf.tfMessage._TYPE);
+		Subscriber<tf.tfMessage> tfSubscriber = connectedNode.newSubscriber("tf", tf.tfMessage._TYPE);
 		tfSubscriber.addMessageListener(new MessageListener<tf.tfMessage>() {
 			@Override
 			public void onNewMessage(tf.tfMessage message) {

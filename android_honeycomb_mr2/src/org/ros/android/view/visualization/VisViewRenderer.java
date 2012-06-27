@@ -120,7 +120,6 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
         gl.glCullFace(GL10.GL_BACK);
 		
         // Texturing
-
 		
 		// Depth
 		gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_FASTEST);
@@ -141,10 +140,15 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 						GraphName layerFrame = ((TfLayer) layer).getFrame();
 						// TODO(moesenle): throw a warning that no transform could be found and
 						// the layer has been ignored.
-						if(layerFrame != null && frameTransformTree.canTransform(layerFrame, camera.getFixedFrame())) {
-							Transform transform = frameTransformTree.newFrameTransform(layerFrame, camera.getFixedFrame()).getTransform();
-							OpenGlTransform.apply(gl, transform);
+						if(layerFrame != null) {
+							Transform t = frameTransformTree.newTransformIfPossible(layerFrame, camera.getFixedFrame());
+							OpenGlTransform.apply(gl, t);
 						}
+						
+//						if(layerFrame != null && frameTransformTree.canTransform(layerFrame, camera.getFixedFrame())) {
+//							Transform transform = frameTransformTree.newFrameTransform(layerFrame, camera.getFixedFrame()).getTransform();
+//							OpenGlTransform.apply(gl, transform);
+//						}
 					}
 					layer.draw(gl);
 					gl.glPopMatrix();
