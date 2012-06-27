@@ -39,14 +39,9 @@ import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.app.ActionBar;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -57,7 +52,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 /**
@@ -195,7 +189,7 @@ public class MainActivity extends RosActivity {
 		elv.setAdapter(propAdapter);
 		elv.setItemsCanFocus(true);
 		
-		// TODO: Add default layers. MAKE THESE LOADED FROM A CONFIG FILE
+		// TODO: Add default layers. MAKE THESE LOAD FROM A CONFIG FILE
 		addNewLayer(0);
 		addNewLayer(1);
 		

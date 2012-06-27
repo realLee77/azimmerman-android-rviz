@@ -30,6 +30,8 @@ import android.util.FloatMath;
 
 public class Cylinder implements Shape {
 
+	private static final Transform identityTransform = Transform.newIdentityTransform();
+	
 	private FloatBuffer sideVertices;
 	private FloatBuffer sideNormals;
 
@@ -125,10 +127,21 @@ public class Cylinder implements Shape {
 		this.bottomNormals = Vertices.toFloatBuffer(bottomNormals);
 	}
 
+	private Transform transform = identityTransform;
+	
+	@Override
+	public void setTransform(Transform transform) {
+		this.transform = transform;
+	}
+
+	@Override
+	public Transform getTransform() {
+		return transform;
+	}
+	
 	@Override
 	public void draw(GL10 gl) {
-		// TODO Auto-generated method stub
-
+		draw(gl, transform, 1, 1);
 	}
 
 	@Override
@@ -139,16 +152,6 @@ public class Cylinder implements Shape {
 	@Override
 	public Color getColor() {
 		return color;
-	}
-
-	@Override
-	public void setTransform(Transform transform) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public Transform getTransform() {
-		return null;
 	}
 
 	public void draw(GL10 gl, Transform transform, float length, float radius) {

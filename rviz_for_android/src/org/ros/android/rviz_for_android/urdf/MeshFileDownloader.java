@@ -40,7 +40,6 @@ public class MeshFileDownloader {
 	private Activity context;
 	private Object lock = new Object();
 
-	// TODO:
 	private MeshFileDownloader.QueryServer qs;
 
 	private static MeshFileDownloader instance;
