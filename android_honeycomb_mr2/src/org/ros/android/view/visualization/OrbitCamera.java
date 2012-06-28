@@ -128,7 +128,7 @@ public class OrbitCamera implements Camera {
 		vTheta = Utility.cap(-vY / 500, -MAX_FLING_VELOCITY, MAX_FLING_VELOCITY);
 	}
 
-	public void moveOrbitPosition(float xDistance, float yDistance) {
+	public void moveOrbitPosition(float xDistance, float yDistance) {		
 		anglePhi += Math.toRadians(xDistance);
 		anglePhi = Utility.angleWrap(anglePhi);
 
@@ -138,12 +138,11 @@ public class OrbitCamera implements Camera {
 		updateLocation();
 	}
 
+	private float translationScaleFactor = 5f/6f;
 	@Override
 	public void moveCameraScreenCoordinates(float xDistance, float yDistance) {
-		targetFrame = null;
-
-		float xDistCap = Utility.cap(xDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED);
-		float yDistCap = Utility.cap(yDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED);
+		float xDistCap = Utility.cap(xDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED) * translationScaleFactor;
+		float yDistCap = Utility.cap(yDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED) * translationScaleFactor;
 
 		lookTarget = lookTarget.subtract(new Vector3(Math.cos(anglePhi - Math.PI / 2) * xDistCap - Math.sin(anglePhi + Math.PI / 2) * yDistCap, Math.sin(anglePhi - Math.PI / 2) * xDistCap + Math.cos(anglePhi + Math.PI / 2) * yDistCap, 0));
 		updateLocation();
@@ -160,6 +159,7 @@ public class OrbitCamera implements Camera {
 
 	public void zoomCamera(float factor) {
 		orbitRadius /= factor;
+		translationScaleFactor = orbitRadius/6.0f;
 	}
 
 	public GraphName getFixedFrame() {
@@ -217,8 +217,10 @@ public class OrbitCamera implements Camera {
 		return null;
 	}
 
+	/**
+	 * Set the camera look target to the fixed frame or the origin if one isn't set
+	 */
 	public void resetLookTarget() {
-		//frameTransformTree.getMap().get(fixedFrame).getTransform().getTranslation();
 		lookTarget = Vector3.newIdentityVector3();
 	}
 

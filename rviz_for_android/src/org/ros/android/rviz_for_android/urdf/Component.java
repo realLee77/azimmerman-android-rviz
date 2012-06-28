@@ -254,8 +254,8 @@ public class Component {
 			if(material_color != null && material_name == null)
 				throw new IllegalArgumentException("Forgot to name the color " + material_color);
 			
-//			if(material_color == null)
-//				material_color = new Color(1f, .5f, 0.15f, 1f);
+			if(material_color == null)
+				material_color = new Color(1f, .5f, 0.15f, 1f);
 
 			retval.type = type;
 			retval.radius = radius;

@@ -17,10 +17,8 @@
 
 package org.ros.android.rviz_for_android.urdf;
 
-import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,14 +27,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public abstract class XmlReader {
@@ -105,8 +101,8 @@ public abstract class XmlReader {
 
 	protected NodeList getExpression(String... xPathExpression) {
 		try {
-			XPathExpression expr = xpath.compile(Compose(xPathExpression));
-			return (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+			//XPathExpression expr = xpath.compile(Compose(xPathExpression));	
+			return (NodeList) xpath.evaluate(Compose(xPathExpression), doc, XPathConstants.NODESET);//expr.evaluate(doc, XPathConstants.NODESET);
 		} catch(XPathExpressionException e) {
 			e.printStackTrace();
 		}
