@@ -1,20 +1,15 @@
 package org.ros.android.rviz_for_android.drawable.loader;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 
 import org.apache.commons.io.IOUtils;
 import org.ros.rosjava_geometry.Vector3;
 
 import android.util.Log;
-
-import com.google.common.io.Files;
 
 /*
  * Copyright (c) 2012, Willow Garage, Inc.
@@ -91,7 +86,7 @@ public class StlLoader {
 			for(int b = 0; b < 3; b++) {
 				vertexVec[b].setVector(getFloat(), getFloat(), getFloat());
 			}
-			if(vertexVec[2].subtract(vertexVec[0]).crossProduct(vertexVec[1].subtract(vertexVec[0])).dotProduct(normalVec) < 0) {
+			if(vertexVec[1].subtract(vertexVec[0]).crossProduct(vertexVec[2].subtract(vertexVec[0])).dotProduct(normalVec) < 0) {
 				vertexVec[3] = vertexVec[2];
 				vertexVec[2] = vertexVec[1];
 				vertexVec[1] = vertexVec[3];

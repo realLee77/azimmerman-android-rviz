@@ -43,6 +43,7 @@ public class StlMesh extends TrianglesShape implements UrdfDrawable {
 				loader.load(mfd.getContext().openFileInput(loadedFilename));
 			} catch(FileNotFoundException e) {
 				e.printStackTrace();
+				return null;
 			}
 			v = loader.getVertices();
 			n = loader.getNormals();

@@ -64,6 +64,12 @@ public class StringProperty extends Property<String> {
 				return false;
 			}
 		});
+		super.addUpdateListener(new PropertyUpdateListener<String>() {
+			@Override
+			public void onPropertyChanged(String newval) {
+				et.setText(newval);
+			}
+		});
 		return convertView;
 	}
 

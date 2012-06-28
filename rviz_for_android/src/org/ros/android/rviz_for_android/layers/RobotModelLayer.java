@@ -22,12 +22,11 @@ import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import org.ros.android.rviz_for_android.MainActivity;
 import org.ros.android.rviz_for_android.drawable.ColladaMesh;
 import org.ros.android.rviz_for_android.drawable.Cube;
 import org.ros.android.rviz_for_android.drawable.Cylinder;
-import org.ros.android.rviz_for_android.drawable.StlMesh;
 import org.ros.android.rviz_for_android.drawable.Sphere;
+import org.ros.android.rviz_for_android.drawable.StlMesh;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
@@ -37,8 +36,8 @@ import org.ros.android.rviz_for_android.urdf.Component;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.android.rviz_for_android.urdf.UrdfLink;
-import org.ros.android.rviz_for_android.urdf.UrdfReader;
 import org.ros.android.rviz_for_android.urdf.VTDUrdfReader;
+import org.ros.android.rviz_for_android.urdf.VTDUrdfReader.UrdfReadingProgressListener;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.OpenGlTransform;
 import org.ros.android.view.visualization.layer.DefaultLayer;
@@ -47,16 +46,15 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 public class RobotModelLayer extends DefaultLayer implements LayerWithProperties {
 
 	private static final String DEFAULT_PARAM_VALUE = "/robot_description";
+	private String current_param_value = DEFAULT_PARAM_VALUE;
 	private BoolProperty prop = new BoolProperty("Enabled", true, null);
 	private FrameTransformTree ftt;
 	private Camera cam;
@@ -86,8 +84,14 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		prop.addSubProperty(new StringProperty("Parameter", DEFAULT_PARAM_VALUE, new PropertyUpdateListener<String>() {
 			@Override
 			public void onPropertyChanged(String newval) {
-				if(params.has(newval)) {
-					reloadUrdf(newval);
+				if(!newval.equals(current_param_value)) {
+					if(params.has(newval)) {
+						current_param_value = newval;
+						reloadUrdf(newval);
+					} else {
+						prop.<StringProperty>getProperty("Parameter").setValue(current_param_value);
+						Toast.makeText(context, "Invalid parameter " + newval, Toast.LENGTH_LONG).show();
+					}
 				}
 			}
 		}));
@@ -129,12 +133,12 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			gl.glPushMatrix();
 
 			// Transform to the URDF link's frame
-			// if(ftt.canTransform(cam.getFixedFrame(), ul.getName())) {
-			// Transform t = ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform();
-			// Log.i("RobotModel", t.toString());
-			// OpenGlTransform.apply(gl, t);
-			// }
-
+/*			 if(ftt.canTransform(cam.getFixedFrame(), ul.getName())) {
+				 Transform t = ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform();
+				 Log.i("RobotModel", t.toString());
+				 OpenGlTransform.apply(gl, t);
+			 }
+*/
 			OpenGlTransform.apply(gl, ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
 
 			// Draw the shape
@@ -167,19 +171,28 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			UrdfDrawable ud = meshes.get(com.getMesh());
 			if(ud != null)
 				ud.draw(gl, com.getOrigin(), com.getSize());
-			else
-				loadMesh(com.getMesh());
 			break;
 		}
 	}
 
-	private void loadMesh(String meshResourceName) {
+	private boolean loadMesh(String meshResourceName) {
+		// Don't reload the mesh if we already have a copy
+		if(meshes.containsKey(meshResourceName))
+			return true;
+
+		UrdfDrawable ud;
 		if(meshResourceName.toLowerCase().endsWith(".dae"))
-			meshes.put(meshResourceName, ColladaMesh.newFromFile(meshResourceName, mfd));
+			ud = ColladaMesh.newFromFile(meshResourceName, mfd);
 		else if(meshResourceName.toLowerCase().endsWith(".stl"))
-			meshes.put(meshResourceName, StlMesh.newFromFile(meshResourceName, mfd));
-		else
-			Log.e("Downloader", "Unknown mesh type! " + meshResourceName);
+			ud = StlMesh.newFromFile(meshResourceName, mfd);
+		else {
+			Log.e("RobotModel", "Unknown mesh type! " + meshResourceName);
+			return false;
+		}
+		
+		meshes.put(meshResourceName, ud);
+		
+		return (ud != null);
 	}
 
 	@Override
@@ -237,7 +250,6 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 		@Override
 		protected Void doInBackground(String... parameters) {
-			publishProgress("Parsing URDF...");
 			String param = parameters[0];
 			
 			// Parse the URDF
@@ -248,15 +260,42 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 				publishProgress("Invalid parameter " + param);
 				return null;
 			}
+			reader.addListener(new UrdfReadingProgressListener() {
+				@Override
+				public void readLink(int linkNumber, int linkCount) {
+					StringBuilder sb = new StringBuilder();
+					sb.append("URDF Loading: [");
+					double percent = 25.0*linkNumber/linkCount;
+					int markers = 0;
+					for(int i = 0; i < percent; i ++) {
+						sb.append('|');
+						markers ++;
+					}
+					for(int i = markers; i < 25; i++) {
+						sb.append(' ');
+					}
+					sb.append(']');
+					publishProgress(sb.toString());
+				}
+			});
 			reader.readUrdf(urdf_xml);
 			urdf = reader.getUrdf();
-			publishProgress("Loading geometry...");
 			
 			// Load any referenced models
 			for(UrdfLink ul : urdf) {
 				for(Component c : ul.getComponents()) {
-					if(c.getType() == Component.GEOMETRY.MESH) {
-						loadMesh(c.getMesh());
+					if(c.getType() == Component.GEOMETRY.MESH && !meshes.containsKey(c.getMesh())) {
+						if(loadMesh(c.getMesh()))
+							publishProgress("Loaded " + c.getMesh());
+						else {
+							// If the model failed to load, show an error message and leave it visible for long enough for the user to know
+							publishProgress("Error loading " + c.getMesh() + "!");
+							try {
+								Thread.sleep(500);
+							} catch(InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
 					}
 				}
 			}

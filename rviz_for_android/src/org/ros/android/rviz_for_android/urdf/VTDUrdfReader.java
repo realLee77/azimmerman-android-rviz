@@ -18,15 +18,34 @@ package org.ros.android.rviz_for_android.urdf;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ros.android.view.visualization.shape.Color;
 
 import android.util.Log;
 
 public class VTDUrdfReader extends VTDXmlReader {
-
+	
+	public interface UrdfReadingProgressListener {
+		public void readLink(int linkNumber, int linkCount);
+	}
+	
+	private Set<UrdfReadingProgressListener> listeners = new HashSet<UrdfReadingProgressListener>();
+	
+	public void addListener(UrdfReadingProgressListener l) {
+		listeners.add(l);
+	}
+	
+	private void publishProgress(int link, int count) {
+		for(UrdfReadingProgressListener l : listeners) {
+			l.readLink(link, count);
+		}
+	}
+	
+	
 	private List<UrdfLink> urdf = new ArrayList<UrdfLink>();
 
 	public VTDUrdfReader() {
@@ -52,29 +71,20 @@ public class VTDUrdfReader extends VTDXmlReader {
 		// Not all URDF files store the color/name pairs under the links. Must rebuild the color library searching the entire URDF file for color tags
 		List<String> colorNames = getAttributeList("//material/@name");
 		for(String name : colorNames) {
-			String rgbaQuery = "//material[@name='" + name + "']/color/@rgba";
-			if(nodeExists(rgbaQuery)) {
-				String colorStr = getSingleAttribute(rgbaQuery);
-				float[] color = toFloatArray(colorStr);
-				colors.put(name, new Color(color[0], color[1], color[2], color[3]));
-				Log.i("URDF","    Built color " + name);
+			if(!colors.containsKey(name)) {
+				String rgbaQuery = "//material[@name='" + name + "']/color/@rgba";
+				if(attributeExists(rgbaQuery)) {
+					float[] color = toFloatArray(super.existResult);
+					colors.put(name, new Color(color[0], color[1], color[2], color[3]));
+					Log.i("URDF","    Built color " + name);
+				}  
 			}
 		}
-		
-//		for(UrdfLink ul : urdf) {
-//			for(Component c : ul.getComponents()) {
-//				if(c.getMaterial_color() != null) {
-//					colors.put(c.getMaterial_name(), c.getMaterial_color());
-//				}
-//			}
-//		}
 
 		for(UrdfLink ul : urdf) {
 			for(Component c : ul.getComponents()) {
 				if(c.getMaterial_name() != null && colors.containsKey(c.getMaterial_name())) {				
 					c.setMaterial_color(colors.get(c.getMaterial_name()));	
-				} else if(c.getMaterial_name() != null && !colors.containsKey(c.getMaterial_name())) {
-					Log.e("URDF", "No material with name " + c.getMaterial_name());
 				}
 			}
 		}
@@ -128,25 +138,25 @@ public class VTDUrdfReader extends VTDXmlReader {
 					break;
 				case MESH:
 					visBuilder.setMesh(getSingleAttribute(vprefix, "/mesh/@filename"));
-					if(nodeExists(vprefix, "/mesh/@scale"))
-						visBuilder.setMeshScale(Float.parseFloat(getSingleAttribute(vprefix, "/mesh/@scale")));
+					if(attributeExists(vprefix, "/mesh/@scale"))
+						visBuilder.setMeshScale(Float.parseFloat(existResult));
 					break;
 				}
 
 				// OPTIONAL - get origin
-				if(nodeExists(vprefix, "/origin/@xyz")) {
-					visBuilder.setOffset(toFloatArray(getSingleAttribute(vprefix, "/origin/@xyz")));
+				if(attributeExists(vprefix, "/origin/@xyz")) {
+					visBuilder.setOffset(toFloatArray(existResult));
 				}
-				if(nodeExists(vprefix, "/origin/@rpy")) {
-					visBuilder.setRotation(toFloatArray(getSingleAttribute(vprefix, "/origin/@rpy")));
+				if(attributeExists(vprefix, "/origin/@rpy")) {
+					visBuilder.setRotation(toFloatArray(existResult));
 				}
 
 				// OPTIONAL - get material
-				if(nodeExists(vprefix, "/material/@name")) {
-					visBuilder.setMaterialName(getSingleAttribute(vprefix,"/material/@name"));
+				if(attributeExists(vprefix, "/material/@name")) {
+					visBuilder.setMaterialName(existResult);
 				}
-				if(nodeExists(vprefix, "/material/color/@rgba")) {
-					visBuilder.setMaterialColor(toFloatArray(getSingleAttribute(vprefix,"/material/color/@rgba")));
+				if(attributeExists(vprefix, "/material/color/@rgba")) {
+					visBuilder.setMaterialColor(toFloatArray(existResult));
 				}
 				visual = visBuilder.build();
 			}
@@ -184,16 +194,17 @@ public class VTDUrdfReader extends VTDXmlReader {
 				}
 
 				// OPTIONAL - get origin
-				if(nodeExists(vprefix, "/origin/@xyz"))
-					colBuilder.setOffset(toFloatArray(getSingleAttribute(vprefix, "/origin/@xyz")));
-				if(nodeExists(vprefix, "/origin/@rpy"))
-					colBuilder.setRotation(toFloatArray(getSingleAttribute(vprefix, "/origin/@rpy")));
+				if(attributeExists(vprefix, "/origin/@xyz"))
+					colBuilder.setOffset(toFloatArray(existResult));
+				if(attributeExists(vprefix, "/origin/@rpy"))
+					colBuilder.setRotation(toFloatArray(existResult));
 
 				collision = colBuilder.build();
 			}
 
 			UrdfLink newLink = new UrdfLink(visual, collision, name);
 			urdf.add(newLink);
+			publishProgress(i+1, nodeLength);
 		}
 	}
 }
