@@ -47,7 +47,7 @@ public class FPSLayer extends DefaultLayer {
 	private int ratecount = 0;
 	
 	// Window limit should scale with FPS to keep the update rate the same.
-	private static final int FPS_RECALCULATIONS_PER_SECOND = 2;
+	private static final int FPS_RECALCULATIONS_PER_SECOND = 4;
 	private int windowLimit = 10;
 
 	private int toDraw = 0;
@@ -58,6 +58,7 @@ public class FPSLayer extends DefaultLayer {
 		dT = now - last;
 		if(dT != 0)
 			framerate = 1000000000.0/dT;
+			
 		last = now;
 
 		avgRate += framerate;

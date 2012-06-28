@@ -11,8 +11,8 @@ import com.ximpleware.XPathParseException;
 
 public abstract class VTDXmlReader {
 
-	private AutoPilot ap;
-	private VTDNav vn;
+	protected AutoPilot ap;
+	protected VTDNav vn;
 
 	public VTDXmlReader() {
 	}
@@ -66,6 +66,25 @@ public abstract class VTDXmlReader {
 		ap.resetXPath();
 		return retval;
 	}
+	
+	protected List<String> getNodeList(String... xPathExpression) {
+		List<String> retval = new LinkedList<String>();
+		getExpression(xPathExpression);
+		int i;
+		try {
+			while((i = ap.evalXPath()) != -1) {
+				retval.add(vn.toString(i));
+			}
+		} catch(XPathEvalException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch(NavException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		ap.resetXPath();
+		return retval;
+	}
 
 	protected String getSingleAttribute(String... xPathExpression) {
 		getExpression(xPathExpression);
@@ -107,13 +126,16 @@ public abstract class VTDXmlReader {
 	protected int nodeCount(String... xPathExpression) {
 		return getAttributeList(xPathExpression).size();
 	}
-
+	
+	protected String existResult;
 	protected boolean nodeExists(String... xPathExpression) {
 		boolean result = false;
 		getExpression(xPathExpression);
 		try {
-			result = (ap.evalXPath() != -1);
-			ap.resetXPath();
+			int res = ap.evalXPath();
+			result = (res != -1);
+			if(result)
+				existResult = vn.toString(res);
 		} catch(XPathEvalException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -121,6 +143,25 @@ public abstract class VTDXmlReader {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		ap.resetXPath();
+		return result;
+	}
+	
+	protected boolean attributeExists(String... xPathExpression) {
+		boolean result = false;
+		getExpression(xPathExpression);
+		try {
+			int res = ap.evalXPath();
+			result = (res != -1);
+			existResult = vn.toString(res+1);
+		} catch(XPathEvalException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch(NavException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		ap.resetXPath();
 		return result;
 	}
 

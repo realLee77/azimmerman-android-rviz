@@ -22,14 +22,17 @@ import java.util.List;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.drawable.loader.ColladaLoader;
+import org.ros.android.rviz_for_android.drawable.loader.VTDColladaLoader;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.android.view.visualization.OpenGlTransform;
 import org.ros.android.view.visualization.shape.BaseShape;
 import org.ros.rosjava_geometry.Transform;
 
+import android.util.Log;
+
 public class ColladaMesh extends BaseShape implements UrdfDrawable {
-	protected static final ColladaLoader loader = new ColladaLoader();
+	protected static final VTDColladaLoader loader = new VTDColladaLoader();
 
 	
 	/**
@@ -38,6 +41,7 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable {
 	 * @return a Collada mesh
 	 */
 	public static ColladaMesh newFromFile(String filename, MeshFileDownloader mfd) {
+		long now = System.nanoTime();
 		if(mfd == null)
 			throw new IllegalArgumentException("Null mesh file downloader! Must have a valid MFD to download meshes.");
 		
@@ -54,10 +58,11 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable {
 			try {				
 				loader.readDae(mfd.getContext().openFileInput(loadedFilename), imgPrefix);
 			} catch(IOException e) {
-				e.printStackTrace();
+				return null;
 			}
 			retval = loader.getGeometries();
 		}
+		Log.i("Collada", "Load time for " + filename + " = " + (System.nanoTime() - now)/1000000000.0);
 		return new ColladaMesh(retval);
 	}
 	
