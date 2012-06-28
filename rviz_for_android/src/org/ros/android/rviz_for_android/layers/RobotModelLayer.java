@@ -38,6 +38,7 @@ import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.android.rviz_for_android.urdf.UrdfLink;
 import org.ros.android.rviz_for_android.urdf.UrdfReader;
+import org.ros.android.rviz_for_android.urdf.VTDUrdfReader;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.OpenGlTransform;
 import org.ros.android.view.visualization.layer.DefaultLayer;
@@ -59,7 +60,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	private BoolProperty prop = new BoolProperty("Enabled", true, null);
 	private FrameTransformTree ftt;
 	private Camera cam;
-	private UrdfReader reader;
+	private VTDUrdfReader reader;
 	private ParameterTree params;
 
 	private volatile boolean readyToDraw = false;
@@ -80,7 +81,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		this.context = mfd.getContext();
 		this.mfd = mfd;
 
-		reader = new UrdfReader();
+		reader = new VTDUrdfReader();
 
 		prop.addSubProperty(new StringProperty("Parameter", DEFAULT_PARAM_VALUE, new PropertyUpdateListener<String>() {
 			@Override

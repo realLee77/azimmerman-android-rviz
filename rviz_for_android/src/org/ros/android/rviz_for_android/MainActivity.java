@@ -51,6 +51,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
+import android.widget.ExpandableListView.OnGroupExpandListener;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -188,6 +189,17 @@ public class MainActivity extends RosActivity {
 		propAdapter = new PropertyListAdapter(layers, getApplicationContext());
 		elv.setAdapter(propAdapter);
 		elv.setItemsCanFocus(true);
+		elv.setOnGroupExpandListener(new OnGroupExpandListener() {
+			@Override
+			public void onGroupExpand(int groupPosition) {
+				int len = propAdapter.getGroupCount();
+				for (int i = 0; i < len; i++) {
+					if (i != groupPosition) {
+						elv.collapseGroup(i);
+					}
+				}
+			}
+		});
 		
 		// TODO: Add default layers. MAKE THESE LOAD FROM A CONFIG FILE
 		addNewLayer(0);
