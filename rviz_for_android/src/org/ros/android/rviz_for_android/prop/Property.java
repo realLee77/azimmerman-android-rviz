@@ -113,6 +113,7 @@ public abstract class Property<T> {
 		}
 		return (R) cur;
 	}
+
 	public void addSubProperty(Property<?> p, String... levels) {
 		Property<?> cur = this;
 		for(int i = 0; i < levels.length; i ++) {

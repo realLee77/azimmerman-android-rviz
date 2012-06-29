@@ -33,9 +33,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 public class ColorProperty extends Property<Color> {
-	
-	private static final android.graphics.Color androidColor = new android.graphics.Color();
-	
+		
 	public ColorProperty(String name, Color value, PropertyUpdateListener<Color> updateListener) {
 		super(name, value, updateListener);
 	}
@@ -54,7 +52,7 @@ public class ColorProperty extends Property<Color> {
 		
 		btn = (Button) convertView.findViewById(R.id.btProp_Button);
 		btn.setText(" ");
-		btn.setBackgroundColor(androidColor.rgb((int)value.getRed()*255, (int)value.getGreen()*255, (int)value.getBlue()*255));
+		btn.setBackgroundColor(android.graphics.Color.rgb((int)value.getRed()*255, (int)value.getGreen()*255, (int)value.getBlue()*255));
 
 		btn.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -70,7 +68,7 @@ public class ColorProperty extends Property<Color> {
 			}
 		});
 		btn.setText("Pick Color");
-		btn.setTextColor(androidColor.BLACK);
+		btn.setTextColor(android.graphics.Color.BLACK);
 		
 		return convertView;
 	}
