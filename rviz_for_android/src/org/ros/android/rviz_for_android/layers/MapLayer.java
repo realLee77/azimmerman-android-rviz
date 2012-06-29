@@ -57,7 +57,7 @@ import android.util.Log;
 public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements LayerWithProperties {
 
 	private static int MAX_TEXTURE_WIDTH = 1024;
-	private static int MAX_TEXTURE_HEIGHT = 256;
+	private static int MAX_TEXTURE_HEIGHT = 1024;
 
 	private int wTileCount;
 	private int hTileCount;
@@ -107,16 +107,15 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 
 		Log.d("Map", "Tile grid is " + wTileCount + " x " + hTileCount + " with " + wTileScale + " x " + hTileScale + " tiles.");
 
-		tiles = new Plane[wTileCount][hTileCount];
+		tiles = new Plane[hTileCount][wTileCount];
 
 		initTextures(u, v, msg.getData());
 
-		for(int col = 0; col < hTileCount; col++) {
-			for(int row = 0; row < wTileCount; row++) {
+		for(int col = 0; col < wTileCount; col++) {
+			for(int row = 0; row < hTileCount; row++) {
 				Log.d("Map", "Generating tile " + row + ", " + col);
 				tiles[row][col] = new Plane(getTileTexture(row, col));
-				Transform tileTransform = new Transform(new Vector3(wTileScale * row, hTileScale * col, 0), Quaternion.newIdentityQuaternion());
-				Log.i("Map", "Offset: " + tileTransform.getTranslation());
+				Transform tileTransform = new Transform(new Vector3(wTileScale * col, hTileScale * row, 0), Quaternion.newIdentityQuaternion());
 				tiles[row][col].setTransform(tileTransform);
 				tiles[row][col].setScale(wTileScale, hTileScale);
 			}
@@ -140,12 +139,10 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		Rect src = new Rect(left, top, right, bottom);
 		Rect dst = new Rect(0, 0, src.width(), src.height());
 		dst.offset(0, MAX_TEXTURE_HEIGHT - dst.height());
-		
-		Log.i("Map", "Src: " + src.toShortString() + "  Dst: " + dst.toShortString());
 
 		canvas.drawBitmap(mapImage, src, dst, paint);
 
-		saveBitmap("tile" + row + "-" + col + ".jpg", tileImage);
+//		saveBitmap("tile" + row + "-" + col + ".jpg", tileImage);
 
 		// Compress the tile
 		return compressBitmap(tileImage);
@@ -194,7 +191,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 				mapImage.setPixel(u, height - v - 1, Color.argb(255, color, color, color));
 			}
 		}
-		saveBitmap("map.jpg", mapImage);
+//		saveBitmap("map.jpg", mapImage);
 	}
 
 	private void saveBitmap(String filename, Bitmap image) {
