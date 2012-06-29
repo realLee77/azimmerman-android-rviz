@@ -2,6 +2,7 @@ package org.ros.android.view.visualization.shape;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +22,13 @@ public class TexturedTrianglesShape extends TrianglesShape {
 
 	private boolean texturesLoaded = false;
 
+	public TexturedTrianglesShape(float[] vertices, float[] normals, float[] uvs, ETC1Texture diffuseTexture) {
+		super(vertices, normals, baseColor);
+		uv = Vertices.toFloatBuffer(uvs);
+		this.textures = new HashMap<String, ETC1Texture>();
+		this.textures.put("diffuse", diffuseTexture);
+	}
+	
 	public TexturedTrianglesShape(float[] vertices, float[] normals, float[] uvs, Map<String, ETC1Texture> textures) {
 		super(vertices, normals, baseColor);
 		uv = Vertices.toFloatBuffer(uvs);
@@ -29,6 +37,7 @@ public class TexturedTrianglesShape extends TrianglesShape {
 
 	@Override
 	public void draw(GL10 gl) {
+		gl.glPushMatrix();
 		super.setColor(baseColor);
 		if(!texturesLoaded)
 			loadTextures(gl);
@@ -44,6 +53,7 @@ public class TexturedTrianglesShape extends TrianglesShape {
 
 		gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
 		gl.glDisable(GL10.GL_TEXTURE_2D);
+		gl.glPopMatrix();
 	}
 
 	private int[] tmp = new int[1];

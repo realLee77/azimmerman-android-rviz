@@ -16,29 +16,67 @@
  */
 package org.ros.android.rviz_for_android.drawable;
 
-import org.ros.android.view.visualization.shape.Color;
-import org.ros.android.view.visualization.shape.TriangleStripShape;
+import javax.microedition.khronos.opengles.GL10;
 
-public class Plane extends TriangleStripShape {
+import org.ros.android.view.visualization.shape.TexturedTrianglesShape;
+
+import android.opengl.ETC1Util.ETC1Texture;
+
+public class Plane extends TexturedTrianglesShape {
 
 	private static final float planeV[] = {
-	-1f,-1f,0f,
-	-1f,1f,0f,
-	1f,-1f,0f,
-	1f,1f,0f
+		0f,1f,0f,
+		0f,0f,0f,
+		1f,0f,0f,
+		
+		0f,1f,0f,
+		1f,0f,0f,
+		1f,1f,0f
 	};
 	
 	private static final float planeN[] = {
 		0f,0f,1f,
 		0f,0f,1f,	
+		0f,0f,1f,
+		
+		0f,0f,1f,
+		0f,0f,1f,
+		0f,0f,1f
 	};
 	
-	private static final short planeI[] = {
-	    3,2,1,0//0, 1, 2, 3
+	private static final float planeUV[] = {
+		0f,0f,
+		0f,1f,
+		1f,1f,
+		
+		0f,0f,
+		1f,1f,
+		1f,0f
 	};
 
-	public Plane(Color color) {
-		super(planeV, planeI, planeN, color);
+	public Plane(ETC1Texture tex) {
+		super(planeV, planeN, planeUV, tex);
+	}
+
+	private float xScale = 1f;
+	private float yScale = 1f;
+	public void setScale(float xScale, float yScale) {
+		this.xScale = xScale;
+		this.yScale = yScale;
+	}
+
+	@Override
+	public void draw(GL10 gl) {
+	    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
+	    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_NEAREST);
+	    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, GL10.GL_CLAMP_TO_EDGE);
+	    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, GL10.GL_CLAMP_TO_EDGE);
+		super.draw(gl);
+	}
+
+	@Override
+	protected void scale(GL10 gl) {
+		gl.glScalef(xScale, yScale, 1f);
 	}
 
 }
