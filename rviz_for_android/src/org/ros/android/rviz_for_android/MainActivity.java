@@ -25,6 +25,7 @@ import org.ros.android.RosActivity;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
 import org.ros.android.rviz_for_android.layers.FPSLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
+import org.ros.android.rviz_for_android.layers.MapLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
 import org.ros.android.rviz_for_android.layers.RobotModelLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
@@ -33,6 +34,7 @@ import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.layer.DefaultLayer;
 import org.ros.android.view.visualization.layer.Layer;
+import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 import org.ros.rosjava_geometry.FrameTransformTree;
@@ -71,8 +73,17 @@ public class MainActivity extends RosActivity {
 	private PropertyListAdapter propAdapter;
 
 	// Tracking layers
+	private static enum AvailableLayerTypes { Axis, Grid, RobotModel, Map };
+	private static final AvailableLayerTypes[] availableLayers = AvailableLayerTypes.values();
+	private static CharSequence[] availableLayerNames;
+	static {
+		availableLayerNames = new CharSequence[availableLayers.length];
+		int i = 0;
+		for(AvailableLayerTypes aln : availableLayers) {
+			availableLayerNames[i++] = aln.toString();
+		}
+	}
 	private CharSequence[] liveLayers;
-	private CharSequence[] availableLayers = { "Axis", "Grid", "RobotModel" };
 	private int[] counts;
 
 	// Adding and removing layers
@@ -221,15 +232,18 @@ public class MainActivity extends RosActivity {
 
 	private void addNewLayer(int layertype) {
 		DefaultLayer newLayer = null;
-		switch(layertype) {
-		case 0:
+		switch(availableLayers[layertype]) {
+		case Axis:
 			newLayer = new AxisLayer();
 			break;
-		case 1:
+		case Grid:
 			newLayer = new GridLayer(10, 1f);
 			break;
-		case 2:
+		case RobotModel:
 			newLayer = new RobotModelLayer(mfd);
+			break;
+		case Map:
+			newLayer = new MapLayer(new GraphName("/map"), nav_msgs.OccupancyGrid._TYPE);
 			break;
 		}
 
@@ -264,7 +278,7 @@ public class MainActivity extends RosActivity {
 		}
 		return liveLayers;
 	}
-
+	
 	private void createLayerDialogs() {
 		// Initialize the number of instances of each layer to zero
 		counts = new int[availableLayers.length];
@@ -275,7 +289,7 @@ public class MainActivity extends RosActivity {
 		// Build a layer selection dialog for adding layers
 		addLayerDialogBuilder = new AlertDialog.Builder(context);
 		addLayerDialogBuilder.setTitle("Select a Layer");
-		addLayerDialogBuilder.setItems(availableLayers, new DialogInterface.OnClickListener() {
+		addLayerDialogBuilder.setItems(availableLayerNames, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int item) {
 				addNewLayer(item);
 			}
