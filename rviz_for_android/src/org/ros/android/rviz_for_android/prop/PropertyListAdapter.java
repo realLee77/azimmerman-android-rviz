@@ -30,12 +30,10 @@ public class PropertyListAdapter extends BaseExpandableListAdapter {
 	
 	private List<LayerWithProperties> layers;
 	private List<ArrayList<Property<?>>> props = new ArrayList<ArrayList<Property<?>>>();
-	private final Context context;
 	private LayoutInflater inflater;
 		
 	public PropertyListAdapter(List<LayerWithProperties> layers, Context context) {
 		super();
-		this.context = context;
 		inflater = LayoutInflater.from(context);
 		this.layers = layers;
 		generateContents();

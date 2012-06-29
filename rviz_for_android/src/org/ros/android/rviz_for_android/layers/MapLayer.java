@@ -16,10 +16,6 @@
  */
 package org.ros.android.rviz_for_android.layers;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -29,10 +25,14 @@ import nav_msgs.OccupancyGrid;
 
 import org.ros.android.rviz_for_android.drawable.Plane;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
+import org.ros.android.rviz_for_android.prop.GraphNameProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.layer.SubscriberLayer;
+import org.ros.android.view.visualization.layer.TfLayer;
+import org.ros.android.view.visualization.shape.TexturedTrianglesShape;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -43,18 +43,16 @@ import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.opengl.ETC1;
 import android.opengl.ETC1Util.ETC1Texture;
-import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 
-public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements LayerWithProperties {
+public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements LayerWithProperties, TfLayer {
 
 	private static int MAX_TEXTURE_WIDTH = 1024;
 	private static int MAX_TEXTURE_HEIGHT = 1024;
@@ -74,6 +72,8 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		super(topicName, messageType);
 
 		prop = new BoolProperty("Enabled", true, null);
+		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
+		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
 	}
 
 	@Override
@@ -88,6 +88,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 				isReady = true;
 			}
 		});
+		prop.<GraphNameProperty> getProperty("Parent").setTransformTree(frameTransformTree);
 	}
 
 	private Bitmap mapImage;
@@ -113,11 +114,11 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 
 		for(int col = 0; col < wTileCount; col++) {
 			for(int row = 0; row < hTileCount; row++) {
-				Log.d("Map", "Generating tile " + row + ", " + col);
 				tiles[row][col] = new Plane(getTileTexture(row, col));
 				Transform tileTransform = new Transform(new Vector3(wTileScale * col, hTileScale * row, 0), Quaternion.newIdentityQuaternion());
 				tiles[row][col].setTransform(tileTransform);
 				tiles[row][col].setScale(wTileScale, hTileScale);
+				tiles[row][col].setTextureSmoothing(TexturedTrianglesShape.TextureSmoothing.Nearest);
 			}
 		}
 	}
@@ -125,6 +126,9 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	private static final int BLACK = Color.argb(255, 0, 0, 0);
 	private static final Paint paint = new Paint();
 
+	/**
+	 * Currently this uses ETC1 compressed textures with black for any unused portions of the tile. Transparency isn't supported by ETC1 compression, which is the only compression mode guaranteed to work on all Android devices with OpenGL ES 2.0 support
+	 */
 	private ETC1Texture getTileTexture(int row, int col) {
 		// Fill the tile with black (background color)
 		canvas.clipRect(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -141,8 +145,6 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		dst.offset(0, MAX_TEXTURE_HEIGHT - dst.height());
 
 		canvas.drawBitmap(mapImage, src, dst, paint);
-
-//		saveBitmap("tile" + row + "-" + col + ".jpg", tileImage);
 
 		// Compress the tile
 		return compressBitmap(tileImage);
@@ -178,6 +180,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		tileImage = Bitmap.createBitmap(MAX_TEXTURE_WIDTH, MAX_TEXTURE_HEIGHT, Bitmap.Config.RGB_565);
 		canvas = new android.graphics.Canvas(tileImage);
 
+		// Copy the message data into a bitmap, flipping vertically
 		for(int u = 0; u < width; u++) {
 			for(int v = 0; v < height; v++) {
 				int color = data[v * width + u];
@@ -191,24 +194,23 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 				mapImage.setPixel(u, height - v - 1, Color.argb(255, color, color, color));
 			}
 		}
-//		saveBitmap("map.jpg", mapImage);
 	}
 
-	private void saveBitmap(String filename, Bitmap image) {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		image.compress(CompressFormat.JPEG, 80, baos);
+	/*	private void saveBitmap(String filename, Bitmap image) {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			image.compress(CompressFormat.JPEG, 80, baos);
 
-		File f = new File(Environment.getExternalStorageDirectory() + File.separator + filename);
-		try {
-			f.createNewFile();
-			FileOutputStream out = new FileOutputStream(f);
-			out.write(baos.toByteArray());
-			out.close();
-		} catch(IOException e) {
-			Log.e("Map", "Error saving JPG!");
-			e.printStackTrace();
-		}
-	}
+			File f = new File(Environment.getExternalStorageDirectory() + File.separator + filename);
+			try {
+				f.createNewFile();
+				FileOutputStream out = new FileOutputStream(f);
+				out.write(baos.toByteArray());
+				out.close();
+			} catch(IOException e) {
+				Log.e("Map", "Error saving JPG!");
+				e.printStackTrace();
+			}
+		}*/
 
 	@Override
 	public void draw(GL10 gl) {
@@ -229,6 +231,11 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	@Override
 	public Property<?> getProperties() {
 		return prop;
+	}
+
+	@Override
+	public GraphName getFrame() {
+		return prop.<GraphNameProperty> getProperty("Parent").getValue();
 	}
 
 }

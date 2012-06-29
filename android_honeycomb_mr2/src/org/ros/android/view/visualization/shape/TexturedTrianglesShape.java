@@ -14,6 +14,7 @@ import android.opengl.ETC1;
 import android.opengl.ETC1Util.ETC1Texture;
 
 public class TexturedTrianglesShape extends TrianglesShape {
+	public static enum TextureSmoothing {Linear, Nearest};
 	private static final Color baseColor = new Color(1f, 1f, 1f, 1f);
 
 	protected final FloatBuffer uv;
@@ -21,6 +22,7 @@ public class TexturedTrianglesShape extends TrianglesShape {
 	private Map<String, ETC1Texture> textures;
 
 	private boolean texturesLoaded = false;
+	private TextureSmoothing smoothing = TextureSmoothing.Linear;
 
 	public TexturedTrianglesShape(float[] vertices, float[] normals, float[] uvs, ETC1Texture diffuseTexture) {
 		super(vertices, normals, baseColor);
@@ -33,6 +35,15 @@ public class TexturedTrianglesShape extends TrianglesShape {
 		super(vertices, normals, baseColor);
 		uv = Vertices.toFloatBuffer(uvs);
 		this.textures = textures;
+	}
+	
+	/**
+	 * Determines which texture smoothing (TEXTURE_MIN_FILTER and TEXTURE_MAG_FILTER) modes are used for this shape.
+	 * This must be called before the shape is first drawn to have any effect.
+	 * @param s The smoothing mode to use
+	 */
+	public void setTextureSmoothing(TextureSmoothing s) {
+		this.smoothing = s;
 	}
 
 	@Override
@@ -72,10 +83,15 @@ public class TexturedTrianglesShape extends TrianglesShape {
 		        gl.glCompressedTexImage2D(GL10.GL_TEXTURE_2D, 0, ETC1.ETC1_RGB8_OES, tex.getWidth(), tex.getHeight(), 0, tex.getData().capacity(), tex.getData());
 		        
 		        // UV mapping parameters
-				gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR);
-				gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-				gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, GL10.GL_REPEAT);
-				gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, GL10.GL_REPEAT);
+		        if(smoothing == TextureSmoothing.Linear) {
+		        	gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR);
+					gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+		        } else if(smoothing == TextureSmoothing.Nearest) {
+		    	    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
+		    	    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_NEAREST);
+		        }
+			    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, GL10.GL_CLAMP_TO_EDGE);
+			    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, GL10.GL_CLAMP_TO_EDGE);
 			}
 		}
 		

@@ -36,10 +36,14 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
-import android.widget.Spinner;
+import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 
-public class GraphNameProperty extends Property<GraphName> {
+/**
+ * @author azimmerman
+ * This class isn't completely working!
+ */
+public class AutofillGraphNameProperty extends Property<GraphName> {
 
 	private static final ArrayList<String> defaultFrameList = new ArrayList<String>(Arrays.asList(new String[] { "<Fixed Frame>" }));
 	private Set<Integer> elementsToIgnore = new HashSet<Integer>();
@@ -64,9 +68,9 @@ public class GraphNameProperty extends Property<GraphName> {
 	private int selection = 0;
 	private FrameTransformTree ftt;
 	private TextView textView;
-	private Spinner spin;
+	private AutoCompleteTextView autocomplete;
 
-	public GraphNameProperty(String name, GraphName value, PropertyUpdateListener<GraphName> updateListener, FrameTransformTree ftt) {
+	public AutofillGraphNameProperty(String name, GraphName value, PropertyUpdateListener<GraphName> updateListener, FrameTransformTree ftt) {
 		super(name, value, updateListener);
 		this.setTransformTree(ftt);
 
@@ -105,7 +109,7 @@ public class GraphNameProperty extends Property<GraphName> {
 	 *            optional, the indices of elements in the list to "ignore". When items at these indices are selected, the value will be set to null. Useful for making '<Fixed Frame>', an invalid GraphName, an option.
 	 * @return self
 	 */
-	public GraphNameProperty setDefaultList(List<String> def, int... toIgnore) {
+	public AutofillGraphNameProperty setDefaultList(List<String> def, int... toIgnore) {
 		defaultList = def;
 		defaultListSize = def.size();
 		elementsToIgnore.clear();
@@ -117,7 +121,7 @@ public class GraphNameProperty extends Property<GraphName> {
 		return this;
 	}
 
-	public GraphNameProperty setDefaultItem(String defaultItem, boolean toIgnore) {
+	public AutofillGraphNameProperty setDefaultItem(String defaultItem, boolean toIgnore) {
 		ArrayList<String> newDefault = new ArrayList<String>();
 		newDefault.add(defaultItem);
 		if(toIgnore)
@@ -128,7 +132,7 @@ public class GraphNameProperty extends Property<GraphName> {
 
 	@Override
 	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		convertView = inflater.inflate(R.layout.row_property_spinner, parent, false);
+		convertView = inflater.inflate(R.layout.row_property_autocomplete, parent, false);
 
 		textView = (TextView) convertView.findViewById(R.id.tvProp_Spinner_Name);
 		if(title != null)
@@ -142,10 +146,10 @@ public class GraphNameProperty extends Property<GraphName> {
 			aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		}
 
-		spin = (Spinner) convertView.findViewById(R.id.spProp_Spinner);
+		autocomplete = (AutoCompleteTextView) convertView.findViewById(R.id.tvAutoComplete);
 
-		spin.setAdapter(aa);
-		spin.setOnItemSelectedListener(new OnItemSelectedListener() {
+		autocomplete.setAdapter(aa);
+		autocomplete.setOnItemSelectedListener(new OnItemSelectedListener() {
 			public void onItemSelected(AdapterView<?> arg0, View v, int position, long id) {
 				selection = position;
 				if(elementsToIgnore.contains(selection))
@@ -159,7 +163,7 @@ public class GraphNameProperty extends Property<GraphName> {
 			}
 		});
 
-		spin.setSelection(selection);
+		autocomplete.setSelection(selection);
 		return convertView;
 	}
 
