@@ -30,12 +30,14 @@ import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
 import org.ros.android.view.visualization.Camera;
+import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.layer.SubscriberLayer;
 import org.ros.android.view.visualization.layer.TfLayer;
 import org.ros.android.view.visualization.shape.TexturedTrianglesShape;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
+import org.ros.node.Node;
 import org.ros.node.topic.Subscriber;
 import org.ros.rosjava_geometry.AvailableFrameTracker.FrameAddedListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
@@ -69,6 +71,8 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 
 	private boolean isReady = false;
 
+	private MessageListener<OccupancyGrid> subListener;
+	
 	public MapLayer(GraphName topicName, String messageType) {
 		super(topicName, messageType);
 		prop = new BoolProperty("Enabled", true, null);
@@ -79,7 +83,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
 		Subscriber<nav_msgs.OccupancyGrid> sub = getSubscriber();
-		sub.addMessageListener(new MessageListener<OccupancyGrid>() {
+		subListener = new MessageListener<OccupancyGrid>() {
 			@Override
 			public void onNewMessage(OccupancyGrid arg0) {
 				isReady = false;
@@ -87,15 +91,16 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 				isReady = true;
 				updateStatus(frameTransformTree, camera);
 			}
-		});
-
+		};
+		
+		sub.addMessageListener(subListener);
+		
 		frameTransformTree.getFrameTracker().addListener(new FrameAddedListener() {
 			@Override
 			public void informFrameAdded(Set<String> newFrames) {
 				updateStatus(frameTransformTree, camera);
 			}
 		});
-
 		updateStatus(frameTransformTree, camera);
 	}
 
@@ -203,18 +208,22 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		canvas = new android.graphics.Canvas(tileImage);
 
 		// Copy the message data into a bitmap, flipping vertically
-		for(int u = 0; u < width; u++) {
-			for(int v = 0; v < height; v++) {
-				int color = data[v * width + u];
-				if(color == 100)
-					color = 0;
-				else if(color == 0)
-					color = 255;
-				else
-					color = 127;
+		if(!testLayerName()) {
+			for(int u = 0; u < width; u++) {
+				for(int v = 0; v < height; v++) {
+					int color = data[v * width + u];
+					if(color == 100)
+						color = 0;
+					else if(color == 0)
+						color = 255;
+					else
+						color = 127;
 
-				mapImage.setPixel(u, height - v - 1, Color.argb(255, color, color, color));
+					mapImage.setPixel(u, height - v - 1, Color.argb(255, color, color, color));
+				}
 			}
+		} else {
+			// TODO: SUPER SECRET EASTER EGG GOES HERE
 		}
 	}
 
@@ -224,22 +233,6 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	private boolean testLayerName() {
 		return super.layerName.equals("BRAINS");
 	}
-
-	/*	private void saveBitmap(String filename, Bitmap image) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			image.compress(CompressFormat.JPEG, 80, baos);
-
-			File f = new File(Environment.getExternalStorageDirectory() + File.separator + filename);
-			try {
-				f.createNewFile();
-				FileOutputStream out = new FileOutputStream(f);
-				out.write(baos.toByteArray());
-				out.close();
-			} catch(IOException e) {
-				Log.e("Map", "Error saving JPG!");
-				e.printStackTrace();
-			}
-		}*/
 
 	@Override
 	public void draw(GL10 gl) {
@@ -267,6 +260,17 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	@Override
 	public GraphName getFrame() {
 		return mapGraphName;
+	}
+
+	@Override
+	public void onShutdown(VisualizationView view, Node node) {
+		super.onShutdown(view, node);
+		if(tiles != null) {
+			for(Plane[] pRow : tiles)
+				for(Plane p : pRow)
+					p.cleanup();
+		}
+		getSubscriber().removeMessageListener(subListener);
 	}
 
 }

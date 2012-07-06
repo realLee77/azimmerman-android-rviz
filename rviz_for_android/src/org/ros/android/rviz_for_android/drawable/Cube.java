@@ -121,13 +121,4 @@ public class Cube extends BufferedTrianglesShape implements UrdfDrawable {
 	protected void scale(GL10 gl) {
 		gl.glScalef(scale[0], scale[1], scale[2]);
 	}
-
-	@Override
-	public void batchDraw(GL10 gl, Transform transform, float[] scale) {
-		//gl.glPushMatrix();
-		this.setTransform(transform);
-		this.scale = scale;
-		super.batchDraw(gl);
-		//gl.glPopMatrix();
-	}
 }

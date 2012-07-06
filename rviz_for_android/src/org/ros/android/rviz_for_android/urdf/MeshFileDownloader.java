@@ -34,6 +34,11 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
+/**
+ * Queries a server to download textures and mesh files. Downloaded files are cached in app storage.
+ * @author azimmerman
+ *
+ */
 public class MeshFileDownloader {
 
 	private String host;

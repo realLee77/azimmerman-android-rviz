@@ -17,8 +17,6 @@
 package org.ros.android.rviz_for_android.layers;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -30,7 +28,6 @@ import org.ros.node.ConnectedNode;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.os.Handler;
-import android.util.Log;
 
 public class FPSLayer extends DefaultLayer {
 

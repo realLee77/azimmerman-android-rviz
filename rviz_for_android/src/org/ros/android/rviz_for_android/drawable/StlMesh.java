@@ -67,11 +67,4 @@ public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable {
 	protected void scale(GL10 gl) {
 		gl.glScalef(scale[0], scale[1], scale[2]);
 	}
-
-	@Override
-	public void batchDraw(GL10 gl, Transform transform, float[] scale) {
-		this.setTransform(transform);
-		this.scale = scale;
-		super.batchDraw(gl);
-	}
 }

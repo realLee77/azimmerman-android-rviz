@@ -18,7 +18,7 @@ import android.opengl.GLES20;
  * @author azimmerman
  *
  */
-public class BufferedTrianglesShape extends BaseShape implements BatchDrawable {
+public class BufferedTrianglesShape extends BaseShape {
 	private FloatBuffer packedBuffer;
 	private boolean bufferPrepared = false;
 	protected int count;
@@ -73,7 +73,8 @@ public class BufferedTrianglesShape extends BaseShape implements BatchDrawable {
 
 	private int bufferIdx = -1;
 	private static final int FLOAT_SIZE = Float.SIZE/8;
-	private static final int stride = 6*FLOAT_SIZE; 
+	private static final int STRIDE = 6*FLOAT_SIZE; 
+	private static final int NORMAL_OFFSET = 3*FLOAT_SIZE;
 	
 	@Override
 	public void draw(GL10 gl) {
@@ -85,10 +86,10 @@ public class BufferedTrianglesShape extends BaseShape implements BatchDrawable {
 
 		GLES11.glBindBuffer(GL11.GL_ARRAY_BUFFER, bufferIdx);
 		GLES11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-		GLES11.glVertexPointer(3, GL11.GL_FLOAT, stride, 0);
+		GLES11.glVertexPointer(3, GL11.GL_FLOAT, STRIDE, 0);
 		
         GLES11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
-        GLES11.glNormalPointer(GL11.GL_FLOAT, stride, 3*FLOAT_SIZE);
+        GLES11.glNormalPointer(GL11.GL_FLOAT, STRIDE, NORMAL_OFFSET);
         
         GLES11.glDrawArrays(GL10.GL_TRIANGLES, 0, count);
         
@@ -105,23 +106,5 @@ public class BufferedTrianglesShape extends BaseShape implements BatchDrawable {
 		
 		bufferPrepared = true;
 		return buffers[0];
-	}
-
-	@Override
-	public void batchDraw(GL10 gl) {
-		if(!bufferPrepared)
-			bufferIdx = createVertexBuffer(gl);
-		
-		super.draw(gl);
-		GLES11.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
-
-		GLES11.glBindBuffer(GL11.GL_ARRAY_BUFFER, bufferIdx);
-		GLES11.glVertexPointer(3, GL11.GL_FLOAT, stride, 0);
-
-        GLES11.glNormalPointer(GL11.GL_FLOAT, stride, 3*FLOAT_SIZE);
-        
-        GLES11.glDrawArrays(GL10.GL_TRIANGLES, 0, count);
-
-		GLES11.glBindBuffer(GL11.GL_ARRAY_BUFFER, 0);
 	}
 }

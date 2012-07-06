@@ -17,7 +17,7 @@ import android.opengl.ETC1Util.ETC1Texture;
  * @author azimmerman
  *
  */
-public class TexturedTrianglesShape extends TrianglesShape {
+public class TexturedTrianglesShape extends TrianglesShape implements CleanableShape {
 	public static enum TextureSmoothing {Linear, Nearest};
 	private static final Color baseColor = new Color(1f, 1f, 1f, 1f);
 
@@ -28,7 +28,7 @@ public class TexturedTrianglesShape extends TrianglesShape {
 	private boolean texturesLoaded = false;
 	private TextureSmoothing smoothing = TextureSmoothing.Linear;
 
-	private boolean readyToCleanup = false;
+	private boolean cleanUp = false;
 	
 	public TexturedTrianglesShape(float[] vertices, float[] normals, float[] uvs, ETC1Texture diffuseTexture) {
 		super(vertices, normals, baseColor);
@@ -54,8 +54,8 @@ public class TexturedTrianglesShape extends TrianglesShape {
 
 	@Override
 	public void draw(GL10 gl) {		
-		if(readyToCleanup) {
-			unloadTextures(gl);
+		if(cleanUp) {
+			clearBuffers(gl);
 			return;
 		}
 		gl.glPushMatrix();
@@ -110,18 +110,22 @@ public class TexturedTrianglesShape extends TrianglesShape {
 	}
 	
 	public void cleanup() {
-		readyToCleanup = true;
+		cleanUp = true;
 	}
 	
 	/**
 	 * Clear the buffered textures which have been loaded
 	 * @param gl
 	 */
-	private void unloadTextures(GL10 gl) {
-		for(Integer i : texIDArray) {
-			tmp[0] = i;
-			gl.glDeleteTextures(1, tmp, 0); 
+	private boolean cleaned = false;
+	private void clearBuffers(GL10 gl) {
+		if(!cleaned) {
+			for(Integer i : texIDArray) {
+				tmp[0] = i;
+				gl.glDeleteTextures(1, tmp, 0); 
+			}
+			texIDArray.clear();
+			cleaned = true;
 		}
-		texIDArray.clear();
 	}
 }

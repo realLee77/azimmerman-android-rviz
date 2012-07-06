@@ -40,8 +40,11 @@ import org.ros.android.rviz_for_android.urdf.UrdfReader;
 import org.ros.android.rviz_for_android.urdf.UrdfReader.UrdfReadingProgressListener;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.OpenGlTransform;
+import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.layer.DefaultLayer;
+import org.ros.android.view.visualization.shape.CleanableShape;
 import org.ros.node.ConnectedNode;
+import org.ros.node.Node;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
@@ -89,7 +92,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 						current_param_value = newval;
 						reloadUrdf(newval);
 					} else {
-						prop.<StringProperty>getProperty("Parameter").setValue(current_param_value);
+						prop.<StringProperty> getProperty("Parameter").setValue(current_param_value);
 						Toast.makeText(context, "Invalid parameter " + newval, Toast.LENGTH_LONG).show();
 					}
 				}
@@ -183,9 +186,9 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			Log.e("RobotModel", "Unknown mesh type! " + meshResourceName);
 			return false;
 		}
-		
+
 		meshes.put(meshResourceName, ud);
-		
+
 		return (ud != null);
 	}
 
@@ -221,7 +224,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	private class LoadUrdf extends AsyncTask<String, String, Void> {
 
 		private Toast progressToast;
-		
+
 		@Override
 		protected void onProgressUpdate(String... values) {
 			super.onProgressUpdate(values);
@@ -245,7 +248,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		@Override
 		protected Void doInBackground(String... parameters) {
 			String param = parameters[0];
-			
+
 			// Parse the URDF
 			String urdf_xml = null;
 			if(params.has(param))
@@ -259,11 +262,11 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 				public void readLink(int linkNumber, int linkCount) {
 					StringBuilder sb = new StringBuilder();
 					sb.append("URDF Loading: [");
-					double percent = 25.0*linkNumber/linkCount;
+					double percent = 25.0 * linkNumber / linkCount;
 					int markers = 0;
-					for(int i = 0; i < percent; i ++) {
+					for(int i = 0; i < percent; i++) {
 						sb.append('|');
-						markers ++;
+						markers++;
 					}
 					for(int i = markers; i < 25; i++) {
 						sb.append(' ');
@@ -274,7 +277,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			});
 			reader.readUrdf(urdf_xml);
 			urdf = reader.getUrdf();
-			
+
 			// Load any referenced models
 			for(UrdfLink ul : urdf) {
 				for(Component c : ul.getComponents()) {
@@ -295,6 +298,15 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			}
 			return null;
 		}
+	}
 
+	@Override
+	public void onShutdown(VisualizationView view, Node node) {
+		super.onShutdown(view, node);
+		
+		for(UrdfDrawable ud : meshes.values()) {
+			if(ud instanceof CleanableShape)
+				((CleanableShape) ud).cleanup();
+		}
 	}
 }
