@@ -25,7 +25,7 @@ import org.ros.android.rviz_for_android.MainActivity;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
-import org.ros.android.rviz_for_android.prop.PropertyUpdateListener;
+import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.layer.SubscriberLayer;
