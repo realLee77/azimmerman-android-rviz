@@ -36,8 +36,8 @@ import org.ros.android.rviz_for_android.urdf.Component;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.android.rviz_for_android.urdf.UrdfLink;
-import org.ros.android.rviz_for_android.urdf.VTDUrdfReader;
-import org.ros.android.rviz_for_android.urdf.VTDUrdfReader.UrdfReadingProgressListener;
+import org.ros.android.rviz_for_android.urdf.UrdfReader;
+import org.ros.android.rviz_for_android.urdf.UrdfReader.UrdfReadingProgressListener;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.OpenGlTransform;
 import org.ros.android.view.visualization.layer.DefaultLayer;
@@ -58,7 +58,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	private BoolProperty prop = new BoolProperty("Enabled", true, null);
 	private FrameTransformTree ftt;
 	private Camera cam;
-	private VTDUrdfReader reader;
+	private UrdfReader reader;
 	private ParameterTree params;
 
 	private volatile boolean readyToDraw = false;
@@ -79,7 +79,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		this.context = mfd.getContext();
 		this.mfd = mfd;
 
-		reader = new VTDUrdfReader();
+		reader = new UrdfReader();
 
 		prop.addSubProperty(new StringProperty("Parameter", DEFAULT_PARAM_VALUE, new PropertyUpdateListener<String>() {
 			@Override
@@ -126,6 +126,9 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			return;
 		}
 
+		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+		gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
+		gl.glEnable(GL10.GL_TEXTURE_2D);
 		for(UrdfLink ul : urdf) {
 			vis = ul.getVisual();
 			col = ul.getCollision();
@@ -133,12 +136,6 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			gl.glPushMatrix();
 
 			// Transform to the URDF link's frame
-/*			 if(ftt.canTransform(cam.getFixedFrame(), ul.getName())) {
-				 Transform t = ftt.newFrameTransform(cam.getFixedFrame(), ul.getName()).getTransform();
-				 Log.i("RobotModel", t.toString());
-				 OpenGlTransform.apply(gl, t);
-			 }
-*/
 			OpenGlTransform.apply(gl, ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
 
 			// Draw the shape
@@ -151,26 +148,29 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 			gl.glPopMatrix();
 		}
+		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+		gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
+		gl.glDisable(GL10.GL_TEXTURE_2D);
 	}
 
 	private void drawComponent(GL10 gl, Component com) {
 		switch(com.getType()) {
 		case BOX:
 			cube.setColor(com.getMaterial_color());
-			cube.draw(gl, com.getOrigin(), com.getSize());
+			cube.batchDraw(gl, com.getOrigin(), com.getSize());
 			break;
 		case CYLINDER:
 			cyl.setColor(com.getMaterial_color());
-			cyl.draw(gl, com.getOrigin(), com.getLength(), com.getRadius());
+			cyl.batchDraw(gl, com.getOrigin(), com.getLength(), com.getRadius());
 			break;
 		case SPHERE:
 			sphere.setColor(com.getMaterial_color());
-			sphere.draw(gl, com.getOrigin(), com.getRadius());
+			sphere.batchDraw(gl, com.getOrigin(), com.getRadius());
 			break;
 		case MESH:
 			UrdfDrawable ud = meshes.get(com.getMesh());
 			if(ud != null)
-				ud.draw(gl, com.getOrigin(), com.getSize());
+				ud.batchDraw(gl, com.getOrigin(), com.getSize());
 			break;
 		}
 	}

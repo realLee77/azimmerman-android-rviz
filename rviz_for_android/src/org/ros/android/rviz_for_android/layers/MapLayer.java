@@ -18,6 +18,7 @@ package org.ros.android.rviz_for_android.layers;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -25,7 +26,6 @@ import nav_msgs.OccupancyGrid;
 
 import org.ros.android.rviz_for_android.drawable.Plane;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
-import org.ros.android.rviz_for_android.prop.GraphNameProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
@@ -37,6 +37,7 @@ import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Subscriber;
+import org.ros.rosjava_geometry.AvailableFrameTracker.FrameAddedListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
@@ -70,14 +71,12 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 
 	public MapLayer(GraphName topicName, String messageType) {
 		super(topicName, messageType);
-
 		prop = new BoolProperty("Enabled", true, null);
-		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
 		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
 	}
 
 	@Override
-	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
+	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
 		Subscriber<nav_msgs.OccupancyGrid> sub = getSubscriber();
 		sub.addMessageListener(new MessageListener<OccupancyGrid>() {
@@ -86,9 +85,32 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 				isReady = false;
 				generateMapTiles(arg0);
 				isReady = true;
+				updateStatus(frameTransformTree, camera);
 			}
 		});
-		prop.<GraphNameProperty> getProperty("Parent").setTransformTree(frameTransformTree);
+
+		frameTransformTree.getFrameTracker().addListener(new FrameAddedListener() {
+			@Override
+			public void informFrameAdded(Set<String> newFrames) {
+				updateStatus(frameTransformTree, camera);
+			}
+		});
+
+		updateStatus(frameTransformTree, camera);
+	}
+
+	private void updateStatus(FrameTransformTree frameTransformTree, Camera camera) {
+		ReadOnlyProperty status = prop.<ReadOnlyProperty> getProperty("Status");
+		if(!isReady) {
+			status.setValue("No map exists!");
+			status.setTextColor(ReadOnlyProperty.StatusColor.ERROR);
+		} else if(!frameTransformTree.canTransform(camera.getFixedFrame(), mapGraphName)) {
+			status.setValue("No transform exists from " + camera.getFixedFrame() + " to /map!");
+			status.setTextColor(ReadOnlyProperty.StatusColor.WARN);
+		} else {
+			status.setValue("OK");
+			status.setTextColor(ReadOnlyProperty.StatusColor.OK);
+		}
 	}
 
 	private Bitmap mapImage;
@@ -196,6 +218,13 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		}
 	}
 
+	/**
+	 * Super secret easter egg (currently unimplemented)
+	 */
+	private boolean testLayerName() {
+		return super.layerName.equals("BRAINS");
+	}
+
 	/*	private void saveBitmap(String filename, Bitmap image) {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			image.compress(CompressFormat.JPEG, 80, baos);
@@ -233,9 +262,11 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		return prop;
 	}
 
+	private static final GraphName mapGraphName = new GraphName("/map");
+
 	@Override
 	public GraphName getFrame() {
-		return prop.<GraphNameProperty> getProperty("Parent").getValue();
+		return mapGraphName;
 	}
 
 }

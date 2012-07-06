@@ -8,24 +8,30 @@
     android:orientation="horizontal"
     android:weightSum="1.0" >
 
+    <ImageView
+        android:id="@+id/imgStatus"
+        android:layout_width="30dp"
+        android:layout_marginLeft="2dp"
+        android:layout_height="fill_parent" />
+
     <TextView
         android:id="@+id/tvProp_ReadOnly_Name"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="0.5"
         android:layout_gravity="center_vertical"
-        android:layout_marginLeft="35dp"
-        android:text="TextView"
-        android:textSize="20sp" />
+        android:layout_marginLeft="5dp"
+        android:textSize="20sp" /> <!-- was 35 dp margin left-->
 
     <TextView
         android:id="@+id/tvProp_ReadOnly_Value"
-        android:layout_width="0dp"
-        android:layout_weight="0.5"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:ems="10"
         android:layout_gravity="center_vertical"
-        android:maxLines="1"
-        android:textSize="22sp" />
+        android:layout_marginLeft="6dp"
+        android:layout_marginRight="28dp"
+        android:textStyle="bold"
+        android:ems="10"
+        android:gravity="right"
+        android:textSize="16sp" />
 
 </LinearLayout>

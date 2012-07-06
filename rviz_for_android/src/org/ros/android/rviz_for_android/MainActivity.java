@@ -73,7 +73,15 @@ public class MainActivity extends RosActivity {
 	private PropertyListAdapter propAdapter;
 
 	// Tracking layers
-	private static enum AvailableLayerTypes { Axis, Grid, RobotModel, Map };
+	private static enum AvailableLayerTypes { Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map");
+	private String printName;
+	AvailableLayerTypes(String printName) {
+		this.printName = printName;
+	}
+	@Override
+	public String toString() {
+		return printName;
+	}};
 	private static final AvailableLayerTypes[] availableLayers = AvailableLayerTypes.values();
 	private static CharSequence[] availableLayerNames;
 	static {

@@ -22,4 +22,5 @@ import org.ros.rosjava_geometry.Transform;
 
 public interface UrdfDrawable {
 	public void draw(GL10 gl, Transform transform, float[] scale);
+	public void batchDraw(GL10 gl, Transform transform, float[] scale);
 }
