@@ -126,9 +126,6 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			return;
 		}
 
-		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-		gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
-		gl.glEnable(GL10.GL_TEXTURE_2D);
 		for(UrdfLink ul : urdf) {
 			vis = ul.getVisual();
 			col = ul.getCollision();
@@ -148,29 +145,26 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 			gl.glPopMatrix();
 		}
-		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-		gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
-		gl.glDisable(GL10.GL_TEXTURE_2D);
 	}
 
 	private void drawComponent(GL10 gl, Component com) {
 		switch(com.getType()) {
 		case BOX:
 			cube.setColor(com.getMaterial_color());
-			cube.batchDraw(gl, com.getOrigin(), com.getSize());
+			cube.draw(gl, com.getOrigin(), com.getSize());
 			break;
 		case CYLINDER:
 			cyl.setColor(com.getMaterial_color());
-			cyl.batchDraw(gl, com.getOrigin(), com.getLength(), com.getRadius());
+			cyl.draw(gl, com.getOrigin(), com.getLength(), com.getRadius());
 			break;
 		case SPHERE:
 			sphere.setColor(com.getMaterial_color());
-			sphere.batchDraw(gl, com.getOrigin(), com.getRadius());
+			sphere.draw(gl, com.getOrigin(), com.getRadius());
 			break;
 		case MESH:
 			UrdfDrawable ud = meshes.get(com.getMesh());
 			if(ud != null)
-				ud.batchDraw(gl, com.getOrigin(), com.getSize());
+				ud.draw(gl, com.getOrigin(), com.getSize());
 			break;
 		}
 	}
