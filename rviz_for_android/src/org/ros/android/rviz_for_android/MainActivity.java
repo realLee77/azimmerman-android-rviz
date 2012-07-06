@@ -66,6 +66,7 @@ public class MainActivity extends RosActivity {
 	private ExpandableListView elv;
 	private ArrayList<LayerWithProperties> layers = new ArrayList<LayerWithProperties>();
 	private PropertyListAdapter propAdapter;
+	private Toast msgToast;
 
 	// Tracking layers
 	private static enum AvailableLayerTypes { Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud");
@@ -150,12 +151,17 @@ public class MainActivity extends RosActivity {
 			break;
 		case R.id.clear_model_cache:
 			int clearedCount = mfd.clearCache();
-			Toast.makeText(this, "Cleared " + clearedCount + " items in model cache", Toast.LENGTH_LONG).show();
+			showToast("Cleared " + clearedCount + " items in model cache");
 			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
+	private void showToast(String msg) {
+		msgToast.setText(msg);
+		msgToast.show();
+	}
+	
 	private void showTFSelectDialog() {
 		FrameTransformTree ftt = visualizationView.getFrameTransformTree();
 
@@ -175,7 +181,7 @@ public class MainActivity extends RosActivity {
 			AlertDialog dialog = selTfFrame.create();
 			dialog.show();
 		} else {
-			Toast.makeText(this, "No TF frames to follow!", Toast.LENGTH_LONG).show();
+			showToast("No TF frames to follow!");
 		}
 	}
 
@@ -184,6 +190,7 @@ public class MainActivity extends RosActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		MainActivity.context = this;
+		msgToast = Toast.makeText(this, "", Toast.LENGTH_LONG);
 
 		createLayerDialogs();
 		configureGUI();
@@ -260,7 +267,7 @@ public class MainActivity extends RosActivity {
 			}
 			visualizationView.addLayer(newLayer);
 		} else {
-			Toast.makeText(context, "Invalid selection!", Toast.LENGTH_LONG).show();
+			showToast("Invalid selection!");
 		}
 	}
 
@@ -272,7 +279,7 @@ public class MainActivity extends RosActivity {
 			layers.remove(toRemove);
 			propAdapter.notifyDataSetChanged();
 		} else {
-			Toast.makeText(context, "Unable to remove selected layer " + liveLayers[item], Toast.LENGTH_LONG).show();
+			showToast("Unable to remove selected layer " + liveLayers[item]);
 		}
 	}
 
@@ -326,7 +333,7 @@ public class MainActivity extends RosActivity {
 					remLayerDialog = remLayerDialogBuilder.create();
 					remLayerDialog.show();
 				} else {
-					Toast.makeText(context, "No layers to delete!", Toast.LENGTH_LONG).show();
+					showToast("No layers to delete!");
 				}
 			}
 		});

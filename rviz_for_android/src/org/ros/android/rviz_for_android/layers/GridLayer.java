@@ -31,7 +31,7 @@ import org.ros.android.rviz_for_android.prop.GraphNameProperty;
 import org.ros.android.rviz_for_android.prop.IntProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
-import org.ros.android.rviz_for_android.prop.PropertyUpdateListener;
+import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.Vector3Property;
 import org.ros.android.view.visualization.Camera;
 import org.ros.android.view.visualization.layer.DefaultLayer;

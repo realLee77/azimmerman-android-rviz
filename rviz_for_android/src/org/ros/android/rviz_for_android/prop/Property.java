@@ -31,6 +31,10 @@ import android.view.ViewGroup;
  */
 public abstract class Property<T> {
 	
+	public interface PropertyUpdateListener<T> {
+		void onPropertyChanged(T newval);
+	}
+
 	protected T value;
 	protected String name;
 	protected String description = "Not implemented! ಠ_ಠ";
@@ -41,11 +45,12 @@ public abstract class Property<T> {
 	public Property(String name, T value, PropertyUpdateListener<T> updateListener) {
 		this.name = name;
 		this.value = value;
-		updateListeners.add(updateListener);
+		addUpdateListener(updateListener);
 	}
 	
 	public void addUpdateListener(PropertyUpdateListener<T> updateListener) {
-		updateListeners.add(updateListener);
+		if(updateListener != null)
+			updateListeners.add(updateListener);
 	}
 	
 	public void setValue(T value) {

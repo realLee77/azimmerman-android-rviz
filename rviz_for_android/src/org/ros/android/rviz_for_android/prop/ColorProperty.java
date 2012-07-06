@@ -33,11 +33,11 @@ import android.widget.Button;
 import android.widget.TextView;
 
 public class ColorProperty extends Property<Color> {
-		
+
 	public ColorProperty(String name, Color value, PropertyUpdateListener<Color> updateListener) {
 		super(name, value, updateListener);
 	}
-	
+
 	private TextView textView;
 	private Button btn;
 
@@ -49,10 +49,10 @@ public class ColorProperty extends Property<Color> {
 			textView.setText(title);
 		else
 			textView.setText(super.name);
-		
+
 		btn = (Button) convertView.findViewById(R.id.btProp_Button);
 		btn.setText(" ");
-		btn.setBackgroundColor(android.graphics.Color.rgb((int)value.getRed()*255, (int)value.getGreen()*255, (int)value.getBlue()*255));
+		btn.setBackgroundColor(android.graphics.Color.rgb((int) value.getRed() * 255, (int) value.getGreen() * 255, (int) value.getBlue() * 255));
 
 		btn.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -61,7 +61,7 @@ public class ColorProperty extends Property<Color> {
 				d.setAlphaSliderVisible(true);
 				d.setButton("Ok", new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						setValue(Utility.IntToColor(d.getColor()));	
+						setValue(Utility.IntToColor(d.getColor()));
 					}
 				});
 				d.show();
@@ -69,10 +69,10 @@ public class ColorProperty extends Property<Color> {
 		});
 		btn.setText("Pick Color");
 		btn.setTextColor(android.graphics.Color.BLACK);
-		
+
 		return convertView;
 	}
-	
+
 	@Override
 	protected void informListeners(Color newvalue) {
 		if(btn != null)

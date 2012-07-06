@@ -23,9 +23,11 @@ import java.nio.FloatBuffer;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.prop.BoolProperty;
+import org.ros.android.rviz_for_android.prop.ColorProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
+import org.ros.android.rviz_for_android.prop.ListProperty;
 import org.ros.android.rviz_for_android.prop.Property;
-import org.ros.android.rviz_for_android.prop.PropertyUpdateListener;
+import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.rviz_for_android.prop.StringProperty.StringPropertyValidator;
 import org.ros.android.view.visualization.Camera;
@@ -33,6 +35,7 @@ import org.ros.android.view.visualization.Vertices;
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.layer.SubscriberLayer;
 import org.ros.android.view.visualization.layer.TfLayer;
+import org.ros.android.view.visualization.shape.Color;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -56,6 +59,7 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 	private ConnectedNode connectedNode;
 	private MessageListener<PointCloud> subListener;
 	private Subscriber<sensor_msgs.PointCloud> sub;
+	private float[] color = new float[4];
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
@@ -92,13 +96,15 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 	@Override
 	public void draw(GL10 gl) {
 		if(readyToDraw) {
-			gl.glColor4f(1f, 1f, 1f, 1f);
+			gl.glColor4f(color[0], color[1], color[2], color[3]);
 			gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, verticesBuffer);
 			gl.glDrawArrays(GL10.GL_POINTS, 0, pointCount);
 		}
 	}
 
+	private static final String[] colorModes = new String[] {"Flat color", "Gradient X", "Gradient Y", "Gradient Z"};
+	
 	public PointCloudLayer(GraphName topicName, String messageType) {
 		super(topicName, messageType);
 		prop = new BoolProperty("Enabled", true, null);
@@ -115,6 +121,22 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 				return GraphName.validate(newval);
 			}
 		});
+		prop.addSubProperty(new ColorProperty("Flat Color", new Color(1f,1f,1f,1f), new PropertyUpdateListener<Color>() {
+			@Override
+			public void onPropertyChanged(Color newval) {
+				color[0] = newval.getRed();
+				color[1] = newval.getGreen();
+				color[2] = newval.getBlue();
+				color[3] = newval.getAlpha();
+			}
+		}));
+		
+		prop.addSubProperty(new ListProperty("Color Mode", 0, new PropertyUpdateListener<Integer>() {
+			@Override
+			public void onPropertyChanged(Integer newval) {
+				// TODO: Change which shader is used
+			}
+		}).setList(colorModes));
 	}
 
 	private void clearSubscriber() {
