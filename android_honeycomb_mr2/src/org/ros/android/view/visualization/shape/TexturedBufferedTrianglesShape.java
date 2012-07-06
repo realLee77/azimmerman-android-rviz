@@ -13,11 +13,7 @@ import org.ros.android.view.visualization.Vertices;
 import android.opengl.ETC1;
 import android.opengl.ETC1Util.ETC1Texture;
 
-/**
- * @author azimmerman
- *
- */
-public class TexturedTrianglesShape extends TrianglesShape {
+public class TexturedBufferedTrianglesShape extends BufferedTrianglesShape implements BatchDrawable {
 	public static enum TextureSmoothing {Linear, Nearest};
 	private static final Color baseColor = new Color(1f, 1f, 1f, 1f);
 
@@ -27,17 +23,15 @@ public class TexturedTrianglesShape extends TrianglesShape {
 
 	private boolean texturesLoaded = false;
 	private TextureSmoothing smoothing = TextureSmoothing.Linear;
-
-	private boolean readyToCleanup = false;
 	
-	public TexturedTrianglesShape(float[] vertices, float[] normals, float[] uvs, ETC1Texture diffuseTexture) {
+	public TexturedBufferedTrianglesShape(float[] vertices, float[] normals, float[] uvs, ETC1Texture diffuseTexture) {
 		super(vertices, normals, baseColor);
 		uv = Vertices.toFloatBuffer(uvs);
 		this.textures = new HashMap<String, ETC1Texture>();
 		this.textures.put("diffuse", diffuseTexture);
 	}
 	
-	public TexturedTrianglesShape(float[] vertices, float[] normals, float[] uvs, Map<String, ETC1Texture> textures) {
+	public TexturedBufferedTrianglesShape(float[] vertices, float[] normals, float[] uvs, Map<String, ETC1Texture> textures) {
 		super(vertices, normals, baseColor);
 		uv = Vertices.toFloatBuffer(uvs);
 		this.textures = textures;
@@ -54,10 +48,6 @@ public class TexturedTrianglesShape extends TrianglesShape {
 
 	@Override
 	public void draw(GL10 gl) {		
-		if(readyToCleanup) {
-			unloadTextures(gl);
-			return;
-		}
 		gl.glPushMatrix();
 		super.setColor(baseColor);
 		if(!texturesLoaded)
@@ -110,7 +100,6 @@ public class TexturedTrianglesShape extends TrianglesShape {
 	}
 	
 	public void cleanup() {
-		readyToCleanup = true;
 	}
 	
 	/**
@@ -123,5 +112,22 @@ public class TexturedTrianglesShape extends TrianglesShape {
 			gl.glDeleteTextures(1, tmp, 0); 
 		}
 		texIDArray.clear();
+	}
+
+	@Override
+	public void batchDraw(GL10 gl) {
+		super.setColor(baseColor);
+		if(!texturesLoaded)
+			loadTextures(gl);
+
+		for(Integer i : texIDArray)
+			gl.glBindTexture(GL10.GL_TEXTURE_2D, i);
+
+		gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, uv);
+		gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+
+		super.batchDraw(gl);
+
+		gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
 	}
 }

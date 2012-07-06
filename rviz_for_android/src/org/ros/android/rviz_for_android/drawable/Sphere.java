@@ -151,6 +151,18 @@ public class Sphere extends BaseShape {
 		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
 		gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
 	}
+	
+	public void batchDraw(GL10 gl, Transform transform, float radius) {
+		this.radius = radius;
+		super.setTransform(transform);
+		super.draw(gl);
+		gl.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+		gl.glNormalPointer(GL10.GL_FLOAT, 0, m_NormalData);
+
+		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, m_VertexData);
+
+		gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, elementsToDraw);
+	}
 
 	@Override
 	protected void scale(GL10 gl) {

@@ -23,11 +23,11 @@ import javax.microedition.khronos.opengles.GL10;
 import org.ros.android.rviz_for_android.drawable.loader.StlLoader;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
+import org.ros.android.view.visualization.shape.BufferedTrianglesShape;
 import org.ros.android.view.visualization.shape.Color;
-import org.ros.android.view.visualization.shape.TrianglesShape;
 import org.ros.rosjava_geometry.Transform;
 
-public class StlMesh extends TrianglesShape implements UrdfDrawable {
+public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable {
 
 	private static final StlLoader loader = new StlLoader();
 	
@@ -66,5 +66,12 @@ public class StlMesh extends TrianglesShape implements UrdfDrawable {
 	@Override
 	protected void scale(GL10 gl) {
 		gl.glScalef(scale[0], scale[1], scale[2]);
+	}
+
+	@Override
+	public void batchDraw(GL10 gl, Transform transform, float[] scale) {
+		this.setTransform(transform);
+		this.scale = scale;
+		super.batchDraw(gl);
 	}
 }

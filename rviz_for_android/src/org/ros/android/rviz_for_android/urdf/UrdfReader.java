@@ -14,49 +14,76 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
 package org.ros.android.rviz_for_android.urdf;
 
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ros.android.view.visualization.shape.Color;
-import org.w3c.dom.NodeList;
 
 import android.util.Log;
 
-public class UrdfReader extends XmlReader {
-
+public class UrdfReader extends VTDXmlReader {
+	
+	public interface UrdfReadingProgressListener {
+		public void readLink(int linkNumber, int linkCount);
+	}
+	
+	private Set<UrdfReadingProgressListener> listeners = new HashSet<UrdfReadingProgressListener>();
+	
+	public void addListener(UrdfReadingProgressListener l) {
+		listeners.add(l);
+	}
+	
+	private void publishProgress(int link, int count) {
+		for(UrdfReadingProgressListener l : listeners) {
+			l.readLink(link, count);
+		}
+	}
+	
+	
 	private List<UrdfLink> urdf = new ArrayList<UrdfLink>();
 
 	public UrdfReader() {
-		super(true);
-
+		super();
 	}
 
 	public void readUrdf(String urdf) {
 		this.urdf.clear();
-		buildDocument(new ByteArrayInputStream(urdf.getBytes()));
+		try {
+			super.parse(urdf);
+		} catch(Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		parseUrdf();
 		buildColors();
 	}
 
 	private void buildColors() {
+		Log.i("URDF", "Building colors...");
 		Map<String, Color> colors = new HashMap<String, Color>();
-		for(UrdfLink ul : urdf) {
-			for(Component c : ul.getComponents()) {
-				if(c.getMaterial_color() != null) {
-					colors.put(c.getMaterial_name(), c.getMaterial_color());
-				}
+		
+		// Not all URDF files store the color/name pairs under the links. Must rebuild the color library searching the entire URDF file for color tags
+		List<String> colorNames = getAttributeList("//material/@name");
+		for(String name : colorNames) {
+			if(!colors.containsKey(name)) {
+				String rgbaQuery = "//material[@name='" + name + "']/color/@rgba";
+				if(attributeExists(rgbaQuery)) {
+					float[] color = toFloatArray(super.existResult);
+					colors.put(name, new Color(color[0], color[1], color[2], color[3]));
+					Log.i("URDF","    Built color " + name);
+				}  
 			}
 		}
 
 		for(UrdfLink ul : urdf) {
 			for(Component c : ul.getComponents()) {
-				if(c.getMaterial_name() != null && c.getMaterial_color() == null) {				
+				if(c.getMaterial_name() != null && colors.containsKey(c.getMaterial_name())) {				
 					c.setMaterial_color(colors.get(c.getMaterial_name()));	
 				}
 			}
@@ -68,15 +95,15 @@ public class UrdfReader extends XmlReader {
 	}
 
 	private void parseUrdf() {
-		NodeList nodes = getExpression("/robot/link/@name");
+		List<String> links = getAttributeList("/robot/link/@name");
 		
-		int nodeLength = nodes.getLength();
+		int nodeLength = links.size();
 		
 		for(int i = 0; i < nodeLength; i++) {
-			Log.i("URDF", "Parsing node " + i + " of " + nodeLength);
+			Log.i("URDF", "Parsing node " + (i+1) + " of " + nodeLength);
 			
 			// Link name
-			String name = nodes.item(i).getNodeValue();
+			String name = links.get(i);
 			String prefix = "/robot/link[@name='" + name + "']";
 
 			Component visual = null;
@@ -87,49 +114,49 @@ public class UrdfReader extends XmlReader {
 				String vprefix = prefix + "/visual";
 
 				// Get geometry type
-				String gtype = getSingleNode(vprefix, "geometry/*").getNodeName();
+				String gtype = getSingleContents(vprefix, "geometry/*");
 
 				Component.Builder visBuilder = new Component.Builder(gtype);
 
 				switch(visBuilder.getType()) {
 				case BOX: {
-					String size = getSingleNode(vprefix, "/box/@size").getNodeValue();
+					String size = getSingleAttribute(vprefix, "/box/@size");
 					visBuilder.setSize(toFloatArray(size));
 				}
 					break;
 				case CYLINDER: {
-					float radius = Float.parseFloat(getSingleNode(vprefix, "/cylinder/@radius").getNodeValue());
-					float length = Float.parseFloat(getSingleNode(vprefix, "/cylinder/@length").getNodeValue());
+					float radius = Float.parseFloat(getSingleAttribute(vprefix, "/cylinder/@radius"));
+					float length = Float.parseFloat(getSingleAttribute(vprefix, "/cylinder/@length"));
 					visBuilder.setRadius(radius);
 					visBuilder.setLength(length);
 				}
 					break;
 				case SPHERE: {
-					float radius = Float.parseFloat(getSingleNode(vprefix, "/sphere/@radius").getNodeValue());
+					float radius = Float.parseFloat(getSingleAttribute(vprefix, "/sphere/@radius"));
 					visBuilder.setRadius(radius);
 				}
 					break;
 				case MESH:
-					visBuilder.setMesh(getSingleNode(vprefix, "/mesh/@filename").getNodeValue());
-					if(nodeExists(vprefix, "/mesh/@scale"))
-						visBuilder.setMeshScale(Float.parseFloat(existResults.item(0).getNodeValue()));
+					visBuilder.setMesh(getSingleAttribute(vprefix, "/mesh/@filename"));
+					if(attributeExists(vprefix, "/mesh/@scale"))
+						visBuilder.setMeshScale(Float.parseFloat(existResult));
 					break;
 				}
 
 				// OPTIONAL - get origin
-				if(nodeExists(vprefix, "/origin/@xyz")) {
-					visBuilder.setOffset(toFloatArray(existResults.item(0).getNodeValue()));
+				if(attributeExists(vprefix, "/origin/@xyz")) {
+					visBuilder.setOffset(toFloatArray(existResult));
 				}
-				if(nodeExists(vprefix, "/origin/@rpy")) {
-					visBuilder.setRotation(toFloatArray(existResults.item(0).getNodeValue()));
+				if(attributeExists(vprefix, "/origin/@rpy")) {
+					visBuilder.setRotation(toFloatArray(existResult));
 				}
 
 				// OPTIONAL - get material
-				if(nodeExists(vprefix, "/material/@name")) {
-					visBuilder.setMaterialName(existResults.item(0).getNodeValue());
+				if(attributeExists(vprefix, "/material/@name")) {
+					visBuilder.setMaterialName(existResult);
 				}
-				if(nodeExists(vprefix, "/material/color/@rgba")) {
-					visBuilder.setMaterialColor(toFloatArray(existResults.item(0).getNodeValue()));
+				if(attributeExists(vprefix, "/material/color/@rgba")) {
+					visBuilder.setMaterialColor(toFloatArray(existResult));
 				}
 				visual = visBuilder.build();
 			}
@@ -139,46 +166,45 @@ public class UrdfReader extends XmlReader {
 				String vprefix = prefix + "/collision";
 
 				// Get geometry type
-				String gtype = getSingleNode(vprefix, "geometry/*").getNodeName();
+				String gtype = getSingleContents(vprefix, "geometry/*");
 
 				Component.Builder colBuilder = new Component.Builder(gtype);
 
 				switch(colBuilder.getType()) {
 				case BOX: {
-					String size = getSingleNode(vprefix, "/box/@size").getNodeValue();
+					String size = getSingleAttribute(vprefix, "/box/@size");
 					colBuilder.setSize(toFloatArray(size));
 				}
 					break;
 				case CYLINDER: {
-					float radius = Float.parseFloat(getSingleNode(vprefix, "/cylinder/@radius").getNodeValue());
-					float length = Float.parseFloat(getSingleNode(vprefix, "/cylinder/@length").getNodeValue());
+					float radius = Float.parseFloat(getSingleAttribute(vprefix, "/cylinder/@radius"));
+					float length = Float.parseFloat(getSingleAttribute(vprefix, "/cylinder/@length"));
 					colBuilder.setRadius(radius);
 					colBuilder.setLength(length);
 				}
 					break;
 				case SPHERE: {
-					float radius = Float.parseFloat(getSingleNode(vprefix, "/sphere/@radius").getNodeValue());
+					float radius = Float.parseFloat(getSingleAttribute(vprefix, "/sphere/@radius"));
 					colBuilder.setRadius(radius);
 				}
 					break;
 				case MESH:
-					colBuilder.setMesh(getSingleNode(vprefix, "/mesh/@filename").getNodeValue());
+					colBuilder.setMesh(getSingleAttribute(vprefix, "/mesh/@filename"));
 					break;
 				}
 
 				// OPTIONAL - get origin
-				if(nodeExists(vprefix, "/origin/@xyz")) {
-					colBuilder.setOffset(toFloatArray(existResults.item(0).getNodeValue()));
-				}
-				if(nodeExists(vprefix, "/origin/@rpy")) {
-					colBuilder.setRotation(toFloatArray(existResults.item(0).getNodeValue()));
-				}
+				if(attributeExists(vprefix, "/origin/@xyz"))
+					colBuilder.setOffset(toFloatArray(existResult));
+				if(attributeExists(vprefix, "/origin/@rpy"))
+					colBuilder.setRotation(toFloatArray(existResult));
 
 				collision = colBuilder.build();
 			}
 
 			UrdfLink newLink = new UrdfLink(visual, collision, name);
 			urdf.add(newLink);
+			publishProgress(i+1, nodeLength);
 		}
 	}
 }

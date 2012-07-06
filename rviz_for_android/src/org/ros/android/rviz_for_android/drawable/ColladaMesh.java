@@ -22,18 +22,16 @@ import java.util.List;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.rviz_for_android.drawable.loader.ColladaLoader;
-import org.ros.android.rviz_for_android.drawable.loader.VTDColladaLoader;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
-import org.ros.android.view.visualization.OpenGlTransform;
 import org.ros.android.view.visualization.shape.BaseShape;
+import org.ros.android.view.visualization.shape.BatchDrawable;
 import org.ros.rosjava_geometry.Transform;
 
 import android.util.Log;
 
 public class ColladaMesh extends BaseShape implements UrdfDrawable {
-	protected static final VTDColladaLoader loader = new VTDColladaLoader();
-
+	protected static final ColladaLoader loader = new ColladaLoader();
 	
 	/**
 	 * @param filename The name of the DAE file to be loaded, parsed directly from the URDF, contains the "package://" or "html://" piece
@@ -45,7 +43,7 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable {
 		if(mfd == null)
 			throw new IllegalArgumentException("Null mesh file downloader! Must have a valid MFD to download meshes.");
 		
-		List<BaseShape> retval = null;
+		List<BatchDrawable> retval = null;
 		
 		// Download the .DAE file if it doesn't exist
 		String loadedFilename = mfd.getFile(filename);
@@ -66,9 +64,13 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable {
 		return new ColladaMesh(retval);
 	}
 	
-	protected List<BaseShape> geometries;
-	protected ColladaMesh(List<BaseShape> geometries) {
+	protected List<BatchDrawable> geometries;
+	protected ColladaMesh(List<BatchDrawable> geometries) {
 		this.geometries = geometries;
+		
+		if(super.color != null)
+			for(BatchDrawable g : geometries)
+				g.setColor(super.color);	
 	}
 	
 	private float[] scale;
@@ -80,22 +82,7 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable {
 
 		super.draw(gl);
 		
-		for(BaseShape g : geometries) {
-			g.draw(gl);
-		}
-
-		gl.glPopMatrix();
-	}
-	
-	public void draw(GL10 gl, Transform transform, float size) {
-		gl.glPushMatrix();
-		this.setTransform(transform);
-		
-	    OpenGlTransform.apply(gl, getTransform());
-	    gl.glScalef(size, size, size);
-	    
-		for(BaseShape g : geometries) {
-			g.setColor(super.color);
+		for(BatchDrawable g : geometries) {
 			g.draw(gl);
 		}
 
@@ -105,5 +92,20 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable {
 	@Override
 	protected void scale(GL10 gl) {
 		gl.glScalef(scale[0], scale[1], scale[2]);
+	}
+
+	@Override
+	public void batchDraw(GL10 gl, Transform transform, float[] scale) {
+		gl.glPushMatrix();
+		this.setTransform(transform);
+		this.scale = scale;
+
+		super.draw(gl);
+		
+		for(BatchDrawable g : geometries) {
+			g.batchDraw(gl);
+		}
+
+		gl.glPopMatrix();
 	}
 }

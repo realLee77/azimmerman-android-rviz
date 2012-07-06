@@ -24,20 +24,21 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
-import org.ros.android.rviz_for_android.urdf.XmlReader;
-import org.ros.android.view.visualization.shape.BaseShape;
+import org.ros.android.rviz_for_android.urdf.VTDXmlReader;
+import org.ros.android.view.visualization.shape.BatchDrawable;
+import org.ros.android.view.visualization.shape.BufferedTrianglesShape;
 import org.ros.android.view.visualization.shape.Color;
-import org.ros.android.view.visualization.shape.TexturedTrianglesShape;
+import org.ros.android.view.visualization.shape.TexturedBufferedTrianglesShape;
 import org.ros.android.view.visualization.shape.TrianglesShape;
-import org.w3c.dom.NodeList;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -46,8 +47,10 @@ import android.opengl.ETC1Util.ETC1Texture;
 import android.util.Log;
 
 import com.tiffdecoder.TiffDecoder;
+import com.ximpleware.NavException;
+import com.ximpleware.XPathEvalException;
 
-public class ColladaLoader extends XmlReader {
+public class ColladaLoader extends VTDXmlReader {
 	private static enum semanticType {
 		POSITION(3), NORMAL(3), TEXCOORD(2);
 
@@ -63,13 +66,13 @@ public class ColladaLoader extends XmlReader {
 
 	};
 
-	private List<BaseShape> geometries;
+	private List<BatchDrawable> geometries;
 
 	private MeshFileDownloader mfd;
 	private String imgPrefix;
 
 	public ColladaLoader() {
-		super(false);
+		super();
 	}
 
 	public void setDownloader(MeshFileDownloader mfd) {
@@ -82,16 +85,24 @@ public class ColladaLoader extends XmlReader {
 		if(fileStream == null)
 			throw new IllegalArgumentException("Invalid DAE file contents passed to ColladaLoader");
 		this.imgPrefix = imgPrefix;
-		buildDocument(fileStream);
+		try {
+			super.parse(IOUtils.toString(fileStream));
+		} catch(IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch(Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		parseDae();
 	}
 
 	private void parseDae() {
 		// Get the ID of each geometry section
-		NodeList nodes = getExpression("/COLLADA/library_geometries/geometry/@id");
+		List<String> nodes = super.getAttributeList("/COLLADA/library_geometries/geometry/@id");
 
-		for(int i = 0; i < nodes.getLength(); i++) {
-			String ID = nodes.item(i).getNodeValue();
+		for(int i = 0; i < nodes.size(); i++) {
+			String ID = nodes.get(i);
 			Log.d("DAE", "Parsing geometry " + ID);
 			parseGeometry(ID);
 		}
@@ -117,7 +128,7 @@ public class ColladaLoader extends XmlReader {
 	// They all use the same vertices and normals though. If they don't, they
 	// aren't supported by this loader currently.
 	private void parseGeometry(String id) {
-		geometries = new ArrayList<BaseShape>();
+		geometries = new ArrayList<BatchDrawable>();
 		String prefix = "/COLLADA/library_geometries/geometry[@id='" + id + "']/mesh";
 
 		// If the selected geometry doesn't contain one of the types, return
@@ -135,9 +146,8 @@ public class ColladaLoader extends XmlReader {
 
 		// For each submesh inside the mesh tag, parse its vertices, normals, and texture data
 		for(TYPES type : TYPES.values()) {
-			NodeList nodes = getExpression(prefix, type.toString());
-			for(int i = 1; i <= nodes.getLength(); i++) {
-				Log.i("DAE", "Parsing submesh " + i);
+			List<String> nodes = super.getNodeList(prefix, type.toString());
+			for(int i = 1; i <= nodes.size(); i++) {
 				geometries.add(parseSubMesh(prefix, type, i));
 			}
 		}
@@ -145,17 +155,23 @@ public class ColladaLoader extends XmlReader {
 
 	private static Color defaultColor = new Color(1, 1, 0, 1);
 
-	private BaseShape parseSubMesh(String prefix, TYPES type, int submeshIndex) {
+	private BatchDrawable parseSubMesh(String prefix, TYPES type, int submeshIndex) {
 		// Load all necessary data (vertices, normals, texture coordinates, etc
-		Map<String, InputData> data = getDataFromAllInputs(prefix, type.toString());
+		Map<String, InputData> data = null;
+		try {
+			data = getDataFromAllInputs(prefix, type.toString());
+		} catch(Exception e) {
+			// TODO: Determine if we care about this exception
+			e.printStackTrace();
+		}
 
 		// Load indices
-		short[] indices = toShortArray(getSingleNode(prefix, type + "[" + submeshIndex + "]/p").getTextContent());
+		short[] indices = toShortArray(getSingleAttribute(prefix, type + "[" + submeshIndex + "]/p"));
 
 		// Find the triangle count
-		int triCount = Integer.parseInt(getSingleNode(prefix, type.toString(), "@count").getNodeValue());
+		int triCount = Integer.parseInt(getSingleAttribute(prefix, type.toString(), "@count"));
 
-		Log.d("DAE", "I'm expecting " + triCount + " triangles.");
+		Log.d("DAE", triCount + " triangles.");
 
 		boolean textured = false;
 		Map<String, ETC1Texture> textures = null;
@@ -163,7 +179,6 @@ public class ColladaLoader extends XmlReader {
 		// Load the images if the mesh is textured. Otherwise, if the normals and positions are the only
 		// values included AND they have the same offset, there's no need to deindex, can return a mesh immediately
 		if(data.containsKey("TEXCOORD")) {
-			Log.d("DAE", "Mesh is textured!");
 			textures = getTextures(prefix);
 			textured = true;
 		} else if(data.size() == 2 && data.containsKey("NORMAL") && data.containsKey("POSITION") && (data.get("NORMAL").getOffset() == data.get("POSITION").getOffset())) {
@@ -172,9 +187,8 @@ public class ColladaLoader extends XmlReader {
 		}
 
 		// Find the scale of the mesh (if present)
-		if(nodeExists("/COLLADA/library_visual_scenes//scale")) {
-			float[] scales = toFloatArray(existResults.item(0).getTextContent());
-			Log.d("DAE", "Scale factor: " + Arrays.toString(scales));
+		if(nodeExists("/COLLADA/library_visual_scenes//scale/text()")) {
+			float[] scales = toFloatArray(super.existResult);
 			float[] vertices = data.get("POSITION").getData().getArray();
 			for(int i = 0; i < vertices.length; i++) {
 				vertices[i] = vertices[i] * scales[i % 3];
@@ -189,7 +203,7 @@ public class ColladaLoader extends XmlReader {
 		if(!textured) {
 			switch(type) {
 			case triangles:
-				return new TrianglesShape(results.get("POSITION").getArray(), results.get("NORMAL").getArray(), defaultColor);
+				return new BufferedTrianglesShape(results.get("POSITION").getArray(), results.get("NORMAL").getArray(), defaultColor);
 			case tristrips:
 			case trifans:
 			default:
@@ -198,7 +212,7 @@ public class ColladaLoader extends XmlReader {
 		} else {
 			switch(type) {
 			case triangles:
-				return new TexturedTrianglesShape(results.get("POSITION").getArray(), results.get("NORMAL").getArray(), results.get("TEXCOORD").getArray(), textures);
+				return new TexturedBufferedTrianglesShape(results.get("POSITION").getArray(), results.get("NORMAL").getArray(), results.get("TEXCOORD").getArray(), textures);
 			case tristrips:
 			case trifans:
 			default:
@@ -216,18 +230,17 @@ public class ColladaLoader extends XmlReader {
 
 		// Find which types of acceptable textures are present (diffuse, bump, etc)
 		for(textureType t : textureType.values()) {
-			if(nodeExists("/COLLADA/library_effects/", t.toString(), "texture/@texture")) {
-				Log.i("DAE", "  Mesh has " + t.toString() + " texture component.");
-				String texPointer = existResults.item(0).getNodeValue();
+			if(attributeExists("/COLLADA/library_effects/", t.toString(), "texture/@texture")) {
+				String texPointer = super.existResult;
 
 				// Locate the image ID from the texture pointer
-				String imgID = getSingleNode("/COLLADA/library_effects//newparam[@sid='" + texPointer + "']/sampler2D/source").getTextContent();
+				String imgID = getSingleAttribute("/COLLADA/library_effects//newparam[@sid='" + texPointer + "']/sampler2D/source");
 
 				// Locate the image name
-				String imgName = getSingleNode("/COLLADA/library_effects//newparam[@sid='" + imgID + "']/surface/init_from").getTextContent();
+				String imgName = getSingleAttribute("/COLLADA/library_effects//newparam[@sid='" + imgID + "']/surface/init_from");
 
 				// Locate the filename
-				String filename = getSingleNode("/COLLADA/library_images/image[@id='" + imgName + "']/init_from").getTextContent();
+				String filename = getSingleAttribute("/COLLADA/library_images/image[@id='" + imgName + "']/init_from");
 
 				// If a cached compressed copy exists, load that. Otherwise, download, compress, and save the image
 				String compressedFilename = "COMPRESSED_" + mfd.getSanitizedPrefix(imgPrefix) + filename;
@@ -245,10 +258,10 @@ public class ColladaLoader extends XmlReader {
 
 					// Compress the image
 					ETC1Texture compressed = compressBitmap(uncompressed_two);
-					
+
 					// Save the compressed texture
 					try {
-						BufferedOutputStream bout = new BufferedOutputStream(mfd.getContext().openFileOutput(compressedFilename, mfd.getContext().MODE_WORLD_READABLE));
+						BufferedOutputStream bout = new BufferedOutputStream(mfd.getContext().openFileOutput(compressedFilename, Context.MODE_WORLD_READABLE));
 						bout.write(compressed.getData().array());
 						bout.close();
 					} catch(FileNotFoundException e) {
@@ -263,12 +276,12 @@ public class ColladaLoader extends XmlReader {
 					retval.put(t.toString(), compressed);
 				} else {
 					Log.i("DAE", "A compressed cached copy exists!");
-					
+
 					// Load the existing compressed texture
 					try {
 						byte[] dataArray = IOUtils.toByteArray(mfd.getContext().openFileInput(compressedFilename));
 						// Determine the dimensions of the image
-						int bytes = 2*dataArray.length;
+						int bytes = 2 * dataArray.length;
 						int width = 1024;
 						int height = 1024;
 
@@ -299,21 +312,19 @@ public class ColladaLoader extends XmlReader {
 
 	private ETC1Texture compressBitmap(Bitmap uncompressedBitmap) {
 		// Rescale the bitmap to be half it's current size
-		Bitmap uncompressedBitmapResize = Bitmap.createScaledBitmap(uncompressedBitmap, uncompressedBitmap.getWidth()/4, uncompressedBitmap.getHeight()/4, true);
+		Bitmap uncompressedBitmapResize = Bitmap.createScaledBitmap(uncompressedBitmap, uncompressedBitmap.getWidth() / 4, uncompressedBitmap.getHeight() / 4, true);
 		uncompressedBitmap.recycle();
-		
+
 		// Copy the bitmap to a byte buffer
 		ByteBuffer uncompressedBytes = ByteBuffer.allocateDirect(uncompressedBitmapResize.getByteCount()).order(ByteOrder.nativeOrder());
 		uncompressedBitmapResize.copyPixelsToBuffer(uncompressedBytes);
 		uncompressedBytes.position(0);
 
-		Log.i("DAE", "Uncompressed image has " + uncompressedBytes.capacity() + " bytes.");
 		int width = uncompressedBitmapResize.getWidth();
 		int height = uncompressedBitmapResize.getHeight();
 
 		// Compress the texture
 		int encodedSize = ETC1.getEncodedDataSize(width, height);
-		Log.i("DAE", "Compressed image has " + encodedSize + " bytes.");
 		ByteBuffer compressed = ByteBuffer.allocateDirect(encodedSize).order(ByteOrder.nativeOrder());
 		ETC1.encodeImage(uncompressedBytes, width, height, 2, 2 * width, compressed);
 
@@ -333,7 +344,7 @@ public class ColladaLoader extends XmlReader {
 			int[] pixels = TiffDecoder.nativeTiffGetBytes();
 			int width = TiffDecoder.nativeTiffGetWidth();
 			int height = TiffDecoder.nativeTiffGetHeight();
-			retval = Bitmap.createBitmap(pixels, TiffDecoder.nativeTiffGetWidth(), TiffDecoder.nativeTiffGetHeight(), Bitmap.Config.RGB_565);
+			retval = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.RGB_565);
 			TiffDecoder.nativeTiffClose();
 		} else {
 			Log.d("DAE", "Loading non-TIF image: " + path + filename);
@@ -353,11 +364,6 @@ public class ColladaLoader extends XmlReader {
 			retval.put(id.getSemantic(), new FloatVector(id.getFloatElements(vertexCount)));
 		}
 
-/*		Log.d("DAE", "BEGINNING DEINDEXING");
-		Log.d("DAE", "The indices point to " + sources.size() + " sources.");
-		Log.d("DAE", "There are " + (inputCount + 1) + " pieces of information per vertex, " + vertexCount + " vertices");
-		Log.d("DAE", "There are " + indices.length + " mixed type indices");*/
-
 		int curOffset = 0;
 		for(Short s : indices) {
 			for(InputData id : sources) {
@@ -376,14 +382,21 @@ public class ColladaLoader extends XmlReader {
 		return retval;
 	}
 
-	private Map<String, InputData> getDataFromAllInputs(String prefix, String subMeshType) {
+	private Map<String, InputData> getDataFromAllInputs(String prefix, String subMeshType) throws NumberFormatException, NavException, XPathEvalException {
 		Map<String, InputData> retval = new HashMap<String, InputData>();
 
-		NodeList inputs = getExpression(prefix, subMeshType, "input");
-		for(int i = 0; i < inputs.getLength(); i++) {
-			String semantic = inputs.item(i).getAttributes().getNamedItem("semantic").getNodeValue();
-			String sourceID = inputs.item(i).getAttributes().getNamedItem("source").getNodeValue().substring(1);
-			int offset = Integer.parseInt(inputs.item(i).getAttributes().getNamedItem("offset").getNodeValue());
+		getExpression(prefix, subMeshType, "input");
+		int i;
+		List<Integer> inputNodeLocations = new LinkedList<Integer>();
+		while((i = ap.evalXPath()) != -1) {
+			inputNodeLocations.add(i);
+		}
+
+		for(Integer b : inputNodeLocations) {
+			vn.recoverNode(b);
+			String semantic = vn.toString(vn.getAttrVal("semantic"));
+			String sourceID = vn.toString(vn.getAttrVal("source")).substring(1);
+			int offset = Integer.parseInt(vn.toString(vn.getAttrVal("offset")));
 			List<InputData> returned = getDataFromInput(prefix, semantic, sourceID);
 			for(InputData id : returned) {
 				id.setOffset(offset);
@@ -398,19 +411,19 @@ public class ColladaLoader extends XmlReader {
 		List<InputData> retval = new ArrayList<InputData>();
 
 		// Find whatever node has the requested ID
-		String nodetype = getSingleNode(prefix, "/*[@id='" + sourceID + "']").getNodeName();
+		String nodetype = getSingleContents(prefix, "/*[@id='" + sourceID + "']");
 
 		// If it's a vertices node, get the data from the inputs it references
 		if(nodetype.equals("vertices")) {
-			List<String> inputs = getValuesAsList(prefix, "/vertices[@id='" + sourceID + "']/input/@semantic");
+			List<String> inputs = super.getAttributeList(prefix, "/vertices[@id='" + sourceID + "']/input/@semantic");
 			for(String subSemantic : inputs) {
-				retval.addAll(getDataFromInput(prefix, subSemantic, getSingleNode(prefix, "/vertices[@id='" + sourceID + "']/input[@semantic='" + subSemantic + "']/@source").getNodeValue().substring(1)));
+				retval.addAll(getDataFromInput(prefix, subSemantic, getSingleAttribute(prefix, "/vertices[@id='" + sourceID + "']/input[@semantic='" + subSemantic + "']/@source").substring(1)));
 			}
 
 		} else
 		// If it's a source, grab its float_array data
 		if(nodetype.equals("source")) {
-			retval.add(new InputData(semantic, new FloatVector(toFloatArray(getSingleNode(prefix, "/source[@id='" + sourceID + "']/float_array").getTextContent()))));
+			retval.add(new InputData(semantic, new FloatVector(toFloatArray(getSingleContents(prefix, "/source[@id='" + sourceID + "']/float_array/text()")))));
 			return retval;
 		} else {
 			Log.e("DAE", "ERR! UNKNOWN NODE TYPE: " + nodetype);
@@ -481,7 +494,7 @@ public class ColladaLoader extends XmlReader {
 		}
 	}
 
-	public List<BaseShape> getGeometries() {
+	public List<BatchDrawable> getGeometries() {
 		return geometries;
 	}
 }
