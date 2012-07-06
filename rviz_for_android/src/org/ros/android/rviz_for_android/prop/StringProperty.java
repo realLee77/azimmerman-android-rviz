@@ -24,21 +24,39 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnKeyListener;
-import android.view.inputmethod.InputMethodManager;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
 public class StringProperty extends Property<String> {
-
 	String newText;
 	
 	private TextView textView;
 	private EditText et;
 	
+	public interface StringPropertyValidator {
+		public boolean isAcceptable(String newval);
+	}
+	
+	// The default validator accepts any strings
+	private static final StringPropertyValidator DEFAULT_VALIDATOR = new StringPropertyValidator() {
+		@Override
+		public boolean isAcceptable(String newval) {
+			return true;
+		}
+	};
+	
+	private StringPropertyValidator validator;
+	
+	public void setValidator(StringPropertyValidator validator) {
+		this.validator = validator;
+	}
+	
 	public StringProperty(String name, String value, PropertyUpdateListener<String> updateListener) {
 		super(name, value, updateListener);
 		newText = value;
+		validator = DEFAULT_VALIDATOR;
 	}
 
 	@Override
@@ -56,8 +74,12 @@ public class StringProperty extends Property<String> {
 		et.setOnKeyListener(new OnKeyListener() {
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				newText = et.getText().toString();
-				if(keyCode == KeyEvent.KEYCODE_ENTER) {
+				if(keyCode == KeyEvent.KEYCODE_ENTER && validator.isAcceptable(newText)) {
 					setValue(newText);
+					imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
+					return true;
+				} else if(!validator.isAcceptable(newText)) {
+					et.setText(getValue());
 					imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
 					return true;
 				}
@@ -72,5 +94,4 @@ public class StringProperty extends Property<String> {
 		});
 		return convertView;
 	}
-
 }

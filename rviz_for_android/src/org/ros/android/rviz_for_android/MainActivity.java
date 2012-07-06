@@ -27,6 +27,7 @@ import org.ros.android.rviz_for_android.layers.FPSLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
 import org.ros.android.rviz_for_android.layers.MapLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
+import org.ros.android.rviz_for_android.layers.PointCloudLayer;
 import org.ros.android.rviz_for_android.layers.RobotModelLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
@@ -57,12 +58,6 @@ import android.widget.ExpandableListView.OnGroupExpandListener;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-/**
- * An app that can be used to control a remote robot. This app also demonstrates how to use some of views from the rosjava android library.
- * 
- * @author munjaldesai@google.com (Munjal Desai)
- * @author moesenle@google.com (Lorenz Moesenlechner)
- */
 public class MainActivity extends RosActivity {
 	private VisualizationView visualizationView;
 	private static Context context;
@@ -73,7 +68,7 @@ public class MainActivity extends RosActivity {
 	private PropertyListAdapter propAdapter;
 
 	// Tracking layers
-	private static enum AvailableLayerTypes { Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map");
+	private static enum AvailableLayerTypes { Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud");
 	private String printName;
 	AvailableLayerTypes(String printName) {
 		this.printName = printName;
@@ -220,7 +215,7 @@ public class MainActivity extends RosActivity {
 			}
 		});
 		
-		// TODO: Add default layers. MAKE THESE LOAD FROM A CONFIG FILE
+		// TODO: MAKE THESE LOAD FROM A CONFIG FILE?
 		addNewLayer(0);
 		addNewLayer(1);
 		
@@ -253,6 +248,8 @@ public class MainActivity extends RosActivity {
 		case Map:
 			newLayer = new MapLayer(new GraphName("/map"), nav_msgs.OccupancyGrid._TYPE);
 			break;
+		case PointCloud:
+			newLayer = new PointCloudLayer(new GraphName("/lots_of_points"), sensor_msgs.PointCloud._TYPE);
 		}
 
 		if(newLayer != null) {

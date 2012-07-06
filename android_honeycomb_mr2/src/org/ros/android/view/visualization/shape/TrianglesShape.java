@@ -10,7 +10,7 @@ import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
-public class TrianglesShape extends BaseShape implements BatchDrawable {
+public class TrianglesShape extends BaseShape {
 
 	protected final FloatBuffer normals;
 	protected final FloatBuffer vertices;
@@ -65,20 +65,5 @@ public class TrianglesShape extends BaseShape implements BatchDrawable {
 
 		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
 		gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
-	}
-
-	@Override
-	public void batchDraw(GL10 gl) {
-		super.draw(gl);
-		gl.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
-
-		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertices);
-
-		gl.glNormalPointer(GL10.GL_FLOAT, 0, normals);
-
-		if(useIndices)
-			gl.glDrawElements(GL10.GL_TRIANGLES, count, GL10.GL_UNSIGNED_SHORT, indices);
-		else
-			gl.glDrawArrays(GL10.GL_TRIANGLES, 0, count);
 	}
 }

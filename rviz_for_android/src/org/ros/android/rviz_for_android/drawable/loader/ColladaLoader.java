@@ -32,7 +32,7 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.VTDXmlReader;
-import org.ros.android.view.visualization.shape.BatchDrawable;
+import org.ros.android.view.visualization.shape.BaseShape;
 import org.ros.android.view.visualization.shape.BufferedTrianglesShape;
 import org.ros.android.view.visualization.shape.Color;
 import org.ros.android.view.visualization.shape.TexturedBufferedTrianglesShape;
@@ -66,7 +66,7 @@ public class ColladaLoader extends VTDXmlReader {
 
 	};
 
-	private List<BatchDrawable> geometries;
+	private List<BaseShape> geometries;
 
 	private MeshFileDownloader mfd;
 	private String imgPrefix;
@@ -128,7 +128,7 @@ public class ColladaLoader extends VTDXmlReader {
 	// They all use the same vertices and normals though. If they don't, they
 	// aren't supported by this loader currently.
 	private void parseGeometry(String id) {
-		geometries = new ArrayList<BatchDrawable>();
+		geometries = new ArrayList<BaseShape>();
 		String prefix = "/COLLADA/library_geometries/geometry[@id='" + id + "']/mesh";
 
 		// If the selected geometry doesn't contain one of the types, return
@@ -155,7 +155,7 @@ public class ColladaLoader extends VTDXmlReader {
 
 	private static Color defaultColor = new Color(1, 1, 0, 1);
 
-	private BatchDrawable parseSubMesh(String prefix, TYPES type, int submeshIndex) {
+	private BaseShape parseSubMesh(String prefix, TYPES type, int submeshIndex) {
 		// Load all necessary data (vertices, normals, texture coordinates, etc
 		Map<String, InputData> data = null;
 		try {
@@ -212,6 +212,7 @@ public class ColladaLoader extends VTDXmlReader {
 		} else {
 			switch(type) {
 			case triangles:
+				//TexturedBufferedTrianglesShape
 				return new TexturedBufferedTrianglesShape(results.get("POSITION").getArray(), results.get("NORMAL").getArray(), results.get("TEXCOORD").getArray(), textures);
 			case tristrips:
 			case trifans:
@@ -494,7 +495,7 @@ public class ColladaLoader extends VTDXmlReader {
 		}
 	}
 
-	public List<BatchDrawable> getGeometries() {
+	public List<BaseShape> getGeometries() {
 		return geometries;
 	}
 }
