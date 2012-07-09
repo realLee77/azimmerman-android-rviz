@@ -72,6 +72,8 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 		renderer = new VisViewRenderer(frameTransformTree, camera);
 		layers = Lists.newArrayList();
 		setEGLConfigChooser(8, 8, 8, 8, 8, 8);
+		// TODO: Support ES2:
+//		setEGLContextClientVersion(2);
 		getHolder().setFormat(PixelFormat.TRANSLUCENT);
 		setRenderer(renderer);
 	}

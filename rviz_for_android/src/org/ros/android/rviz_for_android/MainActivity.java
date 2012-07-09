@@ -69,15 +69,20 @@ public class MainActivity extends RosActivity {
 	private Toast msgToast;
 
 	// Tracking layers
-	private static enum AvailableLayerTypes { Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud");
-	private String printName;
-	AvailableLayerTypes(String printName) {
-		this.printName = printName;
-	}
-	@Override
-	public String toString() {
-		return printName;
-	}};
+	private static enum AvailableLayerTypes {
+		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud");
+		private String printName;
+
+		AvailableLayerTypes(String printName) {
+			this.printName = printName;
+		}
+
+		@Override
+		public String toString() {
+			return printName;
+		}
+	};
+
 	private static final AvailableLayerTypes[] availableLayers = AvailableLayerTypes.values();
 	private static CharSequence[] availableLayerNames;
 	static {
@@ -106,10 +111,10 @@ public class MainActivity extends RosActivity {
 	// Enable/disable following
 	boolean following = false;
 	ParentableOrbitCameraControlLayer camControl;
-	
+
 	// Mesh downloader
 	MeshFileDownloader mfd;
-	
+
 	public MainActivity() {
 		super("Rviz", "Rviz");
 	}
@@ -127,7 +132,7 @@ public class MainActivity extends RosActivity {
 		menu.setGroupEnabled(R.id.unfollowGroup, following);
 		return true;
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
@@ -161,7 +166,7 @@ public class MainActivity extends RosActivity {
 		msgToast.setText(msg);
 		msgToast.show();
 	}
-	
+
 	private void showTFSelectDialog() {
 		FrameTransformTree ftt = visualizationView.getFrameTransformTree();
 
@@ -194,7 +199,7 @@ public class MainActivity extends RosActivity {
 
 		createLayerDialogs();
 		configureGUI();
-		
+
 		camControl = new ParentableOrbitCameraControlLayer(this);
 		camControl.setName("Camera");
 		layers.add(camControl);
@@ -214,18 +219,18 @@ public class MainActivity extends RosActivity {
 			@Override
 			public void onGroupExpand(int groupPosition) {
 				int len = propAdapter.getGroupCount();
-				for (int i = 0; i < len; i++) {
-					if (i != groupPosition) {
+				for(int i = 0; i < len; i++) {
+					if(i != groupPosition) {
 						elv.collapseGroup(i);
 					}
 				}
 			}
 		});
-		
+
 		// TODO: MAKE THESE LOAD FROM A CONFIG FILE?
 		addNewLayer(0);
 		addNewLayer(1);
-		
+
 		visualizationView.addLayer(new FPSLayer());
 	}
 
@@ -234,7 +239,7 @@ public class MainActivity extends RosActivity {
 	}
 
 	@Override
-	protected void init(NodeMainExecutor nodeMainExecutor) {		
+	protected void init(NodeMainExecutor nodeMainExecutor) {
 		mfd = MeshFileDownloader.getMeshFileDownloader("http://" + getMasterUri().getHost().toString() + ":44644", this);
 		NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
 		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/map_view"));
@@ -290,7 +295,7 @@ public class MainActivity extends RosActivity {
 		}
 		return liveLayers;
 	}
-	
+
 	private void createLayerDialogs() {
 		// Initialize the number of instances of each layer to zero
 		counts = new int[availableLayers.length];
