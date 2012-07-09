@@ -21,7 +21,10 @@ import geometry_msgs.Point32;
 import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
+import javax.microedition.khronos.opengles.GL11;
 
+import org.ros.android.rviz_for_android.drawable.GLSLProgram;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.ColorProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
@@ -44,10 +47,12 @@ import org.ros.node.topic.Subscriber;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import sensor_msgs.PointCloud;
+import android.opengl.GLES11;
+import android.opengl.GLES20;
 import android.os.Handler;
 import android.util.Log;
 
-public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> implements LayerWithProperties, TfLayer {
+public class PointCloudLayerES2 extends SubscriberLayer<sensor_msgs.PointCloud> implements LayerWithProperties, TfLayer {
 
 	private BoolProperty prop;
 
@@ -60,10 +65,27 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 	private MessageListener<PointCloud> subListener;
 	private Subscriber<sensor_msgs.PointCloud> sub;
 	private float[] color = new float[4];
+	
+	private static final String vShader = "uniform mat4 uMvp; attribute vec3 aPosition; varying vec4 vColor;" +
+											"void main() {"+
+											    "gl_Position = uMvp * vec4(aPosition.xyz, 1.);"+
+											    "vColor = vec4(0.5,0.6,0.9,1.0);"+
+											    "gl_PointSize = 2.;"+
+											"}";
+	
+	private static final String fShader = "varying vec4 vColor;" +
+											"void main()" + 
+											"{" +
+											    "gl_FragColor = vColor;" +
+											"}";
 
+	private GLSLProgram pcShader;
+	private int vertexLoc = 0;
+	private int mvpLoc = 0;
+	
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
-		super.onStart(connectedNode, handler, frameTransformTree, camera);
+		super.onStart(connectedNode, handler, frameTransformTree, camera);		
 		sub = getSubscriber();
 		subListener = new MessageListener<PointCloud>() {
 			@Override
@@ -93,13 +115,37 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 		this.connectedNode = connectedNode;
 	}
 
+	private boolean shadersLoaded = false;
+	
+	private float[] viewMatrix = new float[16];
+	private FloatBuffer viewMatrixBuffer = FloatBuffer.allocate(16);
+	
 	@Override
 	public void draw(GL10 gl) {
+		if(!shadersLoaded) {
+			// Init shaders
+			pcShader = new GLSLProgram(vShader,fShader);
+			pcShader.setAttributeName(ShaderVal.Position, "aPosition");
+			pcShader.setAttributeName(ShaderVal.MVP, "uMvp");
+			pcShader.compile();
+			
+			vertexLoc = pcShader.getAttributeLocation(ShaderVal.Position);
+			mvpLoc = pcShader.getAttributeLocation(ShaderVal.MVP);
+			shadersLoaded = true;
+		}
 		if(readyToDraw) {
-			gl.glColor4f(color[0], color[1], color[2], color[3]);
-			gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, verticesBuffer);
-			gl.glDrawArrays(GL10.GL_POINTS, 0, pointCount);
+			pcShader.use();
+			GLES20.glVertexAttribPointer(vertexLoc, 3, GLES20.GL_FLOAT, false, 12, verticesBuffer);
+			GLES20.glEnableVertexAttribArray(vertexLoc);
+			
+			// TODO: HACK HACK HACK HACK
+			GLES11.glGetFloatv(GL11.GL_MODELVIEW_MATRIX, viewMatrixBuffer);
+			GLES20.glUniformMatrix4fv(mvpLoc, 1, false, viewMatrixBuffer);
+	
+			GLES20.glDrawArrays(GLES20.GL_POINTS, 0, pointCount);
+			
+			
+			GLES20.glDisableVertexAttribArray(vertexLoc);
 		}
 	}
 
@@ -123,7 +169,7 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 		}
 	}
 	
-	public PointCloudLayer(GraphName topicName, String messageType) {
+	public PointCloudLayerES2(GraphName topicName, String messageType) {
 		super(topicName, messageType);
 		prop = new BoolProperty("Enabled", true, null);
 		prop.addSubProperty(new StringProperty("Topic", "/lots_of_points", new PropertyUpdateListener<String>() {

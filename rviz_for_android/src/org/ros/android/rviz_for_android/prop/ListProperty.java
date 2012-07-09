@@ -85,6 +85,9 @@ public class ListProperty extends Property<Integer> {
 
 	public ListProperty setList(String[] list) {
 		this.list = list;
+		if(aa != null)
+			aa.notifyDataSetChanged();
+			
 		return this;
 	}
 
