@@ -2,7 +2,7 @@ package org.ros.android.rviz_for_android.urdf;
 
 import java.util.Arrays;
 
-import org.ros.android.view.visualization.shape.Color;
+import org.ros.android.renderer.shapes.Color;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;

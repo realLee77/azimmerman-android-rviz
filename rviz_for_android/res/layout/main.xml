@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <org.ros.android.view.visualization.VisualizationView
+    <org.ros.android.renderer.VisualizationView
         android:id="@+id/visualization"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

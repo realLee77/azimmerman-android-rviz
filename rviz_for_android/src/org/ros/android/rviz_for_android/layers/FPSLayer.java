@@ -20,10 +20,10 @@ import java.io.IOException;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.Utility;
+import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.rviz_for_android.MainActivity;
-import org.ros.android.view.visualization.Camera;
-import org.ros.android.view.visualization.Utility;
-import org.ros.android.view.visualization.layer.DefaultLayer;
 import org.ros.node.ConnectedNode;
 import org.ros.rosjava_geometry.FrameTransformTree;
 

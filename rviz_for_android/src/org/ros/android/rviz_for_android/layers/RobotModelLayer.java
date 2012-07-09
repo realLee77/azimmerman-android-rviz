@@ -22,6 +22,11 @@ import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.OpenGlTransform;
+import org.ros.android.renderer.VisualizationView;
+import org.ros.android.renderer.layer.DefaultLayer;
+import org.ros.android.renderer.shapes.CleanableShape;
 import org.ros.android.rviz_for_android.drawable.ColladaMesh;
 import org.ros.android.rviz_for_android.drawable.Cube;
 import org.ros.android.rviz_for_android.drawable.Cylinder;
@@ -38,11 +43,6 @@ import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.android.rviz_for_android.urdf.UrdfLink;
 import org.ros.android.rviz_for_android.urdf.UrdfReader;
 import org.ros.android.rviz_for_android.urdf.UrdfReader.UrdfReadingProgressListener;
-import org.ros.android.view.visualization.Camera;
-import org.ros.android.view.visualization.OpenGlTransform;
-import org.ros.android.view.visualization.VisualizationView;
-import org.ros.android.view.visualization.layer.DefaultLayer;
-import org.ros.android.view.visualization.shape.CleanableShape;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.node.parameter.ParameterTree;

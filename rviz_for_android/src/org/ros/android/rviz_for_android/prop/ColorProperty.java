@@ -17,10 +17,10 @@
 
 package org.ros.android.rviz_for_android.prop;
 
+import org.ros.android.renderer.Utility;
+import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.R;
 import org.ros.android.rviz_for_android.color.ColorPickerDialog;
-import org.ros.android.view.visualization.Utility;
-import org.ros.android.view.visualization.shape.Color;
 
 import android.content.DialogInterface;
 import android.content.SharedPreferences;

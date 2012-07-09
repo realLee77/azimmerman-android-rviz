@@ -30,13 +30,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.ros.android.renderer.shapes.BaseShape;
+import org.ros.android.renderer.shapes.BufferedTrianglesShape;
+import org.ros.android.renderer.shapes.Color;
+import org.ros.android.renderer.shapes.TexturedBufferedTrianglesShape;
+import org.ros.android.renderer.shapes.TrianglesShape;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.VTDXmlReader;
-import org.ros.android.view.visualization.shape.BaseShape;
-import org.ros.android.view.visualization.shape.BufferedTrianglesShape;
-import org.ros.android.view.visualization.shape.Color;
-import org.ros.android.view.visualization.shape.TexturedBufferedTrianglesShape;
-import org.ros.android.view.visualization.shape.TrianglesShape;
 
 import android.content.Context;
 import android.graphics.Bitmap;

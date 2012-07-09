@@ -16,15 +16,14 @@
  */
 package org.ros.android.rviz_for_android.layers;
 
+import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.OrbitCamera;
+import org.ros.android.renderer.VisualizationView;
 import org.ros.android.rviz_for_android.prop.GraphNameProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.ViewProperty;
-import org.ros.android.view.visualization.Camera;
-import org.ros.android.view.visualization.OrbitCamera;
-import org.ros.android.view.visualization.VisualizationView;
-import org.ros.android.view.visualization.layer.OrbitCameraControlLayer;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.rosjava_geometry.FrameTransformTree;

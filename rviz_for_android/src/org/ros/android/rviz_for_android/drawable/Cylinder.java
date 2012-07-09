@@ -20,10 +20,10 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import org.ros.android.view.visualization.OpenGlTransform;
-import org.ros.android.view.visualization.Vertices;
-import org.ros.android.view.visualization.shape.Color;
-import org.ros.android.view.visualization.shape.Shape;
+import org.ros.android.renderer.OpenGlTransform;
+import org.ros.android.renderer.Vertices;
+import org.ros.android.renderer.shapes.Color;
+import org.ros.android.renderer.shapes.Shape;
 import org.ros.rosjava_geometry.Transform;
 
 import android.util.FloatMath;

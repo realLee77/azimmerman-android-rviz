@@ -17,8 +17,8 @@
 
 package org.ros.android.rviz_for_android.prop;
 
+import org.ros.android.renderer.Utility;
 import org.ros.android.rviz_for_android.R;
-import org.ros.android.view.visualization.Utility;
 
 import android.content.Context;
 import android.text.InputType;

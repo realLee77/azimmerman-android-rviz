@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.ros.android.view.visualization.shape.Color;
+import org.ros.android.renderer.shapes.Color;
 
 import android.util.Log;
 
