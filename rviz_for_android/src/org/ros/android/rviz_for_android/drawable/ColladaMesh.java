@@ -21,11 +21,11 @@ import java.util.List;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.shapes.BaseShape;
+import org.ros.android.renderer.shapes.CleanableShape;
 import org.ros.android.rviz_for_android.drawable.loader.ColladaLoader;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
-import org.ros.android.view.visualization.shape.BaseShape;
-import org.ros.android.view.visualization.shape.CleanableShape;
 import org.ros.rosjava_geometry.Transform;
 
 import android.util.Log;

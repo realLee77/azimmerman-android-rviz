@@ -20,8 +20,8 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import org.ros.android.view.visualization.Vertices;
-import org.ros.android.view.visualization.shape.BaseShape;
+import org.ros.android.renderer.Vertices;
+import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.rosjava_geometry.Transform;
 
 import android.util.FloatMath;

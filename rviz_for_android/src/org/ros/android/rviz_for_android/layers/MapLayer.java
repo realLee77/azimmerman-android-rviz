@@ -24,16 +24,16 @@ import javax.microedition.khronos.opengles.GL10;
 
 import nav_msgs.OccupancyGrid;
 
+import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.VisualizationView;
+import org.ros.android.renderer.layer.SubscriberLayer;
+import org.ros.android.renderer.layer.TfLayer;
+import org.ros.android.renderer.shapes.TexturedTrianglesShape;
 import org.ros.android.rviz_for_android.drawable.Plane;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
-import org.ros.android.view.visualization.Camera;
-import org.ros.android.view.visualization.VisualizationView;
-import org.ros.android.view.visualization.layer.SubscriberLayer;
-import org.ros.android.view.visualization.layer.TfLayer;
-import org.ros.android.view.visualization.shape.TexturedTrianglesShape;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;

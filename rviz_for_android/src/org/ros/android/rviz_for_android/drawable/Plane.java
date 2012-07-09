@@ -18,7 +18,7 @@ package org.ros.android.rviz_for_android.drawable;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import org.ros.android.view.visualization.shape.TexturedTrianglesShape;
+import org.ros.android.renderer.shapes.TexturedTrianglesShape;
 
 import android.opengl.ETC1Util.ETC1Texture;
 

@@ -22,6 +22,12 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.Vertices;
+import org.ros.android.renderer.VisualizationView;
+import org.ros.android.renderer.layer.SubscriberLayer;
+import org.ros.android.renderer.layer.TfLayer;
+import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.ColorProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
@@ -30,12 +36,6 @@ import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.rviz_for_android.prop.StringProperty.StringPropertyValidator;
-import org.ros.android.view.visualization.Camera;
-import org.ros.android.view.visualization.Vertices;
-import org.ros.android.view.visualization.VisualizationView;
-import org.ros.android.view.visualization.layer.SubscriberLayer;
-import org.ros.android.view.visualization.layer.TfLayer;
-import org.ros.android.view.visualization.shape.Color;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
