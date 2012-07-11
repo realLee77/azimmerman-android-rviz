@@ -16,7 +16,6 @@
 
 package org.ros.android.renderer;
 
-import java.nio.FloatBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -29,6 +28,7 @@ import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Transform;
 
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 
 /**
@@ -47,7 +47,7 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 	private FrameTransformTree frameTransformTree;
 
 	private Camera camera;
-
+	
 	public VisViewRenderer(FrameTransformTree frameTransformTree, Camera camera) {
 		this.frameTransformTree = frameTransformTree;
 		this.camera = camera;
@@ -61,13 +61,14 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		camera.setViewport(viewport);
 		
 		// Set camera location transformation
-		gl.glMatrixMode(GL10.GL_MODELVIEW);
-		gl.glLoadIdentity();
+//		gl.glMatrixMode(GL10.GL_MODELVIEW);
+//		gl.glLoadIdentity();
+		camera.loadIdentityM();
 	}
 
 	@Override
-	public void onDrawFrame(GL10 gl) {	    
-		gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	public void onDrawFrame(GL10 glUnused) {	    
+/*		gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 		gl.glLoadIdentity();
 		camera.apply(gl);
@@ -78,77 +79,83 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		int error = gl.glGetError();
 		if(error != GL10.GL_NO_ERROR) {
 			System.err.println("OpenGL error: " + error);
-		}
+		}*/
+		
+		GLES20.glClearColor(0f, 0f, 0f, 0f);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		camera.apply();
+		camera.loadIdentityM();
+		
+		drawLayers(glUnused);
+		
+		checkErrors(glUnused);
 	}
 
-	FloatBuffer white = Vertices.toFloatBuffer(new float[] {1f, 1f, 1f, 1f});
-	FloatBuffer location = Vertices.toFloatBuffer(new float[] {5f, 5f, 5f, 1f});
-	
-	private void initLighting(GL10 gl) {
-		// Lighting
-		gl.glLightfv(SUNLIGHT, GL10.GL_POSITION, location);
-		gl.glLightfv(SUNLIGHT, GL10.GL_DIFFUSE, white);
-		gl.glShadeModel(GL10.GL_SMOOTH);
-		
-		gl.glLightModelf(GL10.GL_LIGHT_MODEL_TWO_SIDE, 1.0f);
-		
-		gl.glLightModelfv(GL10.GL_LIGHT_MODEL_AMBIENT, Vertices.toFloatBuffer(new float[] {.35f,.35f,.35f,.35f}));
-		
-		gl.glEnable(GL10.GL_LIGHTING);
-		gl.glEnable(SUNLIGHT);
+	private void checkErrors(GL10 glUnused) {
+		int error = GLES20.glGetError();
+		if(error != GLES20.GL_NO_ERROR) {
+			String err;
+			switch(error) {
+			case GLES20.GL_INVALID_ENUM:
+				err = "Invalid enum";
+				break;
+			case GLES20.GL_INVALID_FRAMEBUFFER_OPERATION:
+				err = "Invalid framebuffer operation";
+				break;
+			case GLES20.GL_INVALID_OPERATION:
+				err = "Invalid operation";
+				break;
+			case GLES20.GL_INVALID_VALUE:
+				err = "Invalid value";
+				break;
+			case GLES20.GL_OUT_OF_MEMORY:
+				err = "Out of memory";
+			default:
+				err = "Unknown error " + error;
+			}
+			
+			System.err.println("OpenGL error: " + err); 
+		}
 	}
 
 	public static final int SUNLIGHT = GL10.GL_LIGHT0;
 	
 	@Override
-	public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-		// Set texture rendering hints
-		gl.glEnable(GL10.GL_BLEND);
-		gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-		gl.glEnable(GL10.GL_POINT_SMOOTH);
-		gl.glHint(GL10.GL_POINT_SMOOTH_HINT, GL10.GL_NICEST);
-		gl.glHint(GL10.GL_POLYGON_SMOOTH_HINT, GL10.GL_NICEST);
-		gl.glEnable(GL10.GL_COLOR_MATERIAL);
-        gl.glDisable(GL10.GL_DITHER);
- 
-        // Face culling
-        gl.glEnable(GL10.GL_CULL_FACE);
-        gl.glFrontFace(GL10.GL_CCW);
-        gl.glCullFace(GL10.GL_BACK);
+	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
+		// Set rendering options 
+		// TODO: Are these needed at all???
+		GLES20.glEnable(GLES20.GL_BLEND);
+		GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+		GLES20.glDisable(GLES20.GL_DITHER);
 		
-        // Texturing
+        // Face culling
+		GLES20.glEnable(GLES20.GL_CULL_FACE);
+		GLES20.glFrontFace(GL10.GL_CCW);
+		GLES20.glCullFace(GLES20.GL_BACK);
 		
 		// Depth
-		gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_FASTEST);
-		gl.glEnable(GL10.GL_DEPTH_TEST);
-		gl.glDepthFunc(GL10.GL_LEQUAL);
-        gl.glDepthMask(true);
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES20.glDepthFunc(GLES20.GL_LEQUAL);
+        GLES20.glDepthMask(true);
 	}
 
-	private void drawLayers(GL10 gl) {
+	private void drawLayers(GL10 glUnused) {
 		if(layers == null) {
 			return;
 		}
 		synchronized(layers) {
 			for(Layer layer : getLayers()) {
 				if(layer.isEnabled()) {
-					gl.glPushMatrix();
+					camera.pushM();
 					if(layer instanceof TfLayer) {
 						GraphName layerFrame = ((TfLayer) layer).getFrame();
-						// TODO(moesenle): throw a warning that no transform could be found and
-						// the layer has been ignored.
 						if(layerFrame != null) {
 							Transform t = frameTransformTree.newTransformIfPossible(layerFrame, camera.getFixedFrame());
-							OpenGlTransform.apply(gl, t);
+							camera.applyTransform(t);
 						}
-						
-//						if(layerFrame != null && frameTransformTree.canTransform(layerFrame, camera.getFixedFrame())) {
-//							Transform transform = frameTransformTree.newFrameTransform(layerFrame, camera.getFixedFrame()).getTransform();
-//							OpenGlTransform.apply(gl, transform);
-//						}
 					}
-					layer.draw(gl);
-					gl.glPopMatrix();
+					layer.draw(glUnused);
+					camera.popM();
 				}
 			}
 		}

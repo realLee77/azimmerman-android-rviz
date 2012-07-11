@@ -16,52 +16,182 @@
  */
 package org.ros.android.rviz_for_android.drawable;
 
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
+
+import javax.microedition.khronos.opengles.GL10;
 
 import android.opengl.GLES20;
 import android.util.Log;
 
 public class GLSLProgram {
-
+	
 	private String vertexProgram;
 	private String fragmentProgram;
 	private int programID = 0;
-	private int fShader = 0;
-	private int vShader = 0;
+	private int fShaderHandle = 0;
+	private int vShaderHandle = 0;
+	private boolean compiled = false;
+
+	public static enum ShaderVal {
+		// Attributes - location refers to OpenGL index
+		POSITION(false,1), ATTRIB_COLOR(false,2), TEXCOORD(false,3), NORMAL(false,4),
+		// Uniforms - location refers to uniform int array
+		MVP_MATRIX(true,0), TIME(true,1), UNIFORM_COLOR(true,3), MV_MATRIX(true,4), LIGHTPOS(true,5), M_MATRIX(true,6), LIGHTVEC(true,7);
+		
+		private boolean isUniform = false;
+		public int loc = -1;
+		ShaderVal(boolean isUniform) {
+			this.isUniform = isUniform;
+		}
+		ShaderVal(boolean isUniform, int attribLocation) {
+			this.isUniform = isUniform;
+			this.loc = attribLocation;
+		}
+	};
 	
-	public static enum ShaderVal {Position, Color, TexCoord, MVP, Time};
-	private Map<ShaderVal, Integer> shaderValLocs = new EnumMap<ShaderVal, Integer>(ShaderVal.class);
-	private Map<ShaderVal, String> shaderValNames = new EnumMap<ShaderVal, String>(ShaderVal.class);;
+	// Create an array to store handles to uniforms. The array must be the right size to hold all uniforms described in ShaderVal
+	// TODO: Determine if this is either clever or stupid:
+	private static int maxUniformLocation = 0;
+	static {		
+		for(ShaderVal s : ShaderVal.values())
+			if(s.isUniform)
+				maxUniformLocation = Math.max(s.loc, maxUniformLocation);
+	}
+	private int[] uniformHandles = new int[maxUniformLocation+1];
+
+	private Map<ShaderVal, String> shaderValNames = new EnumMap<ShaderVal, String>(ShaderVal.class);
+
+	
+	// Static factory methods. These create/return singleton instances
+	private static final GLSLProgram FlatColorInstance = MakeFlatColor();
+	private static final GLSLProgram FlatShadedInstance = MakeFlatShaded();
+	private static final GLSLProgram ColoredVertexInstance = MakeColoredVertex();
+	public static GLSLProgram FlatColor() {
+		return FlatColorInstance;
+	}
+	public static GLSLProgram FlatShaded() {
+		return FlatShadedInstance;
+	}
+	public static GLSLProgram ColoredVertex() {
+		return ColoredVertexInstance;
+	}
+	private static GLSLProgram MakeFlatColor() {
+		String vertexShader = "uniform mat4 u_MVPMatrix;      \n"
+				+ "uniform vec4 u_Color;        \n"
+				+ "attribute vec4 a_Position;     \n"
+				+ "varying vec4 v_Color;          \n"
+				+ "void main()                    \n"
+				+ "{                              \n"
+				+ "   v_Color = u_Color;          \n"
+				+ "   gl_Position = u_MVPMatrix * a_Position;\n"
+				+ "}                              \n";
+		String fragmentShader = "precision mediump float;       \n"
+				+ "varying vec4 v_Color;          \n" 
+				+ "void main()                    \n"
+				+ "{                              \n" 
+				+ "   gl_FragColor = v_Color;     \n"
+				+ "}                              \n";
+
+		GLSLProgram retval = new GLSLProgram(vertexShader, fragmentShader);
+		retval.setAttributeName(ShaderVal.POSITION, "a_Position");
+		retval.setAttributeName(ShaderVal.UNIFORM_COLOR, "u_Color");
+		retval.setAttributeName(ShaderVal.MVP_MATRIX, "u_MVPMatrix");		
+		return retval;
+	}
+	private static GLSLProgram MakeFlatShaded() {
+		String vertexShader = "uniform mat4 u_MVPMatrix;      \n"
+				+ "uniform vec4 u_Color;          \n"
+				+ "uniform vec3 u_lightVector;  \n"
+				+ "uniform mat4 u_MMatrix;        \n"
+				+ "attribute vec4 a_Position;     \n"
+				+ "attribute vec3 a_Normal;       \n"
+				+ "varying vec4 v_Color;          \n"
+				+ "void main()                    \n"
+				+ "{                              \n"
+				+ "   vec3 modelViewNormal = vec3(u_MMatrix * vec4(a_Normal,0.0));    \n" 
+				+ "   float diffuse = max(dot(modelViewNormal, u_lightVector), 0.4);   \n"
+				+ "   v_Color = vec4(u_Color[0]*diffuse, u_Color[1]*diffuse, u_Color[2]*diffuse, u_Color[3]);  \n"
+				+ "   gl_Position = u_MVPMatrix * a_Position;\n"
+				+ "}                              \n";
+		String fragmentShader = "precision mediump float;       \n"
+				+ "varying vec4 v_Color;          \n" 
+				+ "void main()                    \n"
+				+ "{                              \n" 
+				+ "   gl_FragColor = v_Color;     \n"
+				+ "}                              \n";
+
+		GLSLProgram retval = new GLSLProgram(vertexShader, fragmentShader);
+		retval.setAttributeName(ShaderVal.POSITION, "a_Position");
+		retval.setAttributeName(ShaderVal.UNIFORM_COLOR, "u_Color");
+		retval.setAttributeName(ShaderVal.MVP_MATRIX, "u_MVPMatrix");	
+		retval.setAttributeName(ShaderVal.LIGHTVEC, "u_lightVector");
+		retval.setAttributeName(ShaderVal.M_MATRIX, "u_MMatrix");
+		retval.setAttributeName(ShaderVal.NORMAL, "a_Normal");
+		return retval;
+	}
+	private static GLSLProgram MakeColoredVertex() {
+		String vertexShader = "uniform mat4 u_MVPMatrix;      \n"
+				+ "attribute vec4 a_Position;     \n"
+				+ "attribute vec4 a_Color;        \n"
+				+ "varying vec4 v_Color;          \n"
+				+ "void main()                    \n"
+				+ "{                              \n"
+				+ "   v_Color = a_Color;          \n"
+				+ "   gl_Position = u_MVPMatrix * a_Position;\n"
+				+ "}                              \n";
+		String fragmentShader = "precision mediump float;       \n"
+				+ "varying vec4 v_Color;          \n" 
+				+ "void main()                    \n"
+				+ "{                              \n" 
+				+ "   gl_FragColor = v_Color;     \n"
+				+ "}                              \n";
+
+		GLSLProgram retval = new GLSLProgram(vertexShader, fragmentShader);
+		retval.setAttributeName(ShaderVal.POSITION, "a_Position");
+		retval.setAttributeName(ShaderVal.ATTRIB_COLOR, "a_Color");
+		retval.setAttributeName(ShaderVal.MVP_MATRIX, "u_MVPMatrix");		
+		return retval;		
+	}
 
 	public GLSLProgram(String vertex, String fragment) {
 		if(vertex == null || fragment == null)
 			throw new IllegalArgumentException("Vertex/fragment shader program cannot be null!");
 
-		programID = GLES20.glCreateProgram();
-
 		this.vertexProgram = vertex;
 		this.fragmentProgram = fragment;
+		Arrays.fill(uniformHandles, -1);
 	}
 
-	public boolean compile() {
-		// Check that attributes are in place
-		if(shaderValNames.isEmpty() || !shaderValNames.containsKey(ShaderVal.MVP))
-			throw new IllegalArgumentException("Must program shader value names");
+	public boolean compile(GL10 glUnused) {
+		programID = GLES20.glCreateProgram();
 		
-		// Load and compile
-		vShader = loadShader(vertexProgram, GLES20.GL_VERTEX_SHADER);
-		fShader = loadShader(fragmentProgram, GLES20.GL_FRAGMENT_SHADER);
+		// Check that attributes are in place
+		if(shaderValNames.isEmpty())
+			throw new IllegalArgumentException("Must program shader value names");
 
-		if(vShader == 0 || fShader == 0) {
+		// Load and compile
+		vShaderHandle = loadShader(glUnused, vertexProgram, GLES20.GL_VERTEX_SHADER);
+		fShaderHandle = loadShader(glUnused, fragmentProgram, GLES20.GL_FRAGMENT_SHADER);
+
+		if(vShaderHandle == 0 || fShaderHandle == 0) {
 			Log.e("GLSL", "Unable to compile shaders!");
 			return false;
 		}
 
-		GLES20.glAttachShader(programID, vShader);
-		GLES20.glAttachShader(programID, fShader);
+		GLES20.glAttachShader(programID, vShaderHandle);
+		GLES20.glAttachShader(programID, fShaderHandle);
 
-		// Link
+		// Bind all attributes. This gives each attribute the same handle in all shaders
+		for(ShaderVal s : shaderValNames.keySet()) {
+			if(!s.isUniform) {
+				GLES20.glBindAttribLocation(programID, s.loc, shaderValNames.get(s));
+				Log.i("GLSL", "Bound attribute " + shaderValNames.get(s) + " to index " + s.loc);
+			}
+		}
+		
+		// Link program
 		int[] linkStatus = new int[1];
 		GLES20.glLinkProgram(programID);
 		GLES20.glGetProgramiv(programID, GLES20.GL_LINK_STATUS, linkStatus, 0);
@@ -69,36 +199,42 @@ public class GLSLProgram {
 		if(linkStatus[0] != GLES20.GL_TRUE) {
 			Log.e("GLSL", "Unable to link program:");
 			Log.e("GLSL", GLES20.glGetProgramInfoLog(programID));
-			cleanup();
+			cleanup(glUnused);
 			return false;
 		}
 
-		// Attach to attribute and uniforms
+		// Fetch all attribute and shader locations
 		for(ShaderVal s : shaderValNames.keySet()) {
-			int location = GLES20.glGetAttribLocation(programID, shaderValNames.get(s));
-			shaderValLocs.put(s, location);
+			if(s.isUniform) {
+				uniformHandles[s.loc] = GLES20.glGetUniformLocation(programID, shaderValNames.get(s));
+				Log.i("GLSL", "Fetched uniform " + shaderValNames.get(s) + " = " + uniformHandles[s.loc]);
+			}
 		}
 		
+		Log.d("GLSL", "Shader ID " + programID + " compiled successfully!");
+
+		compiled = true;
 		return true;
 	}
-	
-	public void use() {
-		GLES20.glUseProgram(programID);
+
+	public boolean isCompiled() {
+		return compiled;
 	}
 	
+	public void use(GL10 glUnused) {
+		GLES20.glUseProgram(programID);
+	}
+
 	public void setAttributeName(ShaderVal val, String name) {
 		shaderValNames.put(val, name);
 	}
-	
-	public int getAttributeLocation(ShaderVal toGet) {
-		if(!shaderValLocs.containsKey(toGet)) {
-			return 0;
-		}
-		return shaderValLocs.get(toGet);
+
+	public int[] getUniformHandles() {
+		return uniformHandles;
 	}
 
 	/* load a Vertex or Fragment shader */
-	private int loadShader(String source, int shaderType) {
+	private int loadShader(GL10 glUnused, String source, int shaderType) {
 		int shader = GLES20.glCreateShader(shaderType);
 		if(shader != 0) {
 			GLES20.glShaderSource(shader, source);
@@ -110,22 +246,23 @@ public class GLSLProgram {
 				Log.e("GLSL", GLES20.glGetShaderInfoLog(shader));
 				GLES20.glDeleteShader(shader);
 				shader = 0;
+				throw new RuntimeException("Unable to compile shader!");
 			}
 		}
 		Log.i("GLSL", "shader compiled: " + shader);
 		return shader;
 	}
 
-	public void cleanup() {
+	public void cleanup(GL10 glUnused) {
 		if(programID > 0)
 			GLES20.glDeleteProgram(programID);
-		if(vShader > 0)
-			GLES20.glDeleteShader(vShader);
-		if(fShader > 0)
-			GLES20.glDeleteShader(fShader);
+		if(vShaderHandle > 0)
+			GLES20.glDeleteShader(vShaderHandle);
+		if(fShaderHandle > 0)
+			GLES20.glDeleteShader(fShaderHandle);
 
-		fShader = 0;
-		vShader = 0;
+		fShaderHandle = 0;
+		vShaderHandle = 0;
 		programID = 0;
 	}
 }

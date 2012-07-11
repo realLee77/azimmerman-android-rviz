@@ -20,7 +20,9 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
@@ -39,16 +41,22 @@ public class TriangleFanShape extends BaseShape {
 		this.vertices = Vertices.toFloatBuffer(vertices);
 		setColor(color);
 		setTransform(new Transform(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1)));
+		uniformHandles = shader.getUniformHandles();
 	}
 
 	@Override
-	public void draw(GL10 gl) {
-		super.draw(gl);
-		gl.glDisable(GL10.GL_CULL_FACE);
-		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertices);
-		gl.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
-		gl.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, vertices.limit() / 3);
-		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+	public void draw(GL10 glUnused, Camera cam) {
+		super.draw(glUnused, cam);
+		
+		if(!shader.isCompiled()) {
+			shader.compile(glUnused);
+		}
+		
+		glUnused.glDisable(GL10.GL_CULL_FACE);
+		glUnused.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+		glUnused.glVertexPointer(3, GL10.GL_FLOAT, 0, vertices);
+		glUnused.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+		glUnused.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, vertices.limit() / 3);
+		glUnused.glDisableClientState(GL10.GL_VERTEX_ARRAY);
 	}
 }

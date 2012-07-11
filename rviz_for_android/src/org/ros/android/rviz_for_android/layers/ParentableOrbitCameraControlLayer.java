@@ -37,8 +37,8 @@ public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer i
 	private ViewProperty prop = new ViewProperty("null", null, null);
 	private OrbitCamera cam;
 	
-	public ParentableOrbitCameraControlLayer(Context context) {
-		super(context);
+	public ParentableOrbitCameraControlLayer(Context context, Camera cam) {
+		super(context, cam);
 		prop.addSubProperty(new GraphNameProperty("Fixed", null, null, null));
 	}
 

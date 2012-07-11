@@ -2,8 +2,12 @@ package org.ros.android.renderer.shapes;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import org.ros.android.renderer.OpenGlTransform;
+import org.ros.android.renderer.Camera;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.rosjava_geometry.Transform;
+
+import android.opengl.Matrix;
 
 import com.google.common.base.Preconditions;
 
@@ -14,13 +18,38 @@ import com.google.common.base.Preconditions;
  */
 public abstract class BaseShape implements Shape {
 
+	protected Camera cam;
 	protected Color color;
 	protected Transform transform;
-
+	protected GLSLProgram shader;
+	protected int[] uniformHandles;
+	protected float[] MVP = new float[16];
+	protected float[] MV = new float[16];
+	public static float[] lightPosition = new float[]{3f, 4f, 5f};
+	public static float[] lightVector = new float[]{0.4242f, 0.5656f, 0.7071f};
+	
+	public BaseShape(Camera cam) {
+		this.cam = cam;
+	}
+	
+	public void setProgram(GLSLProgram shader) {
+		this.shader = shader;
+		uniformHandles = shader.getUniformHandles();
+	}
+	
+	protected int getUniform(ShaderVal s) {
+		return uniformHandles[s.loc];
+	}
+	
 	@Override
-	public void draw(GL10 gl) {
-		OpenGlTransform.apply(gl, getTransform());
-		scale(gl);
+	public void draw(GL10 glUnused) {
+		if(!shader.isCompiled()) {
+			shader.compile(glUnused);
+			uniformHandles = shader.getUniformHandles();
+		}
+		shader.use(glUnused);
+		cam.applyTransform(transform);
+		scale(cam);
 	}
 
 	/**
@@ -31,7 +60,7 @@ public abstract class BaseShape implements Shape {
 	 * 
 	 * @param gl
 	 */
-	protected void scale(GL10 gl) {
+	protected void scale(Camera cam) {
 		// The default scale is in metric space.
 	}
 
@@ -44,6 +73,11 @@ public abstract class BaseShape implements Shape {
 	public void setColor(Color color) {
 		Preconditions.checkNotNull(color);
 		this.color = color;
+	}
+	
+	protected void calcMVP() {
+		Matrix.multiplyMM(MV, 0, cam.getViewMatrix(), 0, cam.getModelMatrix(), 0);
+		Matrix.multiplyMM(MVP, 0, cam.getViewport().getProjectionMatrix(), 0, MV, 0);
 	}
 
 	@Override

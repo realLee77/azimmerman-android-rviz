@@ -18,48 +18,41 @@ package org.ros.android.renderer;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import com.google.common.base.Preconditions;
+import android.opengl.GLES20;
+import android.opengl.Matrix;
 
 /**
  * @author damonkohler@google.com (Damon Kohler)
  */
 public class Viewport {
 
-  /**
-   * Pixels per meter in the world. If zoom is set to the number of pixels per
-   * meter (the display density) then 1 cm in the world will be displayed as 1
-   * cm on the display.
-   */
-  private static final float DEFAULT_ZOOM = 1.0f;
-
   private final int width;
   private final int height;
-
-  private float zoom;
+  
+  private float[] mProjection = new float[16];
 
   public Viewport(int width, int height) {
     this.width = width;
     this.height = height;
-    zoom = DEFAULT_ZOOM;
   }
 
-  public void apply(GL10 gl) {
-    gl.glViewport(0, 0, width, height);
+  public void apply(GL10 glUnused) {
+	GLES20.glViewport(0, 0, width, height);
     
     float zNear = 0.1f;
     float zFar = 1000;
     float fov = 45.0f;
     float aspectRatio = (float)width/(float)height;
     
-    gl.glEnable(GL10.GL_NORMALIZE);
-    gl.glMatrixMode(GL10.GL_PROJECTION);
-    gl.glLoadIdentity();
-    android.opengl.GLU.gluPerspective(gl, fov, aspectRatio, zNear, zFar);
-  }
+    float fW, fH;
+    fH = (float) (Math.tan(fov/360*Math.PI) * zNear);
+    fW = fH*aspectRatio;
 
-  public void zoom(GL10 gl) {
-    Preconditions.checkNotNull(gl);
-    gl.glScalef(zoom, zoom, 1.0f);
+    Matrix.frustumM(mProjection, 0, -fW, fW, -fH, fH, zNear, zFar);
+  }
+  
+  public float[] getProjectionMatrix() {
+	  return mProjection;
   }
 
   public int getWidth() {
@@ -68,13 +61,5 @@ public class Viewport {
 
   public int getHeight() {
     return height;
-  }
-
-  public float getZoom() {
-    return zoom;
-  }
-
-  public void setZoom(float zoom) {
-    this.zoom = zoom;
   }
 }

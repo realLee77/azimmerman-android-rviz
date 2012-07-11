@@ -45,7 +45,8 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 
 	private Vector3 prevScaleCenter = Vector3.newIdentityVector3();
 
-	public OrbitCameraControlLayer(Context context) {
+	public OrbitCameraControlLayer(Context context, Camera cam) {
+		super(cam);
 		this.context = context;
 	}
 
