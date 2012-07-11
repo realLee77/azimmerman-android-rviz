@@ -8,6 +8,7 @@ import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
 
 import android.opengl.ETC1;
@@ -53,28 +54,28 @@ public class TexturedTrianglesShape extends TrianglesShape implements CleanableS
 	}
 
 	@Override
-	public void draw(GL10 gl) {		
+	public void draw(GL10 glUnused, Camera cam) {		
 		if(cleanUp) {
-			clearBuffers(gl);
+			clearBuffers(glUnused);
 			return;
 		}
-		gl.glPushMatrix();
+		glUnused.glPushMatrix();
 		super.setColor(baseColor);
 		if(!texturesLoaded)
-			loadTextures(gl);
+			loadTextures(glUnused);
 
-		gl.glEnable(GL10.GL_TEXTURE_2D);
+		glUnused.glEnable(GL10.GL_TEXTURE_2D);
 		for(Integer i : texIDArray)
-			gl.glBindTexture(GL10.GL_TEXTURE_2D, i);
+			glUnused.glBindTexture(GL10.GL_TEXTURE_2D, i);
 
-		gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, uv);
-		gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+		glUnused.glTexCoordPointer(2, GL10.GL_FLOAT, 0, uv);
+		glUnused.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
 
-		super.draw(gl);
+		super.draw(glUnused, cam);
 
-		gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-		gl.glDisable(GL10.GL_TEXTURE_2D);
-		gl.glPopMatrix();
+		glUnused.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+		glUnused.glDisable(GL10.GL_TEXTURE_2D);
+		glUnused.glPopMatrix();
 	}
 
 	private int[] tmp = new int[1];

@@ -17,17 +17,18 @@
 
 package org.ros.android.rviz_for_android.layers;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.Vertices;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.Color;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.ColorProperty;
 import org.ros.android.rviz_for_android.prop.FloatProperty;
@@ -42,6 +43,8 @@ import org.ros.node.ConnectedNode;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Vector3;
 
+import android.opengl.GLES20;
+import android.opengl.Matrix;
 import android.os.Handler;
 
 public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLayer {
@@ -58,23 +61,28 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	private float xOffset = 0f;
 	private float yOffset = 0f;
 	private float zOffset = 0f;
+	
+	private GLSLProgram gridShader = GLSLProgram.FlatColor();
 
-	public GridLayer(int cells, float spacing) {
-		super();
+	public GridLayer(Camera cam, int cells, float spacing) {
+		super(cam);
 
 		prop = new BoolProperty("enabled", true, null);
 		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
 		prop.addSubProperty(new IntProperty("Cells", cells, new PropertyUpdateListener<Integer>() {
+			@Override
 			public void onPropertyChanged(Integer newval) {
 				onValueChanged();
 			}
 		}).setValidRange(1, 1000));
 		prop.addSubProperty(new FloatProperty("Spacing", spacing, new PropertyUpdateListener<Float>() {
+			@Override
 			public void onPropertyChanged(Float newval) {
 				onValueChanged();
 			}
 		}).setValidRange(0.01f, 10000f));
 		prop.addSubProperty(new Vector3Property("Offset", new Vector3(0, 0, 0), new PropertyUpdateListener<Vector3>() {
+			@Override
 			public void onPropertyChanged(Vector3 newval) {
 				xOffset = (float) newval.getX();
 				yOffset = (float) newval.getY();
@@ -82,9 +90,15 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			}
 
 		}));
-		prop.addSubProperty(new ColorProperty("Color", new Color(1f, 1f, 1f, 1f), null));
+		prop.addSubProperty(new ColorProperty("Color", drawColor, new PropertyUpdateListener<Color>() {
+			@Override
+			public void onPropertyChanged(Color newval) {
+				drawColor = newval;
+			}
+		}));
 
 		initGrid();
+		uniformHandles = gridShader.getUniformHandles();
 	}
 
 	@Override
@@ -103,7 +117,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		float spacing = prop.<FloatProperty> getProperty("Spacing").getValue();
 
 		nLines = 2 * cells + 2 + (2 * ((cells + 1) % 2));
-		vertices = new float[3 * (2 * nLines)];
+		vertices = new float[6 * nLines];
 		indices = new short[2 * nLines];
 
 		float max = (spacing * cells) / 2f;
@@ -147,41 +161,50 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			vertices[++idx] = 0;
 		}
 
-		for(int i = 0; i < 2 * nLines; i++) {
+		for(int i = 0; i < 2* nLines; i++) {
 			indices[i] = (short) i;
 		}
 
 		// Pack the vertices into a byte array
-		ByteBuffer bb_vtx = ByteBuffer.allocateDirect(vertices.length * 4);
-		bb_vtx.order(ByteOrder.nativeOrder());
-		vbb = bb_vtx.asFloatBuffer();
-		vbb.put(vertices);
-		vbb.position(0);
-
-		ByteBuffer bb_idx = ByteBuffer.allocateDirect(indices.length * 2);
-		bb_idx.order(ByteOrder.nativeOrder());
-		ibb = bb_idx.asShortBuffer();
-		ibb.put(indices);
-		ibb.position(0);
+		vbb = Vertices.toFloatBuffer(vertices);
+		ibb = Vertices.toShortBuffer(indices);
 
 		ready = true;
 		requestRender();
 	}
 
+	Color drawColor = new Color(1f, 1f, 1f, 1f);
+	
+	private int[] uniformHandles;
+	private float[] MVP = new float[16];
+	
+	private void calcMVP() {
+		Matrix.multiplyMM(MVP, 0, camera.getViewMatrix(), 0, camera.getModelMatrix(), 0);
+		Matrix.multiplyMM(MVP, 0, camera.getViewport().getProjectionMatrix(), 0, MVP, 0);
+	}
+	
 	@Override
-	public void draw(GL10 gl) {
+	public void draw(GL10 glUnused) {
+		if(!gridShader.isCompiled()) {
+			gridShader.compile(glUnused);
+			uniformHandles = gridShader.getUniformHandles();
+		}
+			
 		if(prop.getValue() && ready) {
-
-			Color c = prop.<ColorProperty> getProperty("Color").getValue();
-			gl.glColor4f(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
-
-			gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vbb);
-			gl.glPushMatrix();
-			gl.glTranslatef(xOffset, yOffset, zOffset);
-			gl.glDrawElements(GL10.GL_LINES, 2 * nLines, GL10.GL_UNSIGNED_SHORT, ibb);
-			gl.glPopMatrix();
-			gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+			camera.pushM();
+			camera.translateM(xOffset, yOffset, zOffset);
+			calcMVP();
+			gridShader.use(glUnused);
+			
+			GLES20.glUniform4f(uniformHandles[ShaderVal.UNIFORM_COLOR.loc], drawColor.getRed(), drawColor.getGreen(), drawColor.getBlue(), drawColor.getAlpha());
+			
+			GLES20.glUniformMatrix4fv(uniformHandles[ShaderVal.MVP_MATRIX.loc], 1, false, MVP,0);
+			
+			GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
+			GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, vbb);
+			
+			GLES20.glDrawElements(GLES20.GL_LINES, 2*nLines, GLES20.GL_UNSIGNED_SHORT, ibb);
+			camera.popM();
 		}
 	}
 

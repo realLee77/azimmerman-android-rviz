@@ -42,9 +42,11 @@ public abstract class DefaultLayer implements Layer {
 	private final Collection<RenderRequestListener> renderListeners;
 
 	protected String layerName = "Unnamed Layer";
+	protected Camera camera;
 
-	public DefaultLayer() {
+	public DefaultLayer(Camera cam) {
 		renderListeners = Lists.newArrayList();
+		this.camera = cam;
 	}
 
 	public void setName(String name) {
@@ -56,7 +58,7 @@ public abstract class DefaultLayer implements Layer {
 	}
 
 	@Override
-	public void draw(GL10 gl) {
+	public void draw(GL10 glUnused) {
 	}
 
 	@Override
@@ -66,6 +68,7 @@ public abstract class DefaultLayer implements Layer {
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
+		this.camera = camera;
 	}
 
 	@Override

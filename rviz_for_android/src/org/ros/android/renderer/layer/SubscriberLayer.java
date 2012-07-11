@@ -38,7 +38,8 @@ public class SubscriberLayer<T> extends DefaultLayer {
 
   private Subscriber<T> subscriber;
 
-  public SubscriberLayer(GraphName topicName, String messageType) {
+  public SubscriberLayer(GraphName topicName, String messageType, Camera cam) {
+	super(cam);
     this.topicName = topicName;
     this.messageType = messageType;
   }

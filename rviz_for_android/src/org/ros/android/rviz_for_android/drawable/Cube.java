@@ -14,12 +14,15 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
+
 package org.ros.android.rviz_for_android.drawable;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.BufferedTrianglesShape;
 import org.ros.android.renderer.shapes.Color;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.rosjava_geometry.Transform;
 
@@ -103,22 +106,21 @@ public class Cube extends BufferedTrianglesShape implements UrdfDrawable {
 		0f,-1f,0f,0f,-1f,0f,0f,-1f,0f
 	};
 
-	public Cube() {
-		super(cubeVertices, cubeNormals, baseColor);
+	public Cube(Camera cam) {
+		super(cam, cubeVertices, cubeNormals, baseColor);
+		super.setProgram(GLSLProgram.FlatShaded());
 	}
 
 	private float[] scale;
 	
 	public void draw(GL10 gl, Transform transform, float[] scale) {
-		//gl.glPushMatrix();
 		this.setTransform(transform);
 		this.scale = scale;
 		super.draw(gl);
-		//gl.glPopMatrix();
 	}
 
 	@Override
-	protected void scale(GL10 gl) {
-		gl.glScalef(scale[0], scale[1], scale[2]);
+	protected void scale(Camera cam) {
+		cam.scaleM(scale[0], scale[1], scale[2]);
 	}
 }

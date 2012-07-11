@@ -22,20 +22,17 @@ import java.util.Set;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.Layer;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
-import org.ros.android.rviz_for_android.layers.FPSLayer;
+import org.ros.android.rviz_for_android.layers.CubeLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
-import org.ros.android.rviz_for_android.layers.MapLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
-import org.ros.android.rviz_for_android.layers.PointCloudLayer;
-import org.ros.android.rviz_for_android.layers.RobotModelLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
-import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 import org.ros.rosjava_geometry.FrameTransformTree;
@@ -69,11 +66,11 @@ public class MainActivity extends RosActivity {
 	private Toast msgToast;
 
 	// Tracking layers
-	private static enum AvailableLayerTypes {
-		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud");
+	private static enum AvailableLayerType {
+		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud"), CubeES2("Cube ES2");
 		private String printName;
-
-		AvailableLayerTypes(String printName) {
+		private int count = 0;
+		AvailableLayerType(String printName) {
 			this.printName = printName;
 		}
 
@@ -81,14 +78,18 @@ public class MainActivity extends RosActivity {
 		public String toString() {
 			return printName;
 		}
+		
+		public int getCount() {
+			return count ++;
+		}
 	};
 
-	private static final AvailableLayerTypes[] availableLayers = AvailableLayerTypes.values();
+	private static final AvailableLayerType[] availableLayers = AvailableLayerType.values();
 	private static CharSequence[] availableLayerNames;
 	static {
 		availableLayerNames = new CharSequence[availableLayers.length];
 		int i = 0;
-		for(AvailableLayerTypes aln : availableLayers) {
+		for(AvailableLayerType aln : availableLayers) {
 			availableLayerNames[i++] = aln.toString();
 		}
 	}
@@ -200,7 +201,7 @@ public class MainActivity extends RosActivity {
 		createLayerDialogs();
 		configureGUI();
 
-		camControl = new ParentableOrbitCameraControlLayer(this);
+		camControl = new ParentableOrbitCameraControlLayer(this, null); // Null camera is acceptable here, it'll be initialized with the real camera on start
 		camControl.setName("Camera");
 		layers.add(camControl);
 
@@ -210,6 +211,7 @@ public class MainActivity extends RosActivity {
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
 		for(Layer l : layers)
 			visualizationView.addLayer(l);
+		
 
 		elv = (ExpandableListView) findViewById(R.id.expandableListView1);
 		propAdapter = new PropertyListAdapter(layers, getApplicationContext());
@@ -228,10 +230,10 @@ public class MainActivity extends RosActivity {
 		});
 
 		// TODO: MAKE THESE LOAD FROM A CONFIG FILE?
-		addNewLayer(0);
-		addNewLayer(1);
+		addNewLayer(AvailableLayerType.Axis);
+		addNewLayer(AvailableLayerType.Grid);
 
-		visualizationView.addLayer(new FPSLayer());
+//		visualizationView.addLayer(new FPSLayer());
 	}
 
 	public static Context getAppContext() {
@@ -245,27 +247,35 @@ public class MainActivity extends RosActivity {
 		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/map_view"));
 	}
 
-	private void addNewLayer(int layertype) {
+	// TODO: ADD ITEMS BACK TO THE NEW LAYER SELECTION DIALOG
+	private void addNewLayer(AvailableLayerType layertype) {
+		Camera cam = visualizationView.getCamera();
+		if(visualizationView.getCamera() == null)
+			throw new IllegalArgumentException("Can not instantiate new layer, camera is null!");
+		
 		DefaultLayer newLayer = null;
-		switch(availableLayers[layertype]) {
+		switch(layertype) {
 		case Axis:
-			newLayer = new AxisLayer();
+			newLayer = new AxisLayer(cam);
 			break;
 		case Grid:
-			newLayer = new GridLayer(10, 1f);
+			newLayer = new GridLayer(cam, 10, 1f);
 			break;
-		case RobotModel:
-			newLayer = new RobotModelLayer(mfd);
-			break;
-		case Map:
-			newLayer = new MapLayer(new GraphName("/map"), nav_msgs.OccupancyGrid._TYPE);
-			break;
-		case PointCloud:
-			newLayer = new PointCloudLayer(new GraphName("/lots_of_points"), sensor_msgs.PointCloud._TYPE);
+//		case RobotModel:
+//			newLayer = new RobotModelLayer(mfd);
+//			break;
+//		case Map:
+//			newLayer = new MapLayer(new GraphName("/map"), nav_msgs.OccupancyGrid._TYPE);
+//			break;
+//		case PointCloud:
+//			newLayer = new PointCloudLayer(new GraphName("/lots_of_points"), sensor_msgs.PointCloud._TYPE);
 		}
 
+		if(layertype == AvailableLayerType.CubeES2)
+			newLayer = new CubeLayer(cam);
+
 		if(newLayer != null) {
-			newLayer.setName(availableLayers[layertype] + " " + counts[layertype]++);
+			newLayer.setName(layertype + " " + layertype.getCount());
 			if(newLayer instanceof LayerWithProperties) {
 				layers.add((LayerWithProperties) newLayer);
 				propAdapter.notifyDataSetChanged();
@@ -302,13 +312,12 @@ public class MainActivity extends RosActivity {
 		for(int i = 0; i < counts.length; i++) {
 			counts[i] = 0;
 		}
-
 		// Build a layer selection dialog for adding layers
 		addLayerDialogBuilder = new AlertDialog.Builder(context);
 		addLayerDialogBuilder.setTitle("Select a Layer");
 		addLayerDialogBuilder.setItems(availableLayerNames, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int item) {
-				addNewLayer(item);
+				addNewLayer(availableLayers[item]);
 			}
 		});
 		addLayerDialog = addLayerDialogBuilder.create();
@@ -356,13 +365,13 @@ public class MainActivity extends RosActivity {
 	}
 
 	private void renameLayer(int item) {
-		final int selectedItem = item;
+		final int selectedItem = item+1;
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 		alert.setTitle("Rename Layer");
 		alert.setMessage("New layer name");
 
 		final EditText input = new EditText(this);
-		input.setText(liveLayers[item + 1]);
+		input.setText(liveLayers[item]);
 		input.setSelectAllOnFocus(true);
 		input.setSingleLine(true);
 		alert.setView(input);

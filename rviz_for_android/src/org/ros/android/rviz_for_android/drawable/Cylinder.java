@@ -20,7 +20,6 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import org.ros.android.renderer.OpenGlTransform;
 import org.ros.android.renderer.Vertices;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.renderer.shapes.Shape;
@@ -179,23 +178,4 @@ public class Cylinder implements Shape {
 		gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
 		gl.glPopMatrix();
 	}
-	
-	public void batchDraw(GL10 gl, Transform transform, float length, float radius) {
-		OpenGlTransform.apply(gl, transform);
-		gl.glScalef(radius, radius, length);
-		gl.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
-
-		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, sideVertices);
-		gl.glNormalPointer(GL10.GL_FLOAT, 0, sideNormals);
-		gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, stripTriangleCount);
-
-		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, topVertices);
-		gl.glNormalPointer(GL10.GL_FLOAT, 0, topNormals);
-		gl.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, fanTriangleCount);
-
-		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, bottomVertices);
-		gl.glNormalPointer(GL10.GL_FLOAT, 0, bottomNormals);
-		gl.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, fanTriangleCount);
-	}
-
 }

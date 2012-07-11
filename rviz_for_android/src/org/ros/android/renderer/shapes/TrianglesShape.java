@@ -5,6 +5,7 @@ import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
@@ -48,22 +49,22 @@ public class TrianglesShape extends BaseShape {
 	}
 
 	@Override
-	public void draw(GL10 gl) {
-		super.draw(gl);
-		gl.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+	public void draw(GL10 glUnused, Camera cam) {
+		super.draw(glUnused, cam);
+		glUnused.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
 
-		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertices);
-		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+		glUnused.glVertexPointer(3, GL10.GL_FLOAT, 0, vertices);
+		glUnused.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 
-		gl.glNormalPointer(GL10.GL_FLOAT, 0, normals);
-		gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
+		glUnused.glNormalPointer(GL10.GL_FLOAT, 0, normals);
+		glUnused.glEnableClientState(GL10.GL_NORMAL_ARRAY);
 
 		if(useIndices)
-			gl.glDrawElements(GL10.GL_TRIANGLES, count, GL10.GL_UNSIGNED_SHORT, indices);
+			glUnused.glDrawElements(GL10.GL_TRIANGLES, count, GL10.GL_UNSIGNED_SHORT, indices);
 		else
-			gl.glDrawArrays(GL10.GL_TRIANGLES, 0, count);
+			glUnused.glDrawArrays(GL10.GL_TRIANGLES, 0, count);
 
-		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-		gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
+		glUnused.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+		glUnused.glDisableClientState(GL10.GL_NORMAL_ARRAY);
 	}
 }

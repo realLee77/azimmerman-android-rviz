@@ -16,14 +16,13 @@
 
 package org.ros.android.renderer;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import android.graphics.Point;
+import android.opengl.Matrix;
 
 import com.google.common.base.Preconditions;
 
@@ -53,6 +52,8 @@ public class OrbitCamera implements Camera {
 	private Vector3 location;
 	private Vector3 lookTarget;
 
+	private float[] mView = new float[16];
+
 	private float vTheta = 0;
 	private float vPhi = 0;
 
@@ -74,36 +75,42 @@ public class OrbitCamera implements Camera {
 	private FrameTransformTree frameTransformTree;
 
 	public OrbitCamera(FrameTransformTree frameTransformTree) {
+		// Initialize the fixed frame
 		this.frameTransformTree = frameTransformTree;
 		fixedFrame = DEFAULT_FIXED_FRAME;
+
+		// Initialize the location
 		location = Vector3.newIdentityVector3();
 		lookTarget = Vector3.newIdentityVector3();
 		updateLocation();
 		location = location.add(lookTarget);
+
+		// Initialize the model matrix and stack
+		loadIdentityM();
+		Matrix.setIdentityM(stackM[0], 0);
 	}
 
-	public void apply(GL10 gl) {
-		viewport.zoom(gl);
+	public void apply() {
 		velocityUpdate();
-		
+
 		synchronized(fixedFrame) {
 			if(targetFrame != null) {
 				lookTarget = frameTransformTree.newTransformIfPossible(targetFrame, fixedFrame).getTranslation();
-				lookTarget.setX(lookTarget.getX()/2);
-				lookTarget.setY(lookTarget.getY()/2);
-				lookTarget.setZ(lookTarget.getZ()/2);
+				lookTarget.setX(lookTarget.getX() / 2);
+				lookTarget.setY(lookTarget.getY() / 2);
+				lookTarget.setZ(lookTarget.getZ() / 2);
 				updateLocation();
 			}
 		}
 
-		rotateOrbit(gl);
+		rotateOrbit();
 	}
 
-	private void rotateOrbit(GL10 gl) {
-		android.opengl.GLU.gluLookAt(gl, (float) location.getX(), (float) location.getY(), (float) location.getZ(), (float) lookTarget.getX(), (float) lookTarget.getY(), (float) lookTarget.getZ(), 0, 0, 1f);
-		gl.glTranslatef(-(float) location.getX(), -(float) location.getY(), -(float) location.getZ());
+	private void rotateOrbit() {
+		Matrix.setLookAtM(mView, 0, (float) location.getX(), (float) location.getY(), (float) location.getZ(), (float) lookTarget.getX(), (float) lookTarget.getY(), (float) lookTarget.getZ(), 0, 0, 1f);
+		Matrix.translateM(mView, 0, -(float) location.getX(), -(float) location.getY(), -(float) location.getZ());
 	}
-	
+
 	private void updateLocation() {
 		location.setX((float) lookTarget.getX() + (orbitRadius * Math.sin(angleTheta) * Math.cos(anglePhi)));
 		location.setY((float) lookTarget.getY() + (orbitRadius * Math.sin(angleTheta) * Math.sin(anglePhi)));
@@ -128,7 +135,7 @@ public class OrbitCamera implements Camera {
 		vTheta = Utility.cap(-vY / 500, -MAX_FLING_VELOCITY, MAX_FLING_VELOCITY);
 	}
 
-	public void moveOrbitPosition(float xDistance, float yDistance) {		
+	public void moveOrbitPosition(float xDistance, float yDistance) {
 		anglePhi += Math.toRadians(xDistance);
 		anglePhi = Utility.angleWrap(anglePhi);
 
@@ -138,7 +145,8 @@ public class OrbitCamera implements Camera {
 		updateLocation();
 	}
 
-	private float translationScaleFactor = 5f/6f;
+	private float translationScaleFactor = 5f / 6f;
+
 	@Override
 	public void moveCameraScreenCoordinates(float xDistance, float yDistance) {
 		float xDistCap = Utility.cap(xDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED) * translationScaleFactor;
@@ -159,7 +167,7 @@ public class OrbitCamera implements Camera {
 
 	public void zoomCamera(float factor) {
 		orbitRadius /= factor;
-		translationScaleFactor = orbitRadius/6.0f;
+		translationScaleFactor = orbitRadius / 6.0f;
 	}
 
 	public GraphName getFixedFrame() {
@@ -197,15 +205,6 @@ public class OrbitCamera implements Camera {
 		this.viewport = viewport;
 	}
 
-	public float getZoom() {
-		return viewport.getZoom();
-	}
-
-	public void setZoom(float zoom) {
-		viewport.setZoom(zoom);
-	}
-
-	@Override
 	public Vector3 toWorldCoordinates(Point screenPoint) {
 		// TODO Auto-generated method stub
 		return null;
@@ -227,5 +226,85 @@ public class OrbitCamera implements Camera {
 	public void resetZoom() {
 		this.orbitRadius = 5f;
 		updateLocation();
+	}
+
+	@Override
+	public float getZoom() {
+		return 0;
+	}
+
+	@Override
+	public void setZoom(float zoom) {
+	}
+	
+	// Copy the contents of an array without instantiating a new object
+	private void copyArray(float[] source, float[] dest) {
+		for(int i = 0; i < 16; i++)
+			dest[i] = source[i];
+	}
+
+	@Override
+	public float[] getViewMatrix() {
+		return mView;
+	}
+
+	private float[] modelM = new float[16];
+	private float[][] stackM = new float[16][16];
+	private int stackPointer = 0;
+
+	@Override
+	public void pushM() {
+		stackPointer++;
+		copyArray(modelM, stackM[stackPointer]);
+		//stackM[stackPointer] = Arrays.copyOf(modelM, 16);
+	}
+
+	@Override
+	public void popM() {
+		stackPointer--;
+		copyArray(stackM[stackPointer], modelM);
+		//modelM = Arrays.copyOf(stackM[stackPointer],16);
+		if(stackPointer < 0)
+			throw new RuntimeException("Can not remove the last element in the model matrix stack!");
+	}
+
+	@Override
+	public void translateM(float x, float y, float z) {
+		Matrix.translateM(modelM, 0, x, y, z);
+	}
+
+	@Override
+	public void scaleM(float sx, float sy, float sz) {
+		Matrix.scaleM(modelM, 0, sx, sy, sz);
+	}
+
+	@Override
+	public void rotateM(float a, float x, float y, float z) {
+		Matrix.rotateM(modelM, 0, a, x, y, z);
+	}
+
+	@Override
+	public void loadIdentityM() {
+		Matrix.setIdentityM(modelM, 0);
+	}
+
+	@Override
+	public void applyTransform(Transform transform) {
+		translateM((float) transform.getTranslation().getX(), (float) transform.getTranslation().getY(), (float) transform.getTranslation().getZ());
+		double angleDegrees = Math.toDegrees(transform.getRotation().getAngle());
+		if(angleDegrees != 0) {
+			Vector3 axis = transform.getRotation().getAxis();
+			rotateM((float) angleDegrees, (float) axis.getX(), (float) axis.getY(), (float) axis.getZ());
+		}
+	}
+
+	@Override
+	public String toString() {
+		return "Location: " + location.toString() + " Look target: " + lookTarget.toString();
+	}
+
+	@Override
+	public float[] getModelMatrix() {
+		return modelM;
 	}
 }

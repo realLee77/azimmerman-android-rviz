@@ -1,7 +1,5 @@
 package org.ros.android.renderer;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
@@ -10,7 +8,7 @@ import android.graphics.Point;
 
 public interface Camera {
 
-	public abstract void apply(GL10 gl);
+	public abstract void apply();
 
 	/**
 	 * Moves the camera.
@@ -28,6 +26,8 @@ public interface Camera {
 	public abstract void setCamera(Vector3 newCameraPoint);
 
 	public abstract Vector3 getCamera();
+	
+	public abstract float[] getViewMatrix();
 
 	public abstract void zoomCamera(float factor);
 
@@ -68,5 +68,20 @@ public interface Camera {
 	public abstract float getZoom();
 
 	public abstract void setZoom(float zoom);
-
+	
+	public abstract float[] getModelMatrix();
+	
+	public abstract void pushM();
+	
+	public abstract void popM();
+	
+	public abstract void translateM(float x, float y, float z);
+	
+	public abstract void scaleM(float sx, float sy, float sz);
+	
+	public abstract void rotateM(float a, float x, float y, float z);
+	
+	public abstract void loadIdentityM();
+	
+	public abstract void applyTransform(Transform t);
 }

@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.opengles.GL11;
 
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
@@ -150,15 +151,15 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 	private volatile boolean cleanUp = false;
 	
 	@Override
-	public void draw(GL10 gl) {		
+	public void draw(GL10 glUnused, Camera cam) {		
 		if(cleanUp) {
-			clearBuffers(gl);
+			clearBuffers(glUnused);
 			return;
 		}	
 		if(!bufferPrepared)
-			bufferIdx = createVertexBuffer(gl);
+			bufferIdx = createVertexBuffer(glUnused);
 		if(!texturesLoaded)
-			loadTextures(gl);
+			loadTextures(glUnused);
 		
 		GLES11.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
 
@@ -170,15 +171,15 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
         GLES11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
         GLES11.glNormalPointer(GL11.GL_FLOAT, STRIDE, NORMAL_OFFSET);
         
-		gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+		glUnused.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
 		for(int i : texIDArray)
-			gl.glBindTexture(GL10.GL_TEXTURE_2D, i);
+			glUnused.glBindTexture(GL10.GL_TEXTURE_2D, i);
 		GLES11.glTexCoordPointer(2, GL11.GL_FLOAT, STRIDE, UV_OFFSET);
         
-		super.draw(gl);
+		super.draw(glUnused, cam);
         GLES11.glDrawArrays(GL10.GL_TRIANGLES, 0, count);
         
-		gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+		glUnused.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
         GLES11.glDisableClientState(GL10.GL_VERTEX_ARRAY);
 		GLES11.glDisableClientState(GL10.GL_NORMAL_ARRAY);
 		GLES11.glBindBuffer(GL11.GL_ARRAY_BUFFER, 0);
