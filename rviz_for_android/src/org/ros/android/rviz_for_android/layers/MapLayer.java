@@ -45,6 +45,7 @@ import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -73,8 +74,10 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 
 	private MessageListener<OccupancyGrid> subListener;
 	
-	public MapLayer(GraphName topicName, String messageType) {
-		super(topicName, messageType);
+	private Context context;
+	
+	public MapLayer(Camera cam, GraphName topicName, String messageType, Context context) {
+		super(topicName, messageType, cam);
 		prop = new BoolProperty("Enabled", true, null);
 		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
 	}
@@ -141,7 +144,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 
 		for(int col = 0; col < wTileCount; col++) {
 			for(int row = 0; row < hTileCount; row++) {
-				tiles[row][col] = new Plane(getTileTexture(row, col));
+				tiles[row][col] = new Plane(super.camera, getTileTexture(row, col));
 				Transform tileTransform = new Transform(new Vector3(wTileScale * col, hTileScale * row, 0), Quaternion.newIdentityQuaternion());
 				tiles[row][col].setTransform(tileTransform);
 				tiles[row][col].setScale(wTileScale, hTileScale);
@@ -235,12 +238,12 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	}
 
 	@Override
-	public void draw(GL10 gl) {
+	public void draw(GL10 glUnused) {
 		if(isReady) {
-			super.draw(gl);
+			super.draw(glUnused);
 			for(Plane[] pRow : tiles) {
 				for(Plane p : pRow)
-					p.draw(gl);
+					p.draw(glUnused);
 			}
 		}
 	}

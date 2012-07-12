@@ -21,6 +21,7 @@ import javax.microedition.khronos.opengles.GL10;
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.rviz_for_android.drawable.Cube;
+import org.ros.android.rviz_for_android.drawable.Cylinder;
 import org.ros.android.rviz_for_android.drawable.Sphere;
 import org.ros.rosjava_geometry.Transform;
 
@@ -29,6 +30,7 @@ public class CubeLayer extends DefaultLayer {
 	private Cube myCube;
 	private Cube myCube2;
 	private Sphere mySphere;
+	private Cylinder myCyl;
 	private Transform transform = Transform.newIdentityTransform();
 	private float[] scale = new float[]{1f,1f,1f};
 	private float[] scale2 = new float[]{.5f,1.5f,.75f};
@@ -40,6 +42,7 @@ public class CubeLayer extends DefaultLayer {
 		myCube = new Cube(cam);
 		myCube2 = new Cube(cam);
 		mySphere = new Sphere(cam);
+		myCyl = new Cylinder(cam);
 		startTime = System.currentTimeMillis();
 	}
 
@@ -51,6 +54,8 @@ public class CubeLayer extends DefaultLayer {
 		myCube2.draw(glUnused,transform,scale);
 		camera.translateM(1f, 0f, 1f);
 		mySphere.draw(glUnused, transform, 1f);
+		camera.translateM(0.5f, 1f, 0.5f);
+		myCyl.draw(glUnused, transform, 1f, 1f);
 	}	
 	
 	private int angle(int msecPerRev) {

@@ -6,6 +6,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
@@ -29,8 +30,9 @@ public class BufferedTrianglesShape extends BaseShape {
 		packedBuffer = packBuffer(vertices, normals);
 		
 		count = vertices.length / 3;
-		setColor(color);
-		setTransform(new Transform(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1)));
+		super.setColor(color);
+		super.setTransform(new Transform(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1)));
+		super.setProgram(GLSLProgram.FlatShaded());
 	}
 	
 	private FloatBuffer packBuffer(float[] vertices, float[] normals) {

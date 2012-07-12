@@ -11,13 +11,14 @@ import javax.microedition.khronos.opengles.GL11;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import android.opengl.ETC1;
 import android.opengl.ETC1Util.ETC1Texture;
-import android.opengl.GLES11;
 import android.opengl.GLES20;
 
 public class TexturedBufferedTrianglesShape extends BaseShape implements CleanableShape {
@@ -34,19 +35,23 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 	private boolean bufferPrepared = false;
 	private FloatBuffer vertexBuffer;
 	
-	public TexturedBufferedTrianglesShape(float[] vertices, float[] normals, float[] uvs, ETC1Texture diffuseTexture) {
+	public TexturedBufferedTrianglesShape(Camera cam, float[] vertices, float[] normals, float[] uvs, ETC1Texture diffuseTexture) {
+		super(cam);
 		super.setColor(baseColor);
 		this.textures = new HashMap<String, ETC1Texture>();
 		this.textures.put("diffuse", diffuseTexture);
 		vertexBuffer = packBuffer(vertices,normals,uvs);
 		setTransform(new Transform(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1)));
+		super.setProgram(GLSLProgram.TexturedShaded());
 	}
 	
-	public TexturedBufferedTrianglesShape(float[] vertices, float[] normals, float[] uvs, Map<String, ETC1Texture> textures) {
+	public TexturedBufferedTrianglesShape(Camera cam, float[] vertices, float[] normals, float[] uvs, Map<String, ETC1Texture> textures) {
+		super(cam);
 		super.setColor(baseColor);
 		this.textures = textures;
 		vertexBuffer = packBuffer(vertices,normals,uvs);
 		setTransform(new Transform(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1)));
+		super.setProgram(GLSLProgram.TexturedShaded());
 	}
 	
 	private static final int FLOAT_SIZE = Float.SIZE/8;
@@ -89,30 +94,30 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 	}
 	
 	private int[] tmp = new int[1];
-	private void loadTextures(GL10 gl) {	
+	private void loadTextures(GL10 glUnused) {	
 		for(String s : textures.keySet()) {
 			// Remove the texture from the map. Once it's loaded to the GPU, it isn't needed anymore
 			ETC1Texture tex = textures.remove(s);
 			
 			if(tex != null) {
 				// Generate a texture ID, append it to the list
-				gl.glGenTextures(1, tmp, 0);
+				GLES20.glGenTextures(1, tmp, 0);
 				texIDArray.add(tmp[0]);
 				
 				// Bind and load the texture
-		        gl.glBindTexture(GL10.GL_TEXTURE_2D, tmp[0]);
-		        gl.glCompressedTexImage2D(GL10.GL_TEXTURE_2D, 0, ETC1.ETC1_RGB8_OES, tex.getWidth(), tex.getHeight(), 0, tex.getData().capacity(), tex.getData());
+		        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tmp[0]);
+		        GLES20.glCompressedTexImage2D(GLES20.GL_TEXTURE_2D, 0, ETC1.ETC1_RGB8_OES, tex.getWidth(), tex.getHeight(), 0, tex.getData().capacity(), tex.getData());
 		        
 		        // UV mapping parameters
 		        if(smoothing == TextureSmoothing.Linear) {
-		        	gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR);
-					gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+		        	GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+					GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
 		        } else if(smoothing == TextureSmoothing.Nearest) {
-		    	    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-		    	    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_NEAREST);
+		    	    GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+		    	    GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
 		        }
-			    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, GL10.GL_CLAMP_TO_EDGE);
-			    gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, GL10.GL_CLAMP_TO_EDGE);
+			    GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+			    GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
 			}
 		}
 		
@@ -120,28 +125,28 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 		textures = null;
 	}
 	
-	private void unloadTextures(GL10 gl) {
+	private void unloadTextures(GL10 glUnused) {
 		for(Integer i : texIDArray) {
 			tmp[0] = i;
-			gl.glDeleteTextures(1, tmp, 0); 
+			GLES20.glDeleteTextures(1, tmp, 0); 
 		}
 		texIDArray.clear();
 	}
 	
-	private int createVertexBuffer(GL10 gl) {
+	private int createVertexBuffer(GL10 glUnused) {
 		final int[] buffers = new int[1];
-		GLES11.glGenBuffers(1, buffers, 0);
-		GLES11.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffers[0]);
-		GLES11.glBufferData(GLES20.GL_ARRAY_BUFFER, vertexBuffer.capacity()*FLOAT_SIZE, vertexBuffer, GLES20.GL_STATIC_DRAW);
+		GLES20.glGenBuffers(1, buffers, 0);
+		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffers[0]);
+		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vertexBuffer.capacity()*FLOAT_SIZE, vertexBuffer, GLES20.GL_STATIC_DRAW);
 		
 		bufferPrepared = true;
 		return buffers[0];
 	}
 	
-	private void destroyBuffer(GL10 gl) {
+	private void destroyBuffer(GL10 glUnused) {
 		int[] buffers = new int[1];
 		buffers[0] = bufferIdx;
-		GLES11.glDeleteBuffers(1, buffers, 0);
+		GLES20.glDeleteBuffers(1, buffers, 0);
 	}
 	
 	private int bufferIdx;
@@ -151,7 +156,8 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 	private volatile boolean cleanUp = false;
 	
 	@Override
-	public void draw(GL10 glUnused, Camera cam) {		
+	public void draw(GL10 glUnused) {	
+		cam.pushM();
 		if(cleanUp) {
 			clearBuffers(glUnused);
 			return;
@@ -161,40 +167,45 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 		if(!texturesLoaded)
 			loadTextures(glUnused);
 		
-		GLES11.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
-
-		GLES11.glBindBuffer(GL11.GL_ARRAY_BUFFER, bufferIdx);
+		calcMVP();
+		// Uniforms
+		GLES20.glUniform3f(getUniform(ShaderVal.LIGHTVEC), lightVector[0], lightVector[1], lightVector[2]);
+		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
+		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.M_MATRIX), 1, false, cam.getModelMatrix(), 0);
+		// Attributes
+		GLES20.glEnableVertexAttribArray(ShaderVal.TEXCOORD.loc);
+		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
+		GLES20.glEnableVertexAttribArray(ShaderVal.NORMAL.loc);
 		
-		GLES11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-		GLES11.glVertexPointer(3, GL11.GL_FLOAT, STRIDE, VERTEX_OFFSET);
+		GLES20.glBindBuffer(GL11.GL_ARRAY_BUFFER, bufferIdx);
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, STRIDE, VERTEX_OFFSET);
+		GLES20.glVertexAttribPointer(ShaderVal.NORMAL.loc, 3, GLES20.GL_FLOAT, false, STRIDE, NORMAL_OFFSET);
+		GLES20.glVertexAttribPointer(ShaderVal.TEXCOORD.loc, 2, GLES20.GL_FLOAT, false, STRIDE, UV_OFFSET);
 		
-        GLES11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
-        GLES11.glNormalPointer(GL11.GL_FLOAT, STRIDE, NORMAL_OFFSET);
-        
-		glUnused.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+		// Bind texture(s)
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		for(int i : texIDArray)
-			glUnused.glBindTexture(GL10.GL_TEXTURE_2D, i);
-		GLES11.glTexCoordPointer(2, GL11.GL_FLOAT, STRIDE, UV_OFFSET);
-        
-		super.draw(glUnused, cam);
-        GLES11.glDrawArrays(GL10.GL_TRIANGLES, 0, count);
-        
-		glUnused.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-        GLES11.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-		GLES11.glDisableClientState(GL10.GL_NORMAL_ARRAY);
-		GLES11.glBindBuffer(GL11.GL_ARRAY_BUFFER, 0);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, i);
+		
+		// Draw
+		super.draw(glUnused);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, count);
+		
+		// Unbind the buffer
+		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+		cam.popM();
 	}
 	
 	private boolean cleaned = false;
 	
-	private void clearBuffers(GL10 gl) {
+	private void clearBuffers(GL10 glUnused) {
 		if(!cleaned) {
-			int[] tmp = new int[0];
+			int[] tmp = new int[1];
 			tmp[0] = bufferIdx;
-			GLES11.glDeleteBuffers(1,tmp,0);
+			GLES20.glDeleteBuffers(1,tmp,0);
 			for(int i : texIDArray) {
 				tmp[0] = i;
-				GLES11.glDeleteTextures(1, tmp, 0);
+				GLES20.glDeleteTextures(1, tmp, 0);
 			}
 			cleaned = true;
 		}

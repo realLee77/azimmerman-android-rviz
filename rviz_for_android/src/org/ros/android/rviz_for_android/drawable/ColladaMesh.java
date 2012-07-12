@@ -21,6 +21,7 @@ import java.util.List;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.CleanableShape;
 import org.ros.android.rviz_for_android.drawable.loader.ColladaLoader;
@@ -38,7 +39,7 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable, CleanableSha
 	 * @param mfd The mesh file downloader instance
 	 * @return a Collada mesh
 	 */
-	public static ColladaMesh newFromFile(String filename, MeshFileDownloader mfd) {
+	public static ColladaMesh newFromFile(String filename, MeshFileDownloader mfd, Camera cam) {
 		long now = System.nanoTime();
 		if(mfd == null)
 			throw new IllegalArgumentException("Null mesh file downloader! Must have a valid MFD to download meshes.");
@@ -48,11 +49,15 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable, CleanableSha
 		// Download the .DAE file if it doesn't exist
 		String loadedFilename = mfd.getFile(filename);
 		
+		if(loadedFilename == null)
+			throw new RuntimeException("Unable to download the file!");
+		
 		// Get the image prefix
 		String imgPrefix = mfd.getPrefix(filename);
 		
 		synchronized(loader) {			
-			loader.setDownloader(mfd);	
+			loader.setDownloader(mfd);
+			loader.setCamera(cam);
 			try {				
 				loader.readDae(mfd.getContext().openFileInput(loadedFilename), imgPrefix);
 			} catch(IOException e) {
@@ -61,11 +66,13 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable, CleanableSha
 			retval = loader.getGeometries();
 		}
 		Log.i("Collada", "Load time for " + filename + " = " + (System.nanoTime() - now)/1000000000.0);
-		return new ColladaMesh(retval);
+		return new ColladaMesh(cam, retval);
 	}
 	
 	protected List<BaseShape> geometries;
-	protected ColladaMesh(List<BaseShape> geometries) {
+	protected ColladaMesh(Camera cam, List<BaseShape> geometries) {
+		super(cam);
+		super.setProgram(GLSLProgram.TexturedShaded());
 		this.geometries = geometries;
 		
 		if(super.color != null)
@@ -75,8 +82,18 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable, CleanableSha
 	
 	private float[] scale;
 	
-	public void draw(GL10 gl, Transform transform, float[] scale) {
-		gl.glPushMatrix();
+	public void draw(GL10 glUnused, Transform transform, float[] scale) {
+		cam.pushM();
+		super.setTransform(transform);
+		this.scale = scale;
+		
+		super.draw(glUnused);
+		
+		for(BaseShape g : geometries)
+			g.draw(glUnused);
+		
+		cam.popM();
+		/*gl.glPushMatrix();
 		this.setTransform(transform);
 		this.scale = scale;
 
@@ -88,12 +105,12 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable, CleanableSha
 		}
 		gl.glDisable(GL10.GL_TEXTURE_2D);
 
-		gl.glPopMatrix();
+		gl.glPopMatrix();*/
 	}
 	
 	@Override
-	protected void scale(GL10 gl) {
-		gl.glScalef(scale[0], scale[1], scale[2]);
+	protected void scale(Camera cam) {
+		cam.scaleM(scale[0], scale[1], scale[2]);
 	}
 
 	@Override

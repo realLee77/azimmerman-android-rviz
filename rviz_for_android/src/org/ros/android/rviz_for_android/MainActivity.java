@@ -27,12 +27,15 @@ import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.Layer;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
-import org.ros.android.rviz_for_android.layers.CubeLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
+import org.ros.android.rviz_for_android.layers.MapLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
+import org.ros.android.rviz_for_android.layers.PointCloudLayer;
+import org.ros.android.rviz_for_android.layers.RobotModelLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 import org.ros.rosjava_geometry.FrameTransformTree;
@@ -67,7 +70,7 @@ public class MainActivity extends RosActivity {
 
 	// Tracking layers
 	private static enum AvailableLayerType {
-		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud"), CubeES2("Cube ES2");
+		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud");
 		private String printName;
 		private int count = 0;
 		AvailableLayerType(String printName) {
@@ -261,18 +264,15 @@ public class MainActivity extends RosActivity {
 		case Grid:
 			newLayer = new GridLayer(cam, 10, 1f);
 			break;
-//		case RobotModel:
-//			newLayer = new RobotModelLayer(mfd);
-//			break;
-//		case Map:
-//			newLayer = new MapLayer(new GraphName("/map"), nav_msgs.OccupancyGrid._TYPE);
-//			break;
-//		case PointCloud:
-//			newLayer = new PointCloudLayer(new GraphName("/lots_of_points"), sensor_msgs.PointCloud._TYPE);
+		case RobotModel:
+			newLayer = new RobotModelLayer(cam, mfd);
+			break;
+		case Map:
+			newLayer = new MapLayer(cam, new GraphName("/map"), nav_msgs.OccupancyGrid._TYPE, this);
+			break;
+		case PointCloud:
+			newLayer = new PointCloudLayer(cam, new GraphName("/lots_of_points"), sensor_msgs.PointCloud._TYPE);
 		}
-
-		if(layertype == AvailableLayerType.CubeES2)
-			newLayer = new CubeLayer(cam);
 
 		if(newLayer != null) {
 			newLayer.setName(layertype + " " + layertype.getCount());

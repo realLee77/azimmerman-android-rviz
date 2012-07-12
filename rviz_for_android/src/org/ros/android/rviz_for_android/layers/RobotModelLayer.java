@@ -23,7 +23,6 @@ import java.util.Map;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
-import org.ros.android.renderer.OpenGlTransform;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.shapes.CleanableShape;
@@ -75,7 +74,8 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	private Activity context;
 	private MeshFileDownloader mfd;
 
-	public RobotModelLayer(MeshFileDownloader mfd) {
+	public RobotModelLayer(Camera cam, MeshFileDownloader mfd) {
+		super(cam);
 		if(mfd == null)
 			throw new IllegalArgumentException("MFD is null!");
 
@@ -112,19 +112,23 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 				requestRender();
 			}
 		}));
+		
+		cyl = new Cylinder(cam);
+		cube = new Cube(cam);
+		sphere = new Sphere(cam);
 	}
 
 	private Component vis;
 	private Component col;
 
-	private Cylinder cyl = new Cylinder();
-	private Cube cube = new Cube();
-	private Sphere sphere = new Sphere();
+	private Cylinder cyl;
+	private Cube cube;
+	private Sphere sphere;
 
 	private Map<String, UrdfDrawable> meshes = new HashMap<String, UrdfDrawable>();
 
 	@Override
-	public void draw(GL10 gl) {
+	public void draw(GL10 glUnused) {
 		if(!readyToDraw || ftt == null || urdf == null) {
 			return;
 		}
@@ -133,6 +137,21 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			vis = ul.getVisual();
 			col = ul.getCollision();
 
+			cam.pushM();
+			// Transform to the URDF link's frame
+			cam.applyTransform(ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
+			
+			// Draw the shape
+			if(drawVis && vis != null) {
+				drawComponent(glUnused, vis);
+			}
+			if(drawCol && col != null) {
+				drawComponent(glUnused, col);
+			}
+			
+			cam.popM();
+			
+			/*			
 			gl.glPushMatrix();
 
 			// Transform to the URDF link's frame
@@ -146,28 +165,28 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 				drawComponent(gl, col);
 			}
 
-			gl.glPopMatrix();
+			gl.glPopMatrix();*/
 		}
 	}
 
-	private void drawComponent(GL10 gl, Component com) {
+	private void drawComponent(GL10 glUnused, Component com) {
 		switch(com.getType()) {
 		case BOX:
 			cube.setColor(com.getMaterial_color());
-			cube.draw(gl, com.getOrigin(), com.getSize());
+			cube.draw(glUnused, com.getOrigin(), com.getSize());
 			break;
 		case CYLINDER:
 			cyl.setColor(com.getMaterial_color());
-			cyl.draw(gl, com.getOrigin(), com.getLength(), com.getRadius());
+			cyl.draw(glUnused, com.getOrigin(), com.getLength(), com.getRadius());
 			break;
 		case SPHERE:
 			sphere.setColor(com.getMaterial_color());
-			sphere.draw(gl, com.getOrigin(), com.getRadius());
+			sphere.draw(glUnused, com.getOrigin(), com.getRadius());
 			break;
 		case MESH:
 			UrdfDrawable ud = meshes.get(com.getMesh());
 			if(ud != null)
-				ud.draw(gl, com.getOrigin(), com.getSize());
+				ud.draw(glUnused, com.getOrigin(), com.getSize());
 			break;
 		}
 	}
@@ -179,9 +198,9 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 		UrdfDrawable ud;
 		if(meshResourceName.toLowerCase().endsWith(".dae"))
-			ud = ColladaMesh.newFromFile(meshResourceName, mfd);
+			ud = ColladaMesh.newFromFile(meshResourceName, mfd, cam);
 		else if(meshResourceName.toLowerCase().endsWith(".stl"))
-			ud = StlMesh.newFromFile(meshResourceName, mfd);
+			ud = StlMesh.newFromFile(meshResourceName, mfd, cam);
 		else {
 			Log.e("RobotModel", "Unknown mesh type! " + meshResourceName);
 			return false;
