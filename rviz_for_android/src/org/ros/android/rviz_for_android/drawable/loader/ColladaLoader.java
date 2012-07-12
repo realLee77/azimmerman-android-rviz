@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.BufferedTrianglesShape;
 import org.ros.android.renderer.shapes.Color;
@@ -70,6 +71,7 @@ public class ColladaLoader extends VTDXmlReader {
 
 	private MeshFileDownloader mfd;
 	private String imgPrefix;
+	private Camera cam;
 
 	public ColladaLoader() {
 		super();
@@ -79,6 +81,10 @@ public class ColladaLoader extends VTDXmlReader {
 		if(mfd == null)
 			throw new IllegalArgumentException("Passed a null MeshFileDownloader! Just what do you think you're doing?");
 		this.mfd = mfd;
+	}
+	
+	public void setCamera(Camera cam) {
+		this.cam = cam;
 	}
 
 	public void readDae(InputStream fileStream, String imgPrefix) {
@@ -183,7 +189,7 @@ public class ColladaLoader extends VTDXmlReader {
 			textured = true;
 		} else if(data.size() == 2 && data.containsKey("NORMAL") && data.containsKey("POSITION") && (data.get("NORMAL").getOffset() == data.get("POSITION").getOffset())) {
 			Log.d("DAE", "I've detected that deindexing is not necessary for this mesh!");
-			return new TrianglesShape(data.get("POSITION").getData().getArray(), data.get("NORMAL").getData().getArray(), indices, defaultColor);
+			return new TrianglesShape(cam, data.get("POSITION").getData().getArray(), data.get("NORMAL").getData().getArray(), indices, defaultColor);
 		}
 
 		// Find the scale of the mesh (if present)
@@ -203,7 +209,7 @@ public class ColladaLoader extends VTDXmlReader {
 		if(!textured) {
 			switch(type) {
 			case triangles:
-				return new BufferedTrianglesShape(results.get("POSITION").getArray(), results.get("NORMAL").getArray(), defaultColor);
+				return new BufferedTrianglesShape(cam, results.get("POSITION").getArray(), results.get("NORMAL").getArray(), defaultColor);
 			case tristrips:
 			case trifans:
 			default:
@@ -213,7 +219,7 @@ public class ColladaLoader extends VTDXmlReader {
 			switch(type) {
 			case triangles:
 				//TexturedBufferedTrianglesShape
-				return new TexturedBufferedTrianglesShape(results.get("POSITION").getArray(), results.get("NORMAL").getArray(), results.get("TEXCOORD").getArray(), textures);
+				return new TexturedBufferedTrianglesShape(cam, results.get("POSITION").getArray(), results.get("NORMAL").getArray(), results.get("TEXCOORD").getArray(), textures);
 			case tristrips:
 			case trifans:
 			default:

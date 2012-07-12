@@ -74,22 +74,10 @@ public class TriangleStripShape extends BaseShape {
 		calcMVP();
 		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
 		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.M_MATRIX), 1, false, cam.getModelMatrix(), 0);
-		GLES20.glUniform3f(getUniform(ShaderVal.LIGHTVEC), super.lightVector[0], super.lightVector[1], super.lightVector[2]);
+		GLES20.glUniform3f(getUniform(ShaderVal.LIGHTVEC), lightVector[0], lightVector[1], lightVector[2]);
 		
 		GLES20.glDrawElements(GLES20.GL_TRIANGLE_STRIP, indices.limit(), GLES20.GL_UNSIGNED_SHORT, indices);
 		
-		cam.popM();
-		
-		/*glUnused.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
-		
-		glUnused.glVertexPointer(3, GL10.GL_FLOAT, 0, vertices);
-		glUnused.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-		
-		glUnused.glNormalPointer(GL10.GL_FLOAT, 0, normals);
-		glUnused.glEnableClientState(GL10.GL_NORMAL_ARRAY);
-		
-		glUnused.glDrawElements(GL10.GL_TRIANGLE_STRIP, indices.limit(), GL10.GL_UNSIGNED_SHORT, indices);
-		glUnused.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-		glUnused.glDisableClientState(GL10.GL_NORMAL_ARRAY);*/		
+		cam.popM();	
 	}
 }

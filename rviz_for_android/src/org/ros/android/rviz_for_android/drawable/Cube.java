@@ -22,7 +22,6 @@ import javax.microedition.khronos.opengles.GL10;
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.BufferedTrianglesShape;
 import org.ros.android.renderer.shapes.Color;
-import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.rosjava_geometry.Transform;
 
@@ -109,6 +108,7 @@ public class Cube extends BufferedTrianglesShape implements UrdfDrawable {
 	public Cube(Camera cam) {
 		super(cam, cubeVertices, cubeNormals, baseColor);
 		super.setProgram(GLSLProgram.FlatShaded());
+		super.setTransform(Transform.newIdentityTransform());
 	}
 
 	private float[] scale;

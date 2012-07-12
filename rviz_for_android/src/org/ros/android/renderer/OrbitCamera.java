@@ -256,14 +256,12 @@ public class OrbitCamera implements Camera {
 	public void pushM() {
 		stackPointer++;
 		copyArray(modelM, stackM[stackPointer]);
-		//stackM[stackPointer] = Arrays.copyOf(modelM, 16);
 	}
 
 	@Override
 	public void popM() {
 		stackPointer--;
 		copyArray(stackM[stackPointer], modelM);
-		//modelM = Arrays.copyOf(stackM[stackPointer],16);
 		if(stackPointer < 0)
 			throw new RuntimeException("Can not remove the last element in the model matrix stack!");
 	}

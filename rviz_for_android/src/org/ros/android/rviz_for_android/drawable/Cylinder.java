@@ -20,38 +20,34 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
+import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.Color;
-import org.ros.android.renderer.shapes.Shape;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.rosjava_geometry.Transform;
 
+import android.opengl.GLES20;
 import android.util.FloatMath;
 
-public class Cylinder implements Shape {
+public class Cylinder extends BaseShape {
+	private static final Color defaultColor = new Color(0.6f, 0.25f, 0.72f, 1f);
+	private static final float TWO_PI = (float) (2 * Math.PI);
+	private static int stripTriangleCount;
+	private static int fanTriangleCount;
 
-	private static final Transform identityTransform = Transform.newIdentityTransform();
-	
-	private FloatBuffer sideVertices;
-	private FloatBuffer sideNormals;
+	private static FloatBuffer sideVerticesBuf;
+	private static FloatBuffer sideNormalsBuf;
 
-	private FloatBuffer topVertices;
-	private FloatBuffer topNormals;
+	private static FloatBuffer topVerticesBuf;
+	private static FloatBuffer topNormalsBuf;
 
-	private FloatBuffer bottomVertices;
-	private FloatBuffer bottomNormals;
+	private static FloatBuffer bottomVerticesBuf;
+	private static FloatBuffer bottomNormalsBuf;
 
-	private int stripTriangleCount = 0;
-	private int fanTriangleCount = 0;
-
-	private static final float TWO_PI = (float)(2*Math.PI);
-	
-	private Color color = new Color(1, 1, 0, 1);
-
-	public Cylinder() {
-		initGeometry(17);
-	}
-
-	private void initGeometry(int sides) {
+	static {
+		int sides = 17;
 		double dTheta = TWO_PI / sides;
 
 		float[] sideVertices = new float[(sides + 1) * 6];
@@ -81,7 +77,7 @@ public class Cylinder implements Shape {
 		bottomNormals[1] = 0f;
 		bottomNormals[2] = -1f;
 
-		for(float theta = 0; theta <= (TWO_PI+dTheta); theta += dTheta) {
+		for(float theta = 0; theta <= (TWO_PI + dTheta); theta += dTheta) {
 			sideVertices[sideVidx++] = FloatMath.cos(theta); // X
 			sideVertices[sideVidx++] = FloatMath.sin(theta); // Y
 			sideVertices[sideVidx++] = 0.5f; // Z
@@ -99,7 +95,7 @@ public class Cylinder implements Shape {
 			sideNormals[sideNidx++] = 0f; // Z
 
 			// X
-			topVertices[capVidx] =FloatMath.cos(theta);
+			topVertices[capVidx] = FloatMath.cos(theta);
 			bottomVertices[capVidx++] = FloatMath.cos(TWO_PI - theta);
 			// Y
 			topVertices[capVidx] = FloatMath.sin(theta);
@@ -118,64 +114,57 @@ public class Cylinder implements Shape {
 		}
 		stripTriangleCount = sideVertices.length / 3;
 		fanTriangleCount = sides + 2;
-		this.sideVertices = Vertices.toFloatBuffer(sideVertices);
-		this.sideNormals = Vertices.toFloatBuffer(sideNormals);
-		this.topVertices = Vertices.toFloatBuffer(topVertices);
-		this.topNormals = Vertices.toFloatBuffer(topNormals);
-		this.bottomVertices = Vertices.toFloatBuffer(bottomVertices);
-		this.bottomNormals = Vertices.toFloatBuffer(bottomNormals);
+		sideVerticesBuf = Vertices.toFloatBuffer(sideVertices);
+		sideNormalsBuf = Vertices.toFloatBuffer(sideNormals);
+		topVerticesBuf = Vertices.toFloatBuffer(topVertices);
+		topNormalsBuf = Vertices.toFloatBuffer(topNormals);
+		bottomVerticesBuf = Vertices.toFloatBuffer(bottomVertices);
+		bottomNormalsBuf = Vertices.toFloatBuffer(bottomNormals);
 	}
 
-	private Transform transform = identityTransform;
-	
-	@Override
-	public void setTransform(Transform transform) {
-		this.transform = transform;
-	}
-
-	@Override
-	public Transform getTransform() {
-		return transform;
-	}
-	
-	@Override
-	public void draw(GL10 gl) {
-		draw(gl, transform, 1, 1);
+	public Cylinder(Camera cam) {
+		super(cam);
+		super.setProgram(GLSLProgram.FlatShaded());
+		super.setColor(defaultColor);
+		super.setTransform(Transform.newIdentityTransform());
 	}
 
 	@Override
-	public void setColor(Color color) {
-		this.color = color;
+	public void draw(GL10 glUnused) {
+		draw(glUnused, transform, 1f, 1f);
 	}
 
-	@Override
-	public Color getColor() {
-		return color;
-	}
+	public void draw(GL10 glUnused, Transform transform, float length, float radius) {
+		setTransform(transform);
+		cam.pushM();
+		super.draw(glUnused);
 
-	public void draw(GL10 gl, Transform transform, float length, float radius) {
-		gl.glPushMatrix();
-		OpenGlTransform.apply(gl, transform);
-		gl.glScalef(radius, radius, length);
-		gl.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+		cam.scaleM(radius, radius, length);
+		calcMVP();
 
-		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-		gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
+		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
+		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.M_MATRIX), 1, false, cam.getModelMatrix(), 0);
+		GLES20.glUniform3f(getUniform(ShaderVal.LIGHTVEC), lightVector[0], lightVector[1], lightVector[2]);
 
-		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, sideVertices);
-		gl.glNormalPointer(GL10.GL_FLOAT, 0, sideNormals);
-		gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, stripTriangleCount);
+		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
+		GLES20.glEnableVertexAttribArray(ShaderVal.NORMAL.loc);
 
-		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, topVertices);
-		gl.glNormalPointer(GL10.GL_FLOAT, 0, topNormals);
-		gl.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, fanTriangleCount);
+		// Draw sides
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, sideVerticesBuf);
+		GLES20.glVertexAttribPointer(ShaderVal.NORMAL.loc, 3, GLES20.GL_FLOAT, false, 0, sideNormalsBuf);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, stripTriangleCount);
 
-		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, bottomVertices);
-		gl.glNormalPointer(GL10.GL_FLOAT, 0, bottomNormals);
-		gl.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, fanTriangleCount);
+		// Draw top
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, topVerticesBuf);
+		GLES20.glVertexAttribPointer(ShaderVal.NORMAL.loc, 3, GLES20.GL_FLOAT, false, 0, topNormalsBuf);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, fanTriangleCount);
 
-		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-		gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
-		gl.glPopMatrix();
+		// Draw bottom
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, bottomVerticesBuf);
+		GLES20.glVertexAttribPointer(ShaderVal.NORMAL.loc, 3, GLES20.GL_FLOAT, false, 0, bottomNormalsBuf);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, fanTriangleCount);
+
+		cam.popM();
 	}
 }

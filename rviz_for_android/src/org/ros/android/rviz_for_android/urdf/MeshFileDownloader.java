@@ -59,7 +59,7 @@ public class MeshFileDownloader {
 		return instance;
 	}
 
-	public MeshFileDownloader(String host, final Activity context) {
+	private MeshFileDownloader(String host, final Activity context) {
 		Log.i("Downloader", "Creating a mesh file downloader object");
 		Log.i("Downloader", "Host IP is " + host);
 		this.context = context;
@@ -148,10 +148,10 @@ public class MeshFileDownloader {
 	}
 
 	/**
-	 * Download a file on the current thread. This will block until the file has been downloaded. No progress dialog is shown
+	 * Download a file on the current thread. This will block until the file has been downloaded. 
+	 * No progress dialog is shown, so the calling thread will appear to hang.
 	 * 
-	 * @param path
-	 *            the URL (http or package) to download
+	 * @param path the URL (http or package) to download
 	 * @return the name of the file accessible through the context-private file space
 	 */
 	public String getFile(final String path) {
@@ -172,7 +172,9 @@ public class MeshFileDownloader {
 				Log.e("Downloader", "Path and URL are malformed: " + host + "    " + path);
 				e.printStackTrace();
 			}
-			return null;
+			// TODO:
+			throw new RuntimeException("Couldn't download file!");
+			//return null;
 		}
 	}
 
@@ -210,7 +212,9 @@ public class MeshFileDownloader {
 				Log.e("Downloader", "Timed out!!");
 				e.printStackTrace();
 			}
-			return null;
+			// TODO:
+			throw new RuntimeException("Couldn't download file!");
+			//return null;
 		}
 	}
 

@@ -18,6 +18,7 @@ package org.ros.android.rviz_for_android.drawable;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.TexturedTrianglesShape;
 
 import android.opengl.ETC1Util.ETC1Texture;
@@ -54,8 +55,8 @@ public class Plane extends TexturedTrianglesShape {
 		1f,0f
 	};
 
-	public Plane(ETC1Texture tex) {
-		super(planeV, planeN, planeUV, tex);
+	public Plane(Camera cam, ETC1Texture tex) {
+		super(cam, planeV, planeN, planeUV, tex);
 	}
 
 	private float xScale = 1f;
@@ -74,8 +75,8 @@ public class Plane extends TexturedTrianglesShape {
 	}
 
 	@Override
-	protected void scale(GL10 gl) {
-		gl.glScalef(xScale, yScale, 1f);
+	protected void scale(Camera cam) {
+		cam.scaleM(xScale, yScale, 1f);
 	}
 
 }

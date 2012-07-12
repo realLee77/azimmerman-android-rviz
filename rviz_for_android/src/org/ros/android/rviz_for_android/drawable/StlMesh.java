@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.BufferedTrianglesShape;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.loader.StlLoader;
@@ -31,7 +32,7 @@ public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable {
 
 	private static final StlLoader loader = new StlLoader();
 	
-	public static StlMesh newFromFile(String filename, MeshFileDownloader mfd) {
+	public static StlMesh newFromFile(String filename, MeshFileDownloader mfd, Camera cam) {
 		float[] v;
 		float[] n;
 		
@@ -48,11 +49,11 @@ public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable {
 			v = loader.getVertices();
 			n = loader.getNormals();
 		}
-		return new StlMesh(v, n, new Color(0,1,1,1));
+		return new StlMesh(cam, v, n, new Color(0,1,1,1));
 	}
 	
-	private StlMesh(float[] vertices, float[] normals, Color color) {
-		super(vertices, normals, color);
+	private StlMesh(Camera cam, float[] vertices, float[] normals, Color color) {
+		super(cam, vertices, normals, color);
 	}
 	
 	private float[] scale;
@@ -64,7 +65,7 @@ public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable {
 	}
 
 	@Override
-	protected void scale(GL10 gl) {
-		gl.glScalef(scale[0], scale[1], scale[2]);
+	protected void scale(Camera cam) {
+		cam.scaleM(scale[0], scale[1], scale[2]);
 	}
 }
