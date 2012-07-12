@@ -250,7 +250,6 @@ public class MainActivity extends RosActivity {
 		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/map_view"));
 	}
 
-	// TODO: ADD ITEMS BACK TO THE NEW LAYER SELECTION DIALOG
 	private void addNewLayer(AvailableLayerType layertype) {
 		Camera cam = visualizationView.getCamera();
 		if(visualizationView.getCamera() == null)

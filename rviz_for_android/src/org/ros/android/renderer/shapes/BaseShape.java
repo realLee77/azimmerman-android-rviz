@@ -18,9 +18,12 @@ import com.google.common.base.Preconditions;
  */
 public abstract class BaseShape implements Shape {
 
+	private static final Transform defaultTransform = Transform.newIdentityTransform();
+	private static final Color defaultColor = new Color(0.5f, 0.5f, 0f, 1f);
+	
 	protected Camera cam;
-	protected Color color;
-	protected Transform transform;
+	protected Color color = defaultColor;
+	protected Transform transform = defaultTransform;
 	protected GLSLProgram shader;
 	protected int[] uniformHandles;
 	protected float[] MVP = new float[16];

@@ -38,7 +38,7 @@ public class GLSLProgram {
 		// Attributes - location refers to OpenGL index
 		POSITION(false,1), ATTRIB_COLOR(false,2), TEXCOORD(false,3), NORMAL(false,4),
 		// Uniforms - location refers to uniform int array
-		MVP_MATRIX(true,0), TIME(true,1), UNIFORM_COLOR(true,3), MV_MATRIX(true,4), LIGHTPOS(true,5), M_MATRIX(true,6), LIGHTVEC(true,7), TEXTURE(true,8);
+		MVP_MATRIX(true,0), TIME(true,1), UNIFORM_COLOR(true,3), MV_MATRIX(true,4), LIGHTPOS(true,5), M_MATRIX(true,6), LIGHTVEC(true,7), TEXTURE(true,8), EXTRA(true,9);
 		
 		private boolean isUniform = false;
 		public int loc = -1;
@@ -115,7 +115,7 @@ public class GLSLProgram {
 				+ "{                              \n"
 				+ "   vec3 modelViewNormal = vec3(u_MMatrix * vec4(a_Normal,0.0));    \n" 
 				+ "   float diffuse = max(dot(modelViewNormal, u_lightVector), 0.4);   \n"
-				+ "   v_Color = vec4(diffuse*u_Color.xyz, u_Color[3]); \n" //vec4(u_Color[0]*diffuse, u_Color[1]*diffuse, u_Color[2]*diffuse, u_Color[3]);  \n
+				+ "   v_Color = vec4(diffuse*u_Color.xyz, u_Color[3]); \n"
 				+ "   gl_Position = u_MVPMatrix * a_Position;\n"
 				+ "}";
 		String fragmentShader = "precision mediump float;       \n"
@@ -185,7 +185,7 @@ public class GLSLProgram {
 				+ "void main()						\n"
 				+ "{								\n"
 				+ "		vec4 color = texture2D(u_texture, v_texCoord); \n"
-				+ "		gl_FragColor = vec4(v_diffuse*color.xyz, color[3]);\n" //v_diffuse*color[0], v_diffuse*color[1], v_diffuse*color[2], color[3]
+				+ "		gl_FragColor = vec4(v_diffuse*color.xyz, color[3]);\n"
 				+ "}";
 		GLSLProgram retval = new GLSLProgram(vertexShader, fragmentShader);
 		// Attributes
