@@ -18,6 +18,7 @@ package org.ros.android.rviz_for_android.drawable;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -31,7 +32,7 @@ import org.ros.rosjava_geometry.Transform;
 
 import android.util.Log;
 
-public class ColladaMesh extends BaseShape implements UrdfDrawable, CleanableShape {
+public class ColladaMesh implements UrdfDrawable, CleanableShape {
 	protected static final ColladaLoader loader = new ColladaLoader();
 	
 	/**
@@ -70,47 +71,37 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable, CleanableSha
 	}
 	
 	protected List<BaseShape> geometries;
+	protected Camera cam;
 	protected ColladaMesh(Camera cam, List<BaseShape> geometries) {
-		super(cam);
-		super.setProgram(GLSLProgram.TexturedShaded());
-		this.geometries = geometries;
-		
-		if(super.color != null)
-			for(BaseShape g : geometries)
-				g.setColor(super.color);	
+		this.cam = cam;
+		this.geometries = geometries;	
 	}
 	
 	private float[] scale;
-	
+	private Transform transform;
+	@Override
 	public void draw(GL10 glUnused, Transform transform, float[] scale) {
 		cam.pushM();
-		super.setTransform(transform);
 		this.scale = scale;
-		
-		super.draw(glUnused);
-		
+		this.transform = transform;
+		cam.scaleM(scale[0], scale[1], scale[2]);
+		cam.applyTransform(transform);
+
 		for(BaseShape g : geometries)
 			g.draw(glUnused);
 		
 		cam.popM();
-		/*gl.glPushMatrix();
-		this.setTransform(transform);
-		this.scale = scale;
-
-		super.draw(gl);
-		
-		gl.glEnable(GL10.GL_TEXTURE_2D);
-		for(BaseShape g : geometries) {
-			g.draw(gl);
-		}
-		gl.glDisable(GL10.GL_TEXTURE_2D);
-
-		gl.glPopMatrix();*/
 	}
-	
+
 	@Override
-	protected void scale(Camera cam) {
+	public void selectionDraw(GL10 glUnused) {
+		cam.pushM();		
 		cam.scaleM(scale[0], scale[1], scale[2]);
+		cam.applyTransform(transform);
+		for(BaseShape g : geometries)
+			g.selectionDraw(glUnused);
+		
+		cam.popM();
 	}
 
 	@Override
@@ -121,5 +112,21 @@ public class ColladaMesh extends BaseShape implements UrdfDrawable, CleanableSha
 				cs.cleanup();
 			}
 		}
+	}
+
+	@Override
+	public void setSelected(boolean isSelected) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public Map<String, String> getInfo() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void registerSelectable() {
+		for(BaseShape g : geometries)
+			g.registerSelectable();
 	}
 }

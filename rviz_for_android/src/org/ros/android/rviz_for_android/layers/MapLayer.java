@@ -16,6 +16,7 @@
  */
 package org.ros.android.rviz_for_android.layers;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Set;
@@ -46,7 +47,9 @@ import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -76,10 +79,13 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	
 	private Context context;
 	
+	private OccupancyGrid mostRecent;
+	
 	public MapLayer(Camera cam, GraphName topicName, String messageType, Context context) {
 		super(topicName, messageType, cam);
 		prop = new BoolProperty("Enabled", true, null);
 		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
+		this.context = context;
 	}
 
 	@Override
@@ -89,6 +95,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		subListener = new MessageListener<OccupancyGrid>() {
 			@Override
 			public void onNewMessage(OccupancyGrid arg0) {
+				mostRecent = arg0;
 				isReady = false;
 				generateMapTiles(arg0);
 				isReady = true;
@@ -227,6 +234,13 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 			}
 		} else {
 			// TODO: SUPER SECRET EASTER EGG GOES HERE
+			AssetManager am = context.getAssets();
+			try {
+				mapImage = BitmapFactory.decodeStream(am.open("hidden.jpg"));
+			} catch(IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -251,6 +265,18 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	@Override
 	public boolean isEnabled() {
 		return prop.getValue();
+	}
+	
+	
+
+	@Override
+	public void setName(String name) {
+		super.setName(name);
+		if(testLayerName()) {
+			isReady = false;
+			generateMapTiles(mostRecent);
+			isReady = true;
+		}
 	}
 
 	@Override

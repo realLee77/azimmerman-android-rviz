@@ -23,7 +23,7 @@ import com.google.common.base.Preconditions;
 public abstract class BaseShape implements Shape, Selectable {
 
 	private static final Transform defaultTransform = Transform.newIdentityTransform();
-	private static final Color defaultColor = new Color(0.5f, 0.5f, 0f, 1f);
+	private static final Color defaultColor = new Color(1f, 1f, 1f, 1f);
 	
 	protected Camera cam;
 	protected Color color = defaultColor;

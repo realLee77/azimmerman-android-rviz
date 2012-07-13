@@ -60,14 +60,13 @@ public class GLSLProgram {
 				maxUniformLocation = Math.max(s.loc, maxUniformLocation);
 	}
 	private int[] uniformHandles = new int[maxUniformLocation+1];
-
 	private Map<ShaderVal, String> shaderValNames = new EnumMap<ShaderVal, String>(ShaderVal.class);
-
 	// Static factory methods. These create/return singleton instances
 	private static final GLSLProgram FlatColorInstance = MakeFlatColor();
 	private static final GLSLProgram FlatShadedInstance = MakeFlatShaded();
 	private static final GLSLProgram ColoredVertexInstance = MakeColoredVertex();
 	private static final GLSLProgram TexturedShadedInstance = MakeTexturedShaded();
+	
 	public static GLSLProgram FlatColor() {
 		return FlatColorInstance;
 	}
@@ -165,14 +164,17 @@ public class GLSLProgram {
 				  "attribute vec2 a_texCoord;		\n"
 				+ "attribute vec4 a_Position;		\n"
 				+ "attribute vec3 a_Normal;			\n"
+				+ "uniform vec4 u_Color;			\n"
 				+ "uniform mat4 u_MVPMatrix;		\n"
 				+ "uniform mat4 u_MMatrix;			\n"
 				+ "uniform vec3 u_lightVector;		\n"
 				+ "varying vec2 v_texCoord;			\n"
 				+ "varying float v_diffuse;			\n"
+				+ "varying vec4 v_Color;			\n"
 				+ "void main()						\n"
 				+ "{								\n"
 				+ "		v_texCoord = a_texCoord;	\n"
+				+ "		v_Color = u_Color;			\n"
 				+ "		vec3 modelViewNormal = vec3(u_MMatrix * vec4(a_Normal,0.0));\n" 
 				+ "		v_diffuse = min(max(dot(modelViewNormal, u_lightVector), 0.45),1.0);	\n"
 				+ "		gl_Position = u_MVPMatrix * a_Position;						\n"
@@ -182,10 +184,11 @@ public class GLSLProgram {
 				+ "uniform sampler2D u_texture;		\n"
 				+ "varying vec2 v_texCoord;			\n"
 				+ "varying float v_diffuse;			\n"
+				+ "varying vec4 v_Color;			\n"
 				+ "void main()						\n"
 				+ "{								\n"
 				+ "		vec4 color = texture2D(u_texture, v_texCoord); \n"
-				+ "		gl_FragColor = vec4(v_diffuse*color.xyz, color[3]);\n"
+				+ "		gl_FragColor = v_Color*vec4(v_diffuse*color.xyz, color[3]);\n"
 				+ "}";
 		GLSLProgram retval = new GLSLProgram(vertexShader, fragmentShader);
 		// Attributes
@@ -197,6 +200,7 @@ public class GLSLProgram {
 		retval.setAttributeName(ShaderVal.M_MATRIX, "u_MMatrix");
 		retval.setAttributeName(ShaderVal.LIGHTVEC, "u_lightVector");
 		retval.setAttributeName(ShaderVal.TEXTURE, "u_texture");
+		retval.setAttributeName(ShaderVal.UNIFORM_COLOR, "u_Color");
 		return retval;
 	}
 
