@@ -78,13 +78,13 @@ public class SelectionManager {
 		if(reverseMap.containsKey(c)) {
 			Selectable newSelected = reverseMap.get(c);
 			if(selected != newSelected) {
-				deselect(selected);
+				deselect();
 				selected = newSelected;			
 				selected.setSelected(true);
 			}
 			return true;
 		}
-		deselect(selected);
+		deselect();
 		return false;
 	}
 	
@@ -113,9 +113,10 @@ public class SelectionManager {
 		return colorPool.removeFirst();
 	}
 	
-	private void deselect(Selectable s) {
-		if(s != null) {
-			s.setSelected(false);
+	private void deselect() {
+		if(selected != null) {
+			selected.setSelected(false);
+			selected = null;
 		}
 	}
 	

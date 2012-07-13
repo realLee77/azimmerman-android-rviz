@@ -18,8 +18,9 @@ package org.ros.android.rviz_for_android.urdf;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.layer.Selectable;
 import org.ros.rosjava_geometry.Transform;
 
-public interface UrdfDrawable {
-	public void draw(GL10 gl, Transform transform, float[] scale);
+public interface UrdfDrawable extends Selectable {
+	public void draw(GL10 glUnused, Transform transform, float[] scale);
 }

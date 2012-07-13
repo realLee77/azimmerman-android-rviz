@@ -26,7 +26,6 @@ import org.ros.rosjava_geometry.Vector3;
 
 import android.content.Context;
 import android.os.Handler;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -96,7 +95,6 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 
 					@Override
 					public boolean onSingleTapConfirmed(MotionEvent e) {
-						Log.d("Selection", "Selection tap: (" + e.getX() + ", " + e.getY() + ")");
 						cam.getSelectionManager().beginSelectionDraw((int)e.getX(), (int)e.getY());
 						return super.onSingleTapConfirmed(e);
 					}

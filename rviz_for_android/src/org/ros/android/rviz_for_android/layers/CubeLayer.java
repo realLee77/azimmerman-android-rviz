@@ -37,7 +37,6 @@ public class CubeLayer extends DefaultLayer implements SelectableLayer {
 	private Cylinder myCyl;
 	private Transform transform = Transform.newIdentityTransform();
 	private float[] scale = new float[]{1f,1f,1f};
-	private float[] scale2 = new float[]{.5f,1.5f,.75f};
 	
 	private long startTime;
 	
@@ -57,7 +56,7 @@ public class CubeLayer extends DefaultLayer implements SelectableLayer {
 
 	@Override
 	public void draw(GL10 glUnused) {
-		//camera.rotateM(angle(8000), 0, 0, 1);
+		camera.rotateM(angle(8000), 0, 0, 1);
 		myCube.draw(glUnused,transform,scale);
 		camera.translateM(2f, 0f, 0f);
 		myCube2.draw(glUnused,transform,scale);

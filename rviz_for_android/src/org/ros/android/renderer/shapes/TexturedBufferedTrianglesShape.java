@@ -125,14 +125,6 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 		textures = null;
 	}
 	
-	private void unloadTextures(GL10 glUnused) {
-		for(Integer i : texIDArray) {
-			tmp[0] = i;
-			GLES20.glDeleteTextures(1, tmp, 0); 
-		}
-		texIDArray.clear();
-	}
-	
 	private int createVertexBuffer(GL10 glUnused) {
 		final int[] buffers = new int[1];
 		GLES20.glGenBuffers(1, buffers, 0);
@@ -141,12 +133,6 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 		
 		bufferPrepared = true;
 		return buffers[0];
-	}
-	
-	private void destroyBuffer(GL10 glUnused) {
-		int[] buffers = new int[1];
-		buffers[0] = bufferIdx;
-		GLES20.glDeleteBuffers(1, buffers, 0);
 	}
 	
 	private int bufferIdx;
@@ -167,9 +153,11 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 		if(!texturesLoaded)
 			loadTextures(glUnused);
 		
+		super.draw(glUnused);
 		calcMVP();
 		// Uniforms
 		GLES20.glUniform3f(getUniform(ShaderVal.LIGHTVEC), lightVector[0], lightVector[1], lightVector[2]);
+		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
 		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
 		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.M_MATRIX), 1, false, cam.getModelMatrix(), 0);
 		// Attributes
@@ -188,14 +176,40 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, i);
 		
 		// Draw
-		super.draw(glUnused);
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, count);
 		
 		// Unbind the buffer
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 		cam.popM();
 	}
-	
+
+	@Override
+	public void selectionDraw(GL10 glUnused) {		
+		cam.pushM();
+		if(!bufferPrepared)
+			bufferIdx = createVertexBuffer(glUnused);
+		if(!texturesLoaded)
+			loadTextures(glUnused);
+		
+		super.selectionDraw(glUnused);
+		
+		calcMVP();
+		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
+		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
+		
+		GLES20.glBindBuffer(GL11.GL_ARRAY_BUFFER, bufferIdx);
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, STRIDE, VERTEX_OFFSET);
+		
+		// Draw
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, count);
+		
+		// Unbind the buffer
+		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+		cam.popM();
+		super.selectionDrawCleanup();
+	}
+
 	private boolean cleaned = false;
 	
 	private void clearBuffers(GL10 glUnused) {
@@ -207,6 +221,7 @@ public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanab
 				tmp[0] = i;
 				GLES20.glDeleteTextures(1, tmp, 0);
 			}
+			texIDArray.clear();
 			cleaned = true;
 		}
 	}

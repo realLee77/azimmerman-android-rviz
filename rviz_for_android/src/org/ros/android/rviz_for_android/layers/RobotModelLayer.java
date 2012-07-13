@@ -19,12 +19,15 @@ package org.ros.android.rviz_for_android.layers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
+import org.ros.android.renderer.layer.Selectable;
+import org.ros.android.renderer.layer.SelectableLayer;
 import org.ros.android.renderer.shapes.CleanableShape;
 import org.ros.android.rviz_for_android.drawable.ColladaMesh;
 import org.ros.android.rviz_for_android.drawable.Cube;
@@ -53,7 +56,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
-public class RobotModelLayer extends DefaultLayer implements LayerWithProperties {
+public class RobotModelLayer extends DefaultLayer implements LayerWithProperties, SelectableLayer {
 
 	private static final String DEFAULT_PARAM_VALUE = "/robot_description";
 	private String current_param_value = DEFAULT_PARAM_VALUE;
@@ -197,16 +200,21 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			return true;
 
 		UrdfDrawable ud;
-		if(meshResourceName.toLowerCase().endsWith(".dae"))
-			ud = ColladaMesh.newFromFile(meshResourceName, mfd, cam);
-		else if(meshResourceName.toLowerCase().endsWith(".stl"))
-			ud = StlMesh.newFromFile(meshResourceName, mfd, cam);
+		if(meshResourceName.toLowerCase().endsWith(".dae")) {
+			ColladaMesh cm = ColladaMesh.newFromFile(meshResourceName, mfd, cam);
+			cm.registerSelectable();
+			ud = (UrdfDrawable) cm;
+		} else if(meshResourceName.toLowerCase().endsWith(".stl")) {
+			StlMesh sm = StlMesh.newFromFile(meshResourceName, mfd, cam);
+			sm.registerSelectable();
+			ud = (UrdfDrawable) sm;
+		}
 		else {
 			Log.e("RobotModel", "Unknown mesh type! " + meshResourceName);
 			return false;
 		}
 
-		meshes.put(meshResourceName, ud);
+		meshes.put(meshResourceName, (UrdfDrawable) ud);
 
 		return (ud != null);
 	}
@@ -327,5 +335,59 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			if(ud instanceof CleanableShape)
 				((CleanableShape) ud).cleanup();
 		}
+	}
+
+	@Override
+	public void selectionDraw(GL10 glUnused) {
+		if(!readyToDraw || ftt == null || urdf == null) {
+			return;
+		}
+
+		for(UrdfLink ul : urdf) {
+			vis = ul.getVisual();
+			col = ul.getCollision();
+
+			cam.pushM();
+			// Transform to the URDF link's frame
+			cam.applyTransform(ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
+			
+			// Draw the shape
+			if(drawVis && vis != null) {
+				selectDrawComponent(glUnused, vis);
+			}
+			if(drawCol && col != null) {
+				selectDrawComponent(glUnused, col);
+			}
+			
+			cam.popM();
+		}
+	}
+	
+	private void selectDrawComponent(GL10 glUnused, Component com) {
+		switch(com.getType()) {
+		case BOX:
+			cube.setColor(com.getMaterial_color());
+			cube.selectionDraw(glUnused);
+			break;
+		case CYLINDER:
+			cyl.setColor(com.getMaterial_color());
+			cyl.selectionDraw(glUnused);
+			break;
+		case SPHERE:
+			sphere.setColor(com.getMaterial_color());
+			sphere.selectionDraw(glUnused);
+			break;
+		case MESH:
+			UrdfDrawable ud = meshes.get(com.getMesh());
+			if(ud != null)
+				ud.selectionDraw(glUnused);
+			break;
+		}
+	}
+
+	@Override
+	public Set<Selectable> getSelectables() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

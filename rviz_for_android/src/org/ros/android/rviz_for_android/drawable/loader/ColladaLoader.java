@@ -159,7 +159,7 @@ public class ColladaLoader extends VTDXmlReader {
 		}
 	}
 
-	private static Color defaultColor = new Color(1, 1, 0, 1);
+	private static Color defaultColor = new Color(1f, 1f, 1f, 1);
 
 	private BaseShape parseSubMesh(String prefix, TYPES type, int submeshIndex) {
 		// Load all necessary data (vertices, normals, texture coordinates, etc
@@ -218,7 +218,6 @@ public class ColladaLoader extends VTDXmlReader {
 		} else {
 			switch(type) {
 			case triangles:
-				//TexturedBufferedTrianglesShape
 				return new TexturedBufferedTrianglesShape(cam, results.get("POSITION").getArray(), results.get("NORMAL").getArray(), results.get("TEXCOORD").getArray(), textures);
 			case tristrips:
 			case trifans:

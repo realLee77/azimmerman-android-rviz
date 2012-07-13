@@ -59,9 +59,15 @@ public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable {
 	private float[] scale;
 	
 	public void draw(GL10 gl, Transform transform, float[] scale) {
-		this.setTransform(transform);
+		super.transform = transform;
 		this.scale = scale;
 		super.draw(gl);
+	}
+
+	@Override
+	public void setSelected(boolean isSelected) {
+		super.setSelected(isSelected);
+		System.out.println("Am I, the lowly STL Mesh, selected? " + isSelected);
 	}
 
 	@Override
