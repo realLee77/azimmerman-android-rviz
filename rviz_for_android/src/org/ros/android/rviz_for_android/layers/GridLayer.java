@@ -62,7 +62,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	private float yOffset = 0f;
 	private float zOffset = 0f;
 	
-	private GLSLProgram gridShader = GLSLProgram.FlatColor();
+	private GLSLProgram gridShader;
 
 	public GridLayer(Camera cam, int cells, float spacing) {
 		super(cam);
@@ -98,6 +98,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		}));
 
 		initGrid();
+		gridShader = GLSLProgram.FlatColor();
 		uniformHandles = gridShader.getUniformHandles();
 	}
 

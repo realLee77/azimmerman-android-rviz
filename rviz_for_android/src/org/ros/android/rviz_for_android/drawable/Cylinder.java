@@ -24,7 +24,6 @@ import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
 import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.Color;
-import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.rosjava_geometry.Transform;
 
@@ -133,13 +132,18 @@ public class Cylinder extends BaseShape {
 	public void draw(GL10 glUnused) {
 		draw(glUnused, transform, 1f, 1f);
 	}
+	
+	private float radius = 1f;
+	private float length = 1f;
 
 	public void draw(GL10 glUnused, Transform transform, float length, float radius) {
 		setTransform(transform);
+		this.radius = radius;
+		this.length = length;
 		cam.pushM();
 		super.draw(glUnused);
 
-		cam.scaleM(radius, radius, length);
+		cam.scaleM(this.radius, this.radius, this.length);
 		calcMVP();
 
 		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
@@ -167,4 +171,35 @@ public class Cylinder extends BaseShape {
 
 		cam.popM();
 	}
+
+	@Override
+	public void selectionDraw(GL10 glUnused) {
+		cam.pushM();
+		super.selectionDraw(glUnused);
+
+		cam.scaleM(this.radius, this.radius, this.length);
+		calcMVP();
+
+		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
+
+		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
+
+		// Draw sides
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, sideVerticesBuf);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, stripTriangleCount);
+
+		// Draw top
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, topVerticesBuf);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, fanTriangleCount);
+
+		// Draw bottom
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, bottomVerticesBuf);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, fanTriangleCount);
+
+		cam.popM();
+		super.selectionDrawCleanup();
+	}
+	
+	
 }

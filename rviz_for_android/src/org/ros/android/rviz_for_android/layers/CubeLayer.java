@@ -16,16 +16,20 @@
  */
 package org.ros.android.rviz_for_android.layers;
 
+import java.util.Set;
+
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.layer.DefaultLayer;
+import org.ros.android.renderer.layer.Selectable;
+import org.ros.android.renderer.layer.SelectableLayer;
 import org.ros.android.rviz_for_android.drawable.Cube;
 import org.ros.android.rviz_for_android.drawable.Cylinder;
 import org.ros.android.rviz_for_android.drawable.Sphere;
 import org.ros.rosjava_geometry.Transform;
 
-public class CubeLayer extends DefaultLayer {
+public class CubeLayer extends DefaultLayer implements SelectableLayer {
 
 	private Cube myCube;
 	private Cube myCube2;
@@ -44,6 +48,11 @@ public class CubeLayer extends DefaultLayer {
 		mySphere = new Sphere(cam);
 		myCyl = new Cylinder(cam);
 		startTime = System.currentTimeMillis();
+		
+		myCube.registerSelectable();
+		myCube2.registerSelectable();
+		mySphere.registerSelectable();
+		myCyl.registerSelectable();
 	}
 
 	@Override
@@ -62,5 +71,22 @@ public class CubeLayer extends DefaultLayer {
 		long now = System.currentTimeMillis();
 		int rotTime = (int) ((now - startTime) % msecPerRev);
 		return (int) (rotTime / (msecPerRev/360));
+	}
+
+	@Override
+	public void selectionDraw(GL10 glUnused) {
+		myCube.selectionDraw(glUnused);
+		camera.translateM(2f, 0f, 0f);
+		myCube2.selectionDraw(glUnused);
+		camera.translateM(1f, 0f, 1f);
+		mySphere.selectionDraw(glUnused);
+		camera.translateM(0.5f, 1f, 0.5f);
+		myCyl.selectionDraw(glUnused);
+	}
+
+	@Override
+	public Set<Selectable> getSelectables() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

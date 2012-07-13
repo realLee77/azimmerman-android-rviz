@@ -74,6 +74,8 @@ public class OrbitCamera implements Camera {
 
 	private FrameTransformTree frameTransformTree;
 
+	private SelectionManager sm = new SelectionManager();
+
 	public OrbitCamera(FrameTransformTree frameTransformTree) {
 		// Initialize the fixed frame
 		this.frameTransformTree = frameTransformTree;
@@ -236,7 +238,7 @@ public class OrbitCamera implements Camera {
 	@Override
 	public void setZoom(float zoom) {
 	}
-	
+
 	// Copy the contents of an array without instantiating a new object
 	private void copyArray(float[] source, float[] dest) {
 		for(int i = 0; i < 16; i++)
@@ -304,5 +306,10 @@ public class OrbitCamera implements Camera {
 	@Override
 	public float[] getModelMatrix() {
 		return modelM;
+	}
+
+	@Override
+	public SelectionManager getSelectionManager() {
+		return sm;
 	}
 }

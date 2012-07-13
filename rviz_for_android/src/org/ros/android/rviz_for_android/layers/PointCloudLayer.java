@@ -141,7 +141,6 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 		pc = new PointCloudGL(cam);
 		pc.setData(generateTestData());
 		pc.setColor(prop.<ColorProperty>getProperty("Flat Color").getValue());
-		pc.setColorMode(1);
 	}
 
 	private void clearSubscriber() {

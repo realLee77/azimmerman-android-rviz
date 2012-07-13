@@ -17,15 +17,18 @@
 
 package org.ros.android.rviz_for_android.drawable;
 
+import java.util.Map;
+
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.layer.Selectable;
 import org.ros.android.renderer.shapes.BufferedTrianglesShape;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.rosjava_geometry.Transform;
 
-public class Cube extends BufferedTrianglesShape implements UrdfDrawable {
+public class Cube extends BufferedTrianglesShape implements UrdfDrawable, Selectable {
 	private static final Color baseColor = new Color(.5f,.5f,0f,1f);
 	
 	private static final float cubeVertices[] = {
@@ -113,14 +116,27 @@ public class Cube extends BufferedTrianglesShape implements UrdfDrawable {
 
 	private float[] scale;
 	
-	public void draw(GL10 gl, Transform transform, float[] scale) {
+	public void draw(GL10 glUnused, Transform transform, float[] scale) {
 		this.setTransform(transform);
 		this.scale = scale;
-		super.draw(gl);
+		super.draw(glUnused);
+	}
+
+	@Override
+	public void selectionDraw(GL10 glUnused) {
+		// Scale and transform have already been set from the last call to draw(), so there's no need to set them
+		// It suffices to just call the superclass selectionDraw method!
+		super.selectionDraw(glUnused);
 	}
 
 	@Override
 	protected void scale(Camera cam) {
 		cam.scaleM(scale[0], scale[1], scale[2]);
+	}
+
+	@Override
+	public Map<String, String> getInfo() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

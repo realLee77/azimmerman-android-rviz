@@ -92,7 +92,7 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		9,11
 	};
 	
-	private GLSLProgram axisShader = GLSLProgram.ColoredVertex();
+	private GLSLProgram axisShader;
 	
 	private FloatBuffer vertexBuffer;
 	private FloatBuffer colorBuffer;
@@ -119,6 +119,7 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			}
 		}).setValidRange(0.001f, 10000f));
 		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
+		axisShader = GLSLProgram.ColoredVertex();
 		uniformHandles = axisShader.getUniformHandles();
 	}
 	
