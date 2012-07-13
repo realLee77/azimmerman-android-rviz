@@ -1,8 +1,12 @@
 package org.ros.android.renderer.shapes;
 
+import java.util.Map;
+
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.SelectionManager;
+import org.ros.android.renderer.layer.Selectable;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.rosjava_geometry.Transform;
@@ -16,7 +20,7 @@ import com.google.common.base.Preconditions;
  * 
  * @author damonkohler@google.com (Damon Kohler)
  */
-public abstract class BaseShape implements Shape {
+public abstract class BaseShape implements Shape, Selectable {
 
 	private static final Transform defaultTransform = Transform.newIdentityTransform();
 	private static final Color defaultColor = new Color(0.5f, 0.5f, 0f, 1f);
@@ -92,5 +96,52 @@ public abstract class BaseShape implements Shape {
 	@Override
 	public void setTransform(Transform pose) {
 		this.transform = pose;
+	}
+	
+	private Color selectedTemp = null;
+	@Override
+	public void setSelected(boolean isSelected) {
+		if(isSelected) {
+			selectedTemp = getColor();
+			setColor(SelectionManager.selectedColor);
+		} else {
+			setColor(selectedTemp);
+		}
+	}
+	
+	private Color tmpColor;
+	private GLSLProgram tmpShader;
+	private Color selectionColor = SelectionManager.backgroundColor;
+
+	public void registerSelectable() {
+		selectionColor = cam.getSelectionManager().registerSelectable(this);
+	}
+	
+	public void removeSelectable() {
+		selectionColor = cam.getSelectionManager().removeSelectable(this); 
+	}
+	
+	@Override
+	public void selectionDraw(GL10 glUnused) {
+		tmpColor = color;
+		tmpShader = shader;
+		shader = GLSLProgram.FlatColor();
+		uniformHandles = shader.getUniformHandles();
+		
+		color = selectionColor;
+		
+		draw(glUnused);
+	}
+	
+	protected void selectionDrawCleanup() {
+		shader = tmpShader;
+		color = tmpColor;
+		uniformHandles = shader.getUniformHandles();
+	}
+	
+	@Override
+	public Map<String, String> getInfo() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

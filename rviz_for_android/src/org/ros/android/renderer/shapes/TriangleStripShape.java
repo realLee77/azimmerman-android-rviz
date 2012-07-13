@@ -80,4 +80,24 @@ public class TriangleStripShape extends BaseShape {
 		
 		cam.popM();	
 	}
+
+	@Override
+	public void selectionDraw(GL10 glUnused) {		
+		cam.pushM();
+		super.selectionDraw(glUnused);
+		
+		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, vertices);
+
+		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+		
+		calcMVP();
+		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
+		GLES20.glDrawElements(GLES20.GL_TRIANGLE_STRIP, indices.limit(), GLES20.GL_UNSIGNED_SHORT, indices);
+		
+		cam.popM();
+		super.selectionDrawCleanup();
+	}
+	
+	
 }

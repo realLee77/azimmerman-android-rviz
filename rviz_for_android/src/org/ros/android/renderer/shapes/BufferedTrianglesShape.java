@@ -95,6 +95,29 @@ public class BufferedTrianglesShape extends BaseShape {
 		
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 	}
+	
+	@Override
+	public void selectionDraw(GL10 glUnused) {
+		if(!bufferPrepared)
+			bufferIdx = createVertexBuffer(glUnused);
+		
+		super.selectionDraw(glUnused);
+
+		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, bufferIdx);
+		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, POSITION_DATA_SIZE, GLES20.GL_FLOAT, false, STRIDE, POSITION_OFFSET);
+		
+		calcMVP();
+		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
+
+		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+	
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, count);
+
+		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+		
+		super.selectionDrawCleanup();
+	}
 
 	private int createVertexBuffer(GL10 glUnused) {
 		final int[] buffers = new int[1];

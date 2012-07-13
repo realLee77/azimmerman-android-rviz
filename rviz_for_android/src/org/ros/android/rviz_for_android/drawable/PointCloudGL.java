@@ -134,6 +134,7 @@ public class PointCloudGL extends BaseShape {
 		programs[ColorMode.GRADIENT_X.shaderArrayPos].setAttributeName(ShaderVal.UNIFORM_COLOR, "uColor");
 		programs[ColorMode.GRADIENT_X.shaderArrayPos].setAttributeName(ShaderVal.MVP_MATRIX, "uMvp");
 		programs[ColorMode.GRADIENT_X.shaderArrayPos].setAttributeName(ShaderVal.EXTRA, "uDirSelect");
+		super.setProgram(programs[mode.shaderArrayPos]);
 	}
 	
 	@Override

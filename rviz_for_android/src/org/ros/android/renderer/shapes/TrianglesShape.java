@@ -79,21 +79,24 @@ public class TrianglesShape extends BaseShape {
 			GLES20.glDrawElements(GLES20.GL_TRIANGLES, count, GLES20.GL_UNSIGNED_SHORT, indices);
 		else
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, count);
+	}
 
-		/*glUnused.glColor4f(getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+	@Override
+	public void selectionDraw(GL10 glUnused) {
+		super.selectionDraw(glUnused);
+		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
 
-		glUnused.glVertexPointer(3, GL10.GL_FLOAT, 0, vertices);
-		glUnused.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+		calcMVP();
+		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
 
-		glUnused.glNormalPointer(GL10.GL_FLOAT, 0, normals);
-		glUnused.glEnableClientState(GL10.GL_NORMAL_ARRAY);
+		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
+		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, vertices);
 
 		if(useIndices)
-			glUnused.glDrawElements(GL10.GL_TRIANGLES, count, GL10.GL_UNSIGNED_SHORT, indices);
+			GLES20.glDrawElements(GLES20.GL_TRIANGLES, count, GLES20.GL_UNSIGNED_SHORT, indices);
 		else
-			glUnused.glDrawArrays(GL10.GL_TRIANGLES, 0, count);
-
-		glUnused.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-		glUnused.glDisableClientState(GL10.GL_NORMAL_ARRAY);*/
+			GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, count);	
+		super.selectionDrawCleanup();
 	}
+	
 }

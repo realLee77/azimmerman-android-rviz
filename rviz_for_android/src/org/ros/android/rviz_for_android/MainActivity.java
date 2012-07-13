@@ -27,6 +27,7 @@ import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.Layer;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
+import org.ros.android.rviz_for_android.layers.CubeLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
 import org.ros.android.rviz_for_android.layers.MapLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
@@ -70,7 +71,7 @@ public class MainActivity extends RosActivity {
 
 	// Tracking layers
 	private static enum AvailableLayerType {
-		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud");
+		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud"), CubeLayer("CUBE LAYER");
 		private String printName;
 		private int count = 0;
 		AvailableLayerType(String printName) {
@@ -271,6 +272,8 @@ public class MainActivity extends RosActivity {
 			break;
 		case PointCloud:
 			newLayer = new PointCloudLayer(cam, new GraphName("/lots_of_points"), sensor_msgs.PointCloud._TYPE);
+		case CubeLayer:
+			newLayer = new CubeLayer(cam);
 		}
 
 		if(newLayer != null) {

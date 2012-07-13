@@ -84,4 +84,6 @@ public interface Camera {
 	public abstract void loadIdentityM();
 	
 	public abstract void applyTransform(Transform t);
+	
+	public abstract SelectionManager getSelectionManager();
 }

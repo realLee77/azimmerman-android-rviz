@@ -16,18 +16,22 @@
 
 package org.ros.android.renderer;
 
-import java.util.LinkedList;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.layer.Layer;
+import org.ros.android.renderer.layer.SelectableLayer;
 import org.ros.android.renderer.layer.TfLayer;
+import org.ros.android.renderer.shapes.Color;
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Transform;
 
+import android.graphics.Point;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 
@@ -41,8 +45,6 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 	 * List of layers to draw. Layers are drawn in-order, i.e. the layer with index 0 is the bottom layer and is drawn first.
 	 */
 	private List<Layer> layers;
-
-	private List<Layer> toAdd = new LinkedList<Layer>();
 
 	private FrameTransformTree frameTransformTree;
 
@@ -61,34 +63,56 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		camera.setViewport(viewport);
 		
 		// Set camera location transformation
-//		gl.glMatrixMode(GL10.GL_MODELVIEW);
-//		gl.glLoadIdentity();
 		camera.loadIdentityM();
+		
+		GLES20.glClearColor(0f, 0f, 0f, 0f);
 	}
 
 	@Override
-	public void onDrawFrame(GL10 glUnused) {	    
-/*		gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-		gl.glLoadIdentity();
-		camera.apply(gl);
-		
-		initLighting(gl);
-		
-		drawLayers(gl);
-		int error = gl.glGetError();
-		if(error != GL10.GL_NO_ERROR) {
-			System.err.println("OpenGL error: " + error);
-		}*/
-		
-		GLES20.glClearColor(0f, 0f, 0f, 0f);
+	public void onDrawFrame(GL10 glUnused) {
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		camera.apply();
 		camera.loadIdentityM();
 		
-		drawLayers(glUnused);
+		if(camera.getSelectionManager().isSelectionDraw())
+			selectionDraw(glUnused);
+		else
+			drawLayers(glUnused);
 		
 		checkErrors(glUnused);
+	}
+
+	private void selectionDraw(GL10 glUnused) {
+		if(layers == null) {
+			return;
+		}
+		synchronized(layers) {
+			for(Layer layer : getLayers()) {
+				if(layer.isEnabled() && (layer instanceof SelectableLayer)) {
+					camera.pushM();
+					if(layer instanceof TfLayer) {
+						GraphName layerFrame = ((TfLayer) layer).getFrame();
+						if(layerFrame != null) {
+							Transform t = frameTransformTree.newTransformIfPossible(layerFrame, camera.getFixedFrame());
+							camera.applyTransform(t);
+						}
+					}
+					((SelectableLayer)layer).selectionDraw(glUnused);
+					camera.popM();
+				}
+			}
+		}
+		
+		// is THIS your card?
+		ByteBuffer colorBuf = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder());
+		colorBuf.position(0);
+		Point selected = camera.getSelectionManager().getSelectionCoordinates();
+		selected.set(selected.x, (camera.getViewport().getHeight()-selected.y));
+		GLES20.glReadPixels(selected.x, selected.y, 1,1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorBuf);
+		colorBuf.position(0);		
+		Color selectedColor = new Color((colorBuf.get() & 0xff)/255f, (colorBuf.get() & 0xff)/255f,(colorBuf.get() & 0xff)/255f, 1f);
+		System.out.println("Selected color " + selectedColor);
+		camera.getSelectionManager().selectItemWithColor(selectedColor);
 	}
 
 	private void checkErrors(GL10 glUnused) {
@@ -118,8 +142,6 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		}
 	}
 
-	public static final int SUNLIGHT = GL10.GL_LIGHT0;
-	
 	@Override
 	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
 		// Set rendering options 
@@ -167,9 +189,5 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 
 	public void setLayers(List<Layer> layers) {
 		this.layers = layers;
-	}
-
-	public void addLayer(Layer layer) {
-		toAdd.add(layer);
 	}
 }

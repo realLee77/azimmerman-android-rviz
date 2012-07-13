@@ -96,7 +96,8 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 
 					@Override
 					public boolean onSingleTapConfirmed(MotionEvent e) {
-						Log.d("OrbitCameraControl", "Selection tap: (" + e.getX() + ", " + e.getY() + ")");
+						Log.d("Selection", "Selection tap: (" + e.getX() + ", " + e.getY() + ")");
+						cam.getSelectionManager().beginSelectionDraw((int)e.getX(), (int)e.getY());
 						return super.onSingleTapConfirmed(e);
 					}
 				});
