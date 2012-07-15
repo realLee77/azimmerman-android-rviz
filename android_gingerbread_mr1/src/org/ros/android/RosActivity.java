@@ -16,7 +16,12 @@
 
 package org.ros.android;
 
-import com.google.common.base.Preconditions;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import org.ros.exception.RosRuntimeException;
+import org.ros.node.NodeMain;
+import org.ros.node.NodeMainExecutor;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -25,12 +30,8 @@ import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.widget.Toast;
-import org.ros.exception.RosRuntimeException;
-import org.ros.node.NodeMain;
-import org.ros.node.NodeMainExecutor;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.google.common.base.Preconditions;
 
 /**
  * @author damonkohler@google.com (Damon Kohler)
