@@ -35,6 +35,8 @@ import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
+import org.ros.android.rviz_for_android.prop.StatusPropertyController;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -73,7 +75,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 
 	private BoolProperty prop;
 
-	private boolean isReady = false;
+	private volatile boolean isReady = false;
 
 	private MessageListener<OccupancyGrid> subListener;
 	
@@ -88,13 +90,19 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		this.context = context;
 	}
 
+	private StatusPropertyController spc;
+	
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
+		
+		spc = new StatusPropertyController(prop.<ReadOnlyProperty>getProperty("Status"));
+		
 		Subscriber<nav_msgs.OccupancyGrid> sub = getSubscriber();
 		subListener = new MessageListener<OccupancyGrid>() {
 			@Override
 			public void onNewMessage(OccupancyGrid arg0) {
+				spc.setStatus("Map loading...", StatusColor.OK);
 				mostRecent = arg0;
 				isReady = false;
 				generateMapTiles(arg0);
@@ -115,16 +123,12 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	}
 
 	private void updateStatus(FrameTransformTree frameTransformTree, Camera camera) {
-		ReadOnlyProperty status = prop.<ReadOnlyProperty> getProperty("Status");
 		if(!isReady) {
-			status.setValue("No map exists!");
-			status.setTextColor(ReadOnlyProperty.StatusColor.ERROR);
+			spc.setStatus("No map exists!", StatusColor.ERROR);
 		} else if(!frameTransformTree.canTransform(camera.getFixedFrame(), mapGraphName)) {
-			status.setValue("No transform exists from " + camera.getFixedFrame() + " to /map!");
-			status.setTextColor(ReadOnlyProperty.StatusColor.WARN);
+			spc.setStatus("No transform exists from " + camera.getFixedFrame() + " to " + mapGraphName.toString() + "!", StatusColor.WARN);
 		} else {
-			status.setValue("OK");
-			status.setTextColor(ReadOnlyProperty.StatusColor.OK);
+			spc.setOk();
 		}
 	}
 
@@ -233,12 +237,10 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 				}
 			}
 		} else {
-			// TODO: SUPER SECRET EASTER EGG GOES HERE
 			AssetManager am = context.getAssets();
 			try {
 				mapImage = BitmapFactory.decodeStream(am.open("hidden.jpg"));
 			} catch(IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -267,8 +269,6 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		return prop.getValue();
 	}
 	
-	
-
 	@Override
 	public void setName(String name) {
 		super.setName(name);
@@ -301,5 +301,4 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		}
 		getSubscriber().removeMessageListener(subListener);
 	}
-
 }

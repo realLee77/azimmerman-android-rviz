@@ -199,6 +199,7 @@ public class MainActivity extends RosActivity {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		Log.e("MainActivity", "OnCreate called");
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		MainActivity.context = this;
@@ -246,7 +247,22 @@ public class MainActivity extends RosActivity {
 	protected void onDestroy() {
 		Log.e("MainActivity", "OnDestroy has been called.");
 		super.onDestroy();
-		finish();
+		// TODO: FIX THIS! This is a total hack to fix a strange and unresolved bug relating to the Android application lifecycle conflicting with OpenGL ES 2!
+		System.exit(0);
+	}
+
+	@Override
+	protected void onPause() {
+		Log.e("MainActivity", "OnPause called.");
+		visualizationView.onPause();
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		Log.e("MainActivity", "OnResume called.");
+		visualizationView.onResume();
+		super.onResume();
 	}
 
 	public static Context getAppContext() {
@@ -281,8 +297,11 @@ public class MainActivity extends RosActivity {
 			break;
 		case PointCloud:
 			newLayer = new PointCloudLayer(cam, new GraphName("/lots_of_points"), sensor_msgs.PointCloud._TYPE);
+			break;
+		// TODO: Remove the cube layer!
 		case CubeLayer:
 			newLayer = new CubeLayer(cam);
+			break;
 		}
 
 		if(newLayer != null) {

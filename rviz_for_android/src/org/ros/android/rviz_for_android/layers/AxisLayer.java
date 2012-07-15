@@ -19,6 +19,7 @@ package org.ros.android.rviz_for_android.layers;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -34,8 +35,12 @@ import org.ros.android.rviz_for_android.prop.GraphNameProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
+import org.ros.android.rviz_for_android.prop.StatusPropertyController;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
+import org.ros.rosjava_geometry.AvailableFrameTracker.FrameAddedListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.opengl.GLES20;
@@ -119,6 +124,7 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			}
 		}).setValidRange(0.001f, 10000f));
 		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
+		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
 		axisShader = GLSLProgram.ColoredVertex();
 		uniformHandles = axisShader.getUniformHandles();
 	}
@@ -146,6 +152,8 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		camera.popM();
 	}
 
+	private StatusPropertyController spc;
+	
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
 		(prop.<GraphNameProperty>getProperty("Parent")).setTransformTree(frameTransformTree);
@@ -153,6 +161,19 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		vertexBuffer = Vertices.toFloatBuffer(VERTICES);
 		colorBuffer = Vertices.toFloatBuffer(COLORS);
 		indexBuffer = Vertices.toByteBuffer(INDEX);
+		
+		spc = new StatusPropertyController(prop.<ReadOnlyProperty>getProperty("Status"));
+		
+		frameTransformTree.getFrameTracker().addListener(new FrameAddedListener() {
+			@Override
+			public void informFrameAdded(Set<String> newFrames) {
+				GraphName parentFrame = prop.<GraphNameProperty>getProperty("Parent").getValue();
+				if(frameTransformTree.canTransform(camera.getFixedFrame(), parentFrame))
+					spc.setOk();
+				else
+					spc.setStatus("No transform exists from " + camera.getFixedFrame() + " to " + parentFrame + "!", StatusColor.WARN);
+			}
+		});
 	}
 
 	public Property<?> getProperties() {
