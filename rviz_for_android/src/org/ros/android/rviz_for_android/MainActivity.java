@@ -28,6 +28,7 @@ import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.Layer;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
 import org.ros.android.rviz_for_android.layers.CubeLayer;
+import org.ros.android.rviz_for_android.layers.FPSLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
 import org.ros.android.rviz_for_android.layers.MapLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
@@ -46,6 +47,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -237,7 +239,14 @@ public class MainActivity extends RosActivity {
 		addNewLayer(AvailableLayerType.Axis);
 		addNewLayer(AvailableLayerType.Grid);
 
-//		visualizationView.addLayer(new FPSLayer());
+		visualizationView.addLayer(new FPSLayer(visualizationView.getCamera()));
+	}
+
+	@Override
+	protected void onDestroy() {
+		Log.e("MainActivity", "OnDestroy has been called.");
+		super.onDestroy();
+		finish();
 	}
 
 	public static Context getAppContext() {
