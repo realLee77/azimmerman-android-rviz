@@ -153,22 +153,6 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			}
 			
 			cam.popM();
-			
-			/*			
-			gl.glPushMatrix();
-
-			// Transform to the URDF link's frame
-			OpenGlTransform.apply(gl, ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
-
-			// Draw the shape
-			if(drawVis && vis != null) {
-				drawComponent(gl, vis);
-			}
-			if(drawCol && col != null) {
-				drawComponent(gl, col);
-			}
-
-			gl.glPopMatrix();*/
 		}
 	}
 
