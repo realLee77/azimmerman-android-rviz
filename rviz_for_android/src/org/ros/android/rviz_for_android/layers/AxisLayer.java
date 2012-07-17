@@ -49,74 +49,43 @@ import android.os.Handler;
 
 public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLayer {
 
-	private static final float VERTICES[] = {
-		0,0,0,
-		0,0,1,
-		0,.25f,.75f,
-		0,-.25f,.75f,
-		
-		0,0,0,
-		0,1,0,
-		.25f,.75f,0,
-		-.25f,.75f,0,
-		
-		0,0,0,
-		1,0,0,
-		.75f,.25f,0,
-		.75f,-.25f,0
-	};
-	
-	private static final float COLORS[] = {
-		0,0,1,1,
-		0,0,1,1,
-		0,0,1,1,
-		0,0,1,1,
-		
-		0,1,0,1,
-		0,1,0,1,
-		0,1,0,1,
-		0,1,0,1,
-		
-		1,0,0,1,
-		1,0,0,1,
-		1,0,0,1,
-		1,0,0,1,
-	};
-	
-	private static final byte INDEX[] = {
-		0,1,
-		1,2,
-		1,3,
-		
-		4,5,
-		5,6,
-		5,7,
-		
-		8,9,
-		9,10,
-		9,11
-	};
-	
+	private static final float VERTICES[] = { 0, 0, 0, 0, 0, 1, 0, .25f, .75f, 0, -.25f, .75f,
+	0, 0, 0, 0, 1, 0, .25f, .75f, 0, -.25f, .75f, 0,
+	0, 0, 0, 1, 0, 0, .75f, .25f, 0, .75f, -.25f, 0 };
+
+	private static final float COLORS[] = { 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1,
+	0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+	1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, };
+
+	private static final byte INDEX[] = { 0, 1, 1, 2, 1, 3,
+	4, 5, 5, 6, 5, 7,
+	8, 9, 9, 10, 9, 11 };
+
 	private GLSLProgram axisShader;
-	
+
 	private FloatBuffer vertexBuffer;
 	private FloatBuffer colorBuffer;
 	private ByteBuffer indexBuffer;
-	
+
 	private BoolProperty prop;
-	
+
 	private int[] uniformHandles;
 	private float[] MVP = new float[16];
 	private float scale = 1f;
+
+	private StatusPropertyController spc;
+
 	
+
 	private void calcMVP() {
 		Matrix.multiplyMM(MVP, 0, camera.getViewMatrix(), 0, camera.getModelMatrix(), 0);
 		Matrix.multiplyMM(MVP, 0, camera.getViewport().getProjectionMatrix(), 0, MVP, 0);
 	}
-	
+
 	public AxisLayer(Camera cam) {
 		super(cam);
 		prop = new BoolProperty("enabled", true, null);
+		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
 		prop.addSubProperty(new FloatProperty("Scale", scale, new PropertyUpdateListener<Float>() {
 			@Override
 			public void onPropertyChanged(Float newval) {
@@ -124,26 +93,27 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			}
 		}).setValidRange(0.001f, 10000f));
 		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
-		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
+		
+		spc = new StatusPropertyController(prop.<ReadOnlyProperty> getProperty("Status"));
 		axisShader = GLSLProgram.ColoredVertex();
 		uniformHandles = axisShader.getUniformHandles();
 	}
-	
+
 	@Override
-	public void draw(GL10 glUnused) {		
+	public void draw(GL10 glUnused) {
 		if(!axisShader.isCompiled()) {
 			axisShader.compile(glUnused);
 			uniformHandles = axisShader.getUniformHandles();
 		}
-		
+
 		axisShader.use(glUnused);
-		
+
 		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
 		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, vertexBuffer);
-		
+
 		GLES20.glEnableVertexAttribArray(ShaderVal.ATTRIB_COLOR.loc);
 		GLES20.glVertexAttribPointer(ShaderVal.ATTRIB_COLOR.loc, 4, GLES20.GL_FLOAT, false, 0, colorBuffer);
-		
+
 		camera.pushM();
 		camera.scaleM(scale, scale, scale);
 		calcMVP();
@@ -152,28 +122,32 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		camera.popM();
 	}
 
-	private StatusPropertyController spc;
+	private FrameTransformTree frameTransformTree;
 	
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
-		(prop.<GraphNameProperty>getProperty("Parent")).setTransformTree(frameTransformTree);
-		
+		(prop.<GraphNameProperty> getProperty("Parent")).setTransformTree(frameTransformTree);
+
 		vertexBuffer = Vertices.toFloatBuffer(VERTICES);
 		colorBuffer = Vertices.toFloatBuffer(COLORS);
 		indexBuffer = Vertices.toByteBuffer(INDEX);
-		
-		spc = new StatusPropertyController(prop.<ReadOnlyProperty>getProperty("Status"));
+
+		this.frameTransformTree = frameTransformTree; 
 		
 		frameTransformTree.getFrameTracker().addListener(new FrameAddedListener() {
 			@Override
 			public void informFrameAdded(Set<String> newFrames) {
-				GraphName parentFrame = prop.<GraphNameProperty>getProperty("Parent").getValue();
-				if(frameTransformTree.canTransform(camera.getFixedFrame(), parentFrame))
-					spc.setOk();
-				else
-					spc.setStatus("No transform exists from " + camera.getFixedFrame() + " to " + parentFrame + "!", StatusColor.WARN);
+				checkFrameStatus();
 			}
 		});
+	}
+	
+	private void checkFrameStatus() {
+		GraphName parentFrame = prop.<GraphNameProperty> getProperty("Parent").getValue();
+		if(frameTransformTree.canTransform(camera.getFixedFrame(), parentFrame))
+			spc.setOk();
+		else
+			spc.setStatus("No transform exists from " + camera.getFixedFrame() + " to " + parentFrame + "!", StatusColor.WARN);		
 	}
 
 	public Property<?> getProperties() {
@@ -181,11 +155,11 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	}
 
 	public GraphName getFrame() {
-		return prop.<GraphNameProperty>getProperty("Parent").getValue();
+		return prop.<GraphNameProperty> getProperty("Parent").getValue();
 	}
 
 	@Override
 	public boolean isEnabled() {
 		return prop.getValue();
-	}	
+	}
 }

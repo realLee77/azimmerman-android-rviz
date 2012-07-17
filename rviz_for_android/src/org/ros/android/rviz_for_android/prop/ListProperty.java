@@ -16,8 +16,12 @@
  */
 package org.ros.android.rviz_for_android.prop;
 
+import java.util.List;
+
 import org.ros.android.rviz_for_android.R;
 
+import android.os.Handler;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +42,15 @@ public class ListProperty extends Property<Integer> {
 	private TextView textView;
 	private Spinner spin;
 	private ArrayAdapter<String> aa;
+
+	private Handler handler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			if(aa != null) {
+				aa.notifyDataSetChanged();
+			}
+		}
+	};
 
 	public ListProperty(String name, Integer value, PropertyUpdateListener<Integer> updateListener) {
 		super(name, value, updateListener);
@@ -80,15 +93,28 @@ public class ListProperty extends Property<Integer> {
 		});
 
 		spin.setSelection(getValue());
+		
+		spin.setEnabled(super.enabled);
+		
 		return convertView;
+	}
+
+	public ListProperty setList(List<String> list) {
+		String[] newList = new String[list.size()];
+		list.toArray(newList);
+		return setList(newList);
 	}
 
 	public ListProperty setList(String[] list) {
 		this.list = list;
-		if(aa != null)
-			aa.notifyDataSetChanged();
-			
+		handler.sendEmptyMessage(0);
 		return this;
 	}
 
+	@Override
+	public void setEnabled(boolean enabled) {
+		if(spin != null)
+			spin.setEnabled(enabled);
+		super.setEnabled(enabled);
+	}
 }

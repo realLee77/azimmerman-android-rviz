@@ -52,31 +52,49 @@ public class ColorProperty extends Property<Color> {
 
 		btn = (Button) convertView.findViewById(R.id.btProp_Button);
 		btn.setText(" ");
-		btn.setBackgroundColor(android.graphics.Color.rgb((int) value.getRed() * 255, (int) value.getGreen() * 255, (int) value.getBlue() * 255));
+		btn.setBackgroundColor(Utility.ColorToIntRGB(value));
 
 		btn.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(parent.getContext());
-				final ColorPickerDialog d = new ColorPickerDialog(parent.getContext(), prefs.getInt("dialog", Utility.ColorToInt(value)));
+				final ColorPickerDialog d = new ColorPickerDialog(parent.getContext(), prefs.getInt("dialog", Utility.ColorToIntRGB(value)));
 				d.setAlphaSliderVisible(true);
 				d.setButton("Ok", new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						setValue(Utility.IntToColor(d.getColor()));
+
+						setButtonBackground();
 					}
 				});
 				d.show();
 			}
 		});
 		btn.setText("Pick Color");
-		btn.setTextColor(android.graphics.Color.BLACK);
-
+		btn.setEnabled(super.enabled);
+		setButtonBackground();
 		return convertView;
+	}
+
+	private void setButtonBackground() {
+		if(btn != null) {
+			if(Utility.ColorToBrightness(value) > 0.5f)
+				btn.setTextColor(android.graphics.Color.BLACK);
+			else
+				btn.setTextColor(android.graphics.Color.WHITE);
+		}
 	}
 
 	@Override
 	protected void informListeners(Color newvalue) {
 		if(btn != null)
-			btn.setBackgroundColor(Utility.ColorToInt(newvalue));
+			btn.setBackgroundColor(Utility.ColorToIntRGB(newvalue));
 		super.informListeners(newvalue);
+	}
+
+	@Override
+	public void setEnabled(boolean enabled) {
+		if(btn != null)
+			btn.setEnabled(enabled);
+		super.setEnabled(enabled);
 	}
 }

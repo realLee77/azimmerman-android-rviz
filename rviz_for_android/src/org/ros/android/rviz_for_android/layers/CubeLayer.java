@@ -58,12 +58,13 @@ public class CubeLayer extends DefaultLayer implements SelectableLayer {
 	public void draw(GL10 glUnused) {
 		camera.rotateM(angle(8000), 0, 0, 1);
 		myCube.draw(glUnused,transform,scale);
-		camera.translateM(2f, 0f, 0f);
+		camera.translateM(2f, 0f, .5f);
 		myCube2.draw(glUnused,transform,scale);
-		camera.translateM(1f, 0f, 1f);
+		camera.translateM(1f, 1.5f, 1f);
 		mySphere.draw(glUnused, transform, 1f);
-		camera.translateM(0.5f, 1f, 0.5f);
-		myCyl.draw(glUnused, transform, 1f, 1f);
+		camera.rotateM(angle(12000), 1, 0, 0);
+		camera.translateM(1.5f, 1.5f, 1.5f);
+		myCyl.draw(glUnused, transform, .5f, .25f);
 	}	
 	
 	private int angle(int msecPerRev) {
@@ -74,12 +75,14 @@ public class CubeLayer extends DefaultLayer implements SelectableLayer {
 
 	@Override
 	public void selectionDraw(GL10 glUnused) {
+		camera.rotateM(angle(8000), 0, 0, 1);
 		myCube.selectionDraw(glUnused);
-		camera.translateM(2f, 0f, 0f);
+		camera.translateM(2f, 0f, .5f);
 		myCube2.selectionDraw(glUnused);
-		camera.translateM(1f, 0f, 1f);
+		camera.translateM(1f, 1.5f, 1f);
 		mySphere.selectionDraw(glUnused);
-		camera.translateM(0.5f, 1f, 0.5f);
+		camera.rotateM(angle(12000), 1, 0, 0);
+		camera.translateM(1.5f, 1.5f, 1.5f);
 		myCyl.selectionDraw(glUnused);
 	}
 

@@ -72,7 +72,14 @@ public class Vector3Property extends Property<Vector3> {
 				return false;
 			}
 		});
+		et.setEnabled(super.enabled);
 		return convertView;
 	}
 
+	@Override
+	public void setEnabled(boolean enabled) {
+		if(et != null)
+			et.setEnabled(enabled);
+		super.setEnabled(enabled);
+	}
 }

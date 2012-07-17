@@ -79,6 +79,8 @@ public class FloatProperty extends Property<Float> {
 			}
 		});
 
+		et.setEnabled(super.enabled);
+		
 		this.addUpdateListener(new PropertyUpdateListener<Float>() {
 			public void onPropertyChanged(Float newval) {
 				et.setText(Float.toString(newval));
@@ -109,4 +111,10 @@ public class FloatProperty extends Property<Float> {
 		super.informListeners(newvalue);
 	}
 
+	@Override
+	public void setEnabled(boolean enabled) {
+		if(et != null)
+			et.setEnabled(enabled);
+		super.setEnabled(enabled);
+	}
 }

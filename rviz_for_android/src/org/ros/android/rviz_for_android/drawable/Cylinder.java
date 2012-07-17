@@ -178,7 +178,6 @@ public class Cylinder extends BaseShape {
 		super.selectionDraw(glUnused);
 
 		cam.scaleM(this.radius, this.radius, this.length);
-		calcMVP();
 
 		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
 		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);

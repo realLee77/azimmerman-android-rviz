@@ -28,6 +28,7 @@ import org.ros.android.renderer.layer.SubscriberLayer;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.PointCloudGL;
+import org.ros.android.rviz_for_android.drawable.PointCloudGL.ColorMode;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.ColorProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
@@ -45,7 +46,6 @@ import org.ros.rosjava_geometry.FrameTransformTree;
 
 import sensor_msgs.PointCloud;
 import android.os.Handler;
-import android.util.Log;
 
 public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> implements LayerWithProperties, TfLayer {
 
@@ -56,19 +56,17 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 	private ConnectedNode connectedNode;
 	private MessageListener<PointCloud> subListener;
 	private Subscriber<sensor_msgs.PointCloud> sub;
-	
+
 	private PointCloudGL pc;
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
-		super.onStart(connectedNode, handler, frameTransformTree, camera);		
+		super.onStart(connectedNode, handler, frameTransformTree, camera);
 		sub = getSubscriber();
 		subListener = new MessageListener<PointCloud>() {
 			@Override
 			public void onNewMessage(PointCloud msg) {
 				pointCount = msg.getPoints().size();
-				Log.i("PCL", "Copying " + pointCount + " vertices to buffer");
-				long now = System.nanoTime();
 				float[] vertices = new float[pointCount * 3];
 				int i = 0;
 				for(Point32 p : msg.getPoints()) {
@@ -76,9 +74,8 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 					vertices[i++] = p.getY();
 					vertices[i++] = p.getZ();
 				}
-
-				pc.setData(vertices);
-				Log.i("PCL", "Done copying. Time: " + (System.nanoTime() - now) / 1000000000.0);
+				pc.setData(vertices, msg.getChannels());
+				prop.<ListProperty> getProperty("Channels").setList(pc.getChannelNames());
 
 				if(frame == null || !frame.equals(msg.getHeader().getFrameId()))
 					frame = new GraphName(msg.getHeader().getFrameId());
@@ -88,59 +85,77 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 		sub.addMessageListener(subListener);
 		this.connectedNode = connectedNode;
 	}
-	
+
 	@Override
 	public void draw(GL10 glUnused) {
 		pc.draw(glUnused);
 	}
-	
+
 	private float[] generateTestData() {
 		Random rand = new Random();
 		int pointCount = rand.nextInt(5000) + 5000;
 		float[] retval = new float[pointCount * 3];
-		
+
 		for(int i = 0; i < retval.length; i += 3) {
-			retval[i] = rand.nextFloat()*8 - 4;
-			retval[i+1] = rand.nextFloat()*8 - 4;
-			retval[i+2] = retval[i+2] = rand.nextFloat()*4 - 2;
+			retval[i] = rand.nextFloat() * 8 - 4;
+			retval[i + 1] = rand.nextFloat() * 8 - 4;
+			retval[i + 2] = retval[i + 2] = rand.nextFloat() * 4 - 2;
 		}
-		
-		return retval;		
+
+		return retval;
 	}
 
 	public PointCloudLayer(Camera cam, GraphName topicName, String messageType) {
 		super(topicName, messageType, cam);
+
+		pc = new PointCloudGL(cam);
+		pc.setData(generateTestData(), null);
+
+		// Enabled property
 		prop = new BoolProperty("Enabled", true, null);
-		prop.addSubProperty(new StringProperty("Topic", "/lots_of_points", new PropertyUpdateListener<String>() {
+
+		// Channel selection property
+		final ListProperty propChannels = new ListProperty("Channels", 0, new PropertyUpdateListener<Integer>() {
+			@Override
+			public void onPropertyChanged(Integer newval) {
+				pc.setChannelSelection(newval);
+			}
+		}).setList(pc.getChannelNames());
+		// Topic graph name property
+		StringProperty propTopic = new StringProperty("Topic", "/lots_of_points", new PropertyUpdateListener<String>() {
 			@Override
 			public void onPropertyChanged(String newval) {
 				clearSubscriber();
 				initSubscriber(newval);
 			}
-		}));
-		prop.<StringProperty> getProperty("Topic").setValidator(new StringPropertyValidator() {
+		});
+		propTopic.setValidator(new StringPropertyValidator() {
 			@Override
 			public boolean isAcceptable(String newval) {
 				return GraphName.validate(newval);
 			}
 		});
-		prop.addSubProperty(new ColorProperty("Flat Color", new Color(1f,1f,1f,1f), new PropertyUpdateListener<Color>() {
+		// Color mode selection property
+		ListProperty propColorMode = new ListProperty("Color Mode", 0, new PropertyUpdateListener<Integer>() {
+			@Override
+			public void onPropertyChanged(Integer newval) {
+				pc.setColorMode(newval);
+				propChannels.setEnabled(PointCloudGL.ColorMode.values()[newval] == ColorMode.CHANNEL);
+			}
+		}).setList(PointCloudGL.colorModeNames);
+		// Flat color selection property
+		final ColorProperty propFlatColor = new ColorProperty("Flat Color", new Color(1f, 1f, 1f, 1f), new PropertyUpdateListener<Color>() {
 			@Override
 			public void onPropertyChanged(Color newval) {
 				pc.setColor(newval);
 			}
-		}));
-		
-		prop.addSubProperty(new ListProperty("Color Mode", 0, new PropertyUpdateListener<Integer>() {
-			@Override
-			public void onPropertyChanged(Integer newval) {
-				pc.setColorMode(newval);
-			}
-		}).setList(PointCloudGL.colorModeNames));
-	
-		pc = new PointCloudGL(cam);
-		pc.setData(generateTestData());
-		pc.setColor(prop.<ColorProperty>getProperty("Flat Color").getValue());
+		});
+
+		prop.addSubProperty(propTopic);
+		prop.addSubProperty(propColorMode);
+		prop.addSubProperty(propChannels);
+		prop.addSubProperty(propFlatColor);
+		pc.setColor(propFlatColor.getValue());
 	}
 
 	private void clearSubscriber() {
@@ -166,7 +181,7 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 	@Override
 	public void onShutdown(VisualizationView view, Node node) {
 		super.onShutdown(view, node);
-		
+
 		// Clear the subscriber
 		getSubscriber().removeMessageListener(subListener);
 	}

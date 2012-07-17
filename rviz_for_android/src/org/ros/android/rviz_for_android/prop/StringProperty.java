@@ -86,6 +86,7 @@ public class StringProperty extends Property<String> {
 				return false;
 			}
 		});
+		et.setEnabled(super.enabled);
 		super.addUpdateListener(new PropertyUpdateListener<String>() {
 			@Override
 			public void onPropertyChanged(String newval) {
@@ -93,5 +94,12 @@ public class StringProperty extends Property<String> {
 			}
 		});
 		return convertView;
+	}
+
+	@Override
+	public void setEnabled(boolean enabled) {
+		if(et != null)
+			et.setEnabled(enabled);
+		super.setEnabled(enabled);
 	}
 }

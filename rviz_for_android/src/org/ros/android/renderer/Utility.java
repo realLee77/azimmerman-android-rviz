@@ -1,5 +1,7 @@
 package org.ros.android.renderer;
 
+import java.util.Arrays;
+
 import org.ros.android.renderer.shapes.Color;
 import org.ros.rosjava_geometry.Vector3;
 
@@ -19,6 +21,20 @@ public final class Utility {
 		} else {
 			return a2;
 		}
+	}
+	
+	public static float arrayMax(float[] arr) {
+		float max = Float.MIN_VALUE;
+		for(float f : arr)
+			max = Math.max(f, max);
+		return max; 
+	}
+	
+	public static float arrayMin(float[] arr) {
+		float min = Float.MIN_VALUE;
+		for(float f : arr)
+			min = Math.min(f, min);
+		return min; 
 	}
 
 	// Common value manipulation and comparison functions
@@ -83,8 +99,19 @@ public final class Utility {
 	}
 
 	// Convert a ROSJava Color object to/from an Android Color integer
-	public static int ColorToInt(Color c) {
+	public static int ColorToIntARGB(Color c) {
 		return android.graphics.Color.argb(cap((int) (c.getAlpha() * 255), 0, 255), cap((int) (c.getRed() * 255), 0, 255), cap((int) (c.getGreen() * 255), 0, 255), cap((int) (c.getBlue() * 255), 0, 255));
+	}
+	
+	public static int ColorToIntRGB(Color c) {
+		return android.graphics.Color.rgb(cap((int) (c.getRed() * 255), 0, 255), cap((int) (c.getGreen() * 255), 0, 255), cap((int) (c.getBlue() * 255), 0, 255));
+	}
+	
+	public static float ColorToBrightness(Color c) {
+		float[] hsv = new float[3];
+		android.graphics.Color.colorToHSV(ColorToIntRGB(c), hsv);
+		System.out.println("HSV: " + Arrays.toString(hsv));
+		return hsv[2];
 	}
 
 	public static Color IntToColor(int i) {
