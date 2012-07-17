@@ -16,6 +16,7 @@
  */
 package org.ros.android.rviz_for_android.prop;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.ros.android.rviz_for_android.R;
@@ -38,7 +39,7 @@ import android.widget.TextView;
  */
 public class ListProperty extends Property<Integer> {
 
-	private String[] list = new String[] { "" };
+	private List<String> list = new ArrayList<String>();
 	private TextView textView;
 	private Spinner spin;
 	private ArrayAdapter<String> aa;
@@ -67,46 +68,51 @@ public class ListProperty extends Property<Integer> {
 
 	@Override
 	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		convertView = inflater.inflate(R.layout.row_property_spinner, parent, false);
+		if(super.visible) {
+			convertView = inflater.inflate(R.layout.row_property_spinner, parent, false);
 
-		textView = (TextView) convertView.findViewById(R.id.tvProp_Spinner_Name);
-		if(title != null)
-			textView.setText(title);
-		else
-			textView.setText(super.name);
+			textView = (TextView) convertView.findViewById(R.id.tvProp_Spinner_Name);
+			if(title != null)
+				textView.setText(title);
+			else
+				textView.setText(super.name);
 
-		if(aa == null) {
-			aa = new ArrayAdapter<String>(parent.getContext(), android.R.layout.simple_spinner_item, list);
-			aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		}
-
-		spin = (Spinner) convertView.findViewById(R.id.spProp_Spinner);
-
-		spin.setAdapter(aa);
-		spin.setOnItemSelectedListener(new OnItemSelectedListener() {
-			public void onItemSelected(AdapterView<?> arg0, View v, int position, long id) {
-				setValue(position);
+			if(aa == null) {
+				aa = new ArrayAdapter<String>(parent.getContext(), android.R.layout.simple_spinner_item, this.list);
+				aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 			}
 
-			public void onNothingSelected(AdapterView<?> arg0) {
-			}
-		});
+			spin = (Spinner) convertView.findViewById(R.id.spProp_Spinner);
 
-		spin.setSelection(getValue());
-		
-		spin.setEnabled(super.enabled);
-		
+			spin.setAdapter(aa);
+			spin.setOnItemSelectedListener(new OnItemSelectedListener() {
+				public void onItemSelected(AdapterView<?> arg0, View v, int position, long id) {
+					setValue(position);
+				}
+
+				public void onNothingSelected(AdapterView<?> arg0) {
+				}
+			});
+
+			spin.setSelection(getValue());
+			spin.setEnabled(super.enabled);
+		} else
+			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
 		return convertView;
 	}
 
 	public ListProperty setList(List<String> list) {
-		String[] newList = new String[list.size()];
-		list.toArray(newList);
-		return setList(newList);
+		this.list.clear();
+		for(String s : list)
+			this.list.add(s);
+		handler.sendEmptyMessage(0);
+		return this;
 	}
 
 	public ListProperty setList(String[] list) {
-		this.list = list;
+		this.list.clear();
+		for(String s : list)
+			this.list.add(s);
 		handler.sendEmptyMessage(0);
 		return this;
 	}

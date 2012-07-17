@@ -162,6 +162,7 @@ public class MainActivity extends RosActivity {
 		case R.id.clear_model_cache:
 			int clearedCount = mfd.clearCache();
 			showToast("Cleared " + clearedCount + " items in model cache");
+			propAdapter.notifyDataSetChanged();
 			break;
 		}
 		return super.onOptionsItemSelected(item);

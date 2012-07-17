@@ -200,12 +200,13 @@ public class PointCloudGL extends BaseShape {
 		}
 		
 		// Determine which channels of data are available
-		channelNames.clear();
 		if(channels != null && channels.size() > 0) {
-			this.channels = new float[channels.size()][points.length/3];
+			//if(channelsChanged(channels)) {
+			channelNames.clear();
 			channelMin = new float[channels.size()];
 			channelMax = new float[channels.size()];
-			
+			//}
+			this.channels = new float[channels.size()][points.length/3];
 			int idx = 0;
 			for(ChannelFloat32 cf : channels) {
 				channelNames.add(cf.getName());
@@ -214,7 +215,6 @@ public class PointCloudGL extends BaseShape {
 				channelMax[idx] = Utility.arrayMax(this.channels[idx]);
 				idx++;
 			}
-			
 			selectedChannelBuffer = Vertices.toFloatBuffer(this.channels[channelSelected]);
 		} else {
 			// If no channels are available
@@ -232,6 +232,20 @@ public class PointCloudGL extends BaseShape {
 		cloudSize = points.length / 3;
 		draw = (cloudSize > 0);
 	}
+	
+/*	private boolean channelsChanged(List<sensor_msgs.ChannelFloat32> channels) {
+		if(channels.size() != channelNames.length)
+			return true;
+		
+		Set<String> newChannelNames = new HashSet<String>();
+		for(ChannelFloat32 cf : channels)
+			newChannelNames.add(cf.getName());
+		
+		for(String s : channelNames)
+			newChannelNames.remove(s);
+		
+		return newChannelNames.size() != 0;
+	}*/
 	
 	public void setChannelSelection(int selected) {
 		channelSelected = selected;
