@@ -19,6 +19,7 @@ package org.ros.android.rviz_for_android.layers;
 
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -37,9 +38,13 @@ import org.ros.android.rviz_for_android.prop.IntProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
+import org.ros.android.rviz_for_android.prop.StatusPropertyController;
 import org.ros.android.rviz_for_android.prop.Vector3Property;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
+import org.ros.rosjava_geometry.AvailableFrameTracker.FrameAddedListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Vector3;
 
@@ -63,11 +68,13 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	private float zOffset = 0f;
 	
 	private GLSLProgram gridShader;
+	private StatusPropertyController spc;
 
 	public GridLayer(Camera cam, int cells, float spacing) {
 		super(cam);
 
 		prop = new BoolProperty("enabled", true, null);
+		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
 		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
 		prop.addSubProperty(new IntProperty("Cells", cells, new PropertyUpdateListener<Integer>() {
 			@Override
@@ -96,15 +103,28 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 				drawColor = newval;
 			}
 		}));
-
+		
+		spc = new StatusPropertyController(prop.<ReadOnlyProperty>getProperty("Status"));
+		
 		initGrid();
 		gridShader = GLSLProgram.FlatColor();
 		uniformHandles = gridShader.getUniformHandles();
 	}
 
 	@Override
-	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
+	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
 		prop.<GraphNameProperty> getProperty("Parent").setTransformTree(frameTransformTree);
+		
+		frameTransformTree.getFrameTracker().addListener(new FrameAddedListener() {
+			@Override
+			public void informFrameAdded(Set<String> newFrames) {
+				GraphName parentFrame = prop.<GraphNameProperty> getProperty("Parent").getValue();
+				if(frameTransformTree.canTransform(camera.getFixedFrame(), parentFrame))
+					spc.setOk();
+				else
+					spc.setStatus("No transform exists from " + camera.getFixedFrame() + " to " + parentFrame + "!", StatusColor.WARN);
+			}
+		});
 	}
 
 	private void onValueChanged() {

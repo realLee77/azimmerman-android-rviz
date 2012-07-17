@@ -107,7 +107,6 @@ public class BufferedTrianglesShape extends BaseShape {
 		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
 		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, POSITION_DATA_SIZE, GLES20.GL_FLOAT, false, STRIDE, POSITION_OFFSET);
 		
-		calcMVP();
 		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
 
 		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
@@ -127,7 +126,6 @@ public class BufferedTrianglesShape extends BaseShape {
 		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, packedBuffer.capacity()*FLOAT_SIZE, packedBuffer, GLES20.GL_STATIC_DRAW);
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 		bufferPrepared = true;
-		System.out.println("Created and loaded buffer " + buffers[0]);
 		return buffers[0];
 	}
 }

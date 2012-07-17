@@ -4,10 +4,11 @@
     android:layout_height="wrap_content"
     android:background="#000000"
     android:gravity="fill"
-    android:minHeight="55dp"
     android:orientation="horizontal"
+    android:minHeight="55dp"
     android:weightSum="1.0" >
-
+    
+	    
     <ImageView
         android:id="@+id/imgStatus"
         android:layout_width="30dp"

@@ -63,6 +63,8 @@ public class IntProperty extends Property<Integer> {
 		et.setSelectAllOnFocus(true);
 		et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
 		
+		et.setEnabled(super.enabled);
+		
 		et.setOnKeyListener(new OnKeyListener() {
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				try {
@@ -109,5 +111,10 @@ public class IntProperty extends Property<Integer> {
 		super.informListeners(newvalue);
 	}
 
-	
+	@Override
+	public void setEnabled(boolean enabled) {
+		if(et != null)
+			et.setEnabled(enabled);
+		super.setEnabled(enabled);
+	}	
 }

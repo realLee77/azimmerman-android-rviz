@@ -86,7 +86,6 @@ public class TrianglesShape extends BaseShape {
 		super.selectionDraw(glUnused);
 		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
 
-		calcMVP();
 		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
 
 		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);

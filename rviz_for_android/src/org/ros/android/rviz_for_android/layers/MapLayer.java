@@ -78,11 +78,11 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	private volatile boolean isReady = false;
 
 	private MessageListener<OccupancyGrid> subListener;
-	
+
 	private Context context;
-	
+
 	private OccupancyGrid mostRecent;
-	
+
 	public MapLayer(Camera cam, GraphName topicName, String messageType, Context context) {
 		super(topicName, messageType, cam);
 		prop = new BoolProperty("Enabled", true, null);
@@ -91,13 +91,13 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	}
 
 	private StatusPropertyController spc;
-	
+
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
-		
-		spc = new StatusPropertyController(prop.<ReadOnlyProperty>getProperty("Status"));
-		
+
+		spc = new StatusPropertyController(prop.<ReadOnlyProperty> getProperty("Status"));
+
 		Subscriber<nav_msgs.OccupancyGrid> sub = getSubscriber();
 		subListener = new MessageListener<OccupancyGrid>() {
 			@Override
@@ -110,9 +110,9 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 				updateStatus(frameTransformTree, camera);
 			}
 		};
-		
+
 		sub.addMessageListener(subListener);
-		
+
 		frameTransformTree.getFrameTracker().addListener(new FrameAddedListener() {
 			@Override
 			public void informFrameAdded(Set<String> newFrames) {
@@ -268,7 +268,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	public boolean isEnabled() {
 		return prop.getValue();
 	}
-	
+
 	@Override
 	public void setName(String name) {
 		super.setName(name);

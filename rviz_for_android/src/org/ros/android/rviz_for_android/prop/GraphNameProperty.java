@@ -160,6 +160,7 @@ public class GraphNameProperty extends Property<GraphName> {
 		});
 
 		spin.setSelection(selection);
+		spin.setEnabled(super.enabled);
 		return convertView;
 	}
 
@@ -174,4 +175,10 @@ public class GraphNameProperty extends Property<GraphName> {
 		}
 	}
 
+	@Override
+	public void setEnabled(boolean enabled) {
+		if(spin != null)
+			spin.setEnabled(enabled);
+		super.setEnabled(enabled);
+	}
 }

@@ -27,28 +27,31 @@ import android.widget.TextView;
 
 /**
  * A read only property used to display status messages to the user. Messages can optionally have an associated warning level (Ok, Warn, or Error).
+ * 
  * @author azimmerman
- *
+ * 
  */
 public class ReadOnlyProperty extends Property<String> {
 
-	public static enum StatusColor { OK(R.drawable.status_ok, Color.GREEN), WARN(R.drawable.status_warn, Color.YELLOW), ERROR(R.drawable.status_err, Color.RED), INVISIBLE(R.drawable.transparent, Color.BLACK), NO_ICON(R.drawable.transparent, Color.WHITE);
+	public static enum StatusColor {
+		OK(R.drawable.status_ok, Color.GREEN), WARN(R.drawable.status_warn, Color.YELLOW), ERROR(R.drawable.status_err, Color.RED), INVISIBLE(R.drawable.transparent, Color.BLACK), NO_ICON(R.drawable.transparent, Color.WHITE);
 		private int drawable;
 		private int color;
+
 		StatusColor(int drawable, int color) {
 			this.drawable = drawable;
 			this.color = color;
 		}
-		
+
 		public int getColor() {
 			return color;
 		}
-		
+
 		public int getDrawable() {
 			return drawable;
 		}
 	}
-	
+
 	private TextView textView;
 	private TextView display;
 	private ImageView statusIcon;
@@ -73,10 +76,10 @@ public class ReadOnlyProperty extends Property<String> {
 			textView.setText(title);
 		else
 			textView.setText(super.name);
-		
+
 		statusIcon = (ImageView) convertView.findViewById(R.id.imgStatus);
 		statusIcon.setImageResource(textColor.getDrawable());
-		
+
 		display = (TextView) convertView.findViewById(R.id.tvProp_ReadOnly_Value);
 		display.setText(super.value);
 		display.setTextColor(textColor.getColor());
@@ -97,6 +100,5 @@ public class ReadOnlyProperty extends Property<String> {
 			}
 		});
 		return convertView;
-	}
-
+	}	
 }

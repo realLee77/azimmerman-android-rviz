@@ -28,7 +28,6 @@ import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.Layer;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
 import org.ros.android.rviz_for_android.layers.CubeLayer;
-import org.ros.android.rviz_for_android.layers.FPSLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
 import org.ros.android.rviz_for_android.layers.MapLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
@@ -100,7 +99,6 @@ public class MainActivity extends RosActivity {
 		}
 	}
 	private CharSequence[] liveLayers;
-	private int[] counts;
 
 	// Adding and removing layers
 	private static AlertDialog.Builder addLayerDialogBuilder;
@@ -240,7 +238,7 @@ public class MainActivity extends RosActivity {
 		addNewLayer(AvailableLayerType.Axis);
 		addNewLayer(AvailableLayerType.Grid);
 
-		visualizationView.addLayer(new FPSLayer(visualizationView.getCamera()));
+		//visualizationView.addLayer(new FPSLayer(visualizationView.getCamera()));
 	}
 
 	@Override
@@ -337,11 +335,6 @@ public class MainActivity extends RosActivity {
 	}
 
 	private void createLayerDialogs() {
-		// Initialize the number of instances of each layer to zero
-		counts = new int[availableLayers.length];
-		for(int i = 0; i < counts.length; i++) {
-			counts[i] = 0;
-		}
 		// Build a layer selection dialog for adding layers
 		addLayerDialogBuilder = new AlertDialog.Builder(context);
 		addLayerDialogBuilder.setTitle("Select a Layer");

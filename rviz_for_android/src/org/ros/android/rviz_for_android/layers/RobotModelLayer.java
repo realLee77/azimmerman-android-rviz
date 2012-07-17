@@ -38,6 +38,9 @@ import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
+import org.ros.android.rviz_for_android.prop.StatusPropertyController;
 import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.rviz_for_android.urdf.Component;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
@@ -76,6 +79,8 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 	private Activity context;
 	private MeshFileDownloader mfd;
+	
+	private StatusPropertyController spc;
 
 	public RobotModelLayer(Camera cam, MeshFileDownloader mfd) {
 		super(cam);
@@ -86,6 +91,10 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		this.mfd = mfd;
 
 		reader = new UrdfReader();
+		
+		prop.addSubProperty(new ReadOnlyProperty("Status","OK",null));
+		
+		spc = new StatusPropertyController(prop.<ReadOnlyProperty>getProperty("Status"));
 
 		prop.addSubProperty(new StringProperty("Parameter", DEFAULT_PARAM_VALUE, new PropertyUpdateListener<String>() {
 			@Override
@@ -94,9 +103,11 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 					if(params.has(newval)) {
 						current_param_value = newval;
 						reloadUrdf(newval);
+						spc.setOk();
 					} else {
 						prop.<StringProperty> getProperty("Parameter").setValue(current_param_value);
 						Toast.makeText(context, "Invalid parameter " + newval, Toast.LENGTH_LONG).show();
+						spc.setStatus("Invalid parameter", StatusColor.ERROR);
 					}
 				}
 			}
@@ -266,6 +277,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 				urdf_xml = params.getString(param);
 			else {
 				publishProgress("Invalid parameter " + param);
+				spc.setStatus("Invalid parameter", StatusColor.ERROR);
 				return null;
 			}
 			reader.addListener(new UrdfReadingProgressListener() {
@@ -307,6 +319,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 					}
 				}
 			}
+			spc.setOk();
 			return null;
 		}
 	}
