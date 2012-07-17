@@ -45,6 +45,9 @@ public class PropertyListAdapter extends BaseExpandableListAdapter {
 			LayerWithProperties lwp = layers.get(i);
 			props.add(i, new ArrayList<Property<?>>(lwp.getProperties().getPropertyCollection()));
 		}
+		for(ArrayList<Property<?>> alp : props)
+			for(Property<?> p : alp)
+				p.registerPropListAdapter(this);
 	}
 
 	public Object getChild(int groupPosition, int childPosition) {

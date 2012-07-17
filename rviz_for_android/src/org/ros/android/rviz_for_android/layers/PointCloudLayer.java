@@ -135,14 +135,6 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 				return GraphName.validate(newval);
 			}
 		});
-		// Color mode selection property
-		ListProperty propColorMode = new ListProperty("Color Mode", 0, new PropertyUpdateListener<Integer>() {
-			@Override
-			public void onPropertyChanged(Integer newval) {
-				pc.setColorMode(newval);
-				propChannels.setEnabled(PointCloudGL.ColorMode.values()[newval] == ColorMode.CHANNEL);
-			}
-		}).setList(PointCloudGL.colorModeNames);
 		// Flat color selection property
 		final ColorProperty propFlatColor = new ColorProperty("Flat Color", new Color(1f, 1f, 1f, 1f), new PropertyUpdateListener<Color>() {
 			@Override
@@ -150,11 +142,25 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 				pc.setColor(newval);
 			}
 		});
-
+		// Color mode selection property
+		ListProperty propColorMode = new ListProperty("Color Mode", 0, new PropertyUpdateListener<Integer>() {
+			@Override
+			public void onPropertyChanged(Integer newval) {
+				pc.setColorMode(newval);
+				propChannels.setVisible(PointCloudGL.ColorMode.values()[newval] == ColorMode.CHANNEL);
+				propFlatColor.setVisible(PointCloudGL.ColorMode.values()[newval] == ColorMode.FLAT_COLOR);
+				System.out.println("Newval: " + newval);
+			}
+		}).setList(PointCloudGL.colorModeNames);
+		
+		propChannels.setVisible(PointCloudGL.ColorMode.values()[propChannels.getValue()] == ColorMode.CHANNEL);
+		propFlatColor.setVisible(PointCloudGL.ColorMode.values()[propChannels.getValue()] == ColorMode.FLAT_COLOR);
+		
 		prop.addSubProperty(propTopic);
 		prop.addSubProperty(propColorMode);
 		prop.addSubProperty(propChannels);
 		prop.addSubProperty(propFlatColor);
+		
 		pc.setColor(propFlatColor.getValue());
 	}
 

@@ -1,7 +1,5 @@
 package org.ros.android.renderer;
 
-import java.util.Arrays;
-
 import org.ros.android.renderer.shapes.Color;
 import org.ros.rosjava_geometry.Vector3;
 
@@ -110,7 +108,6 @@ public final class Utility {
 	public static float ColorToBrightness(Color c) {
 		float[] hsv = new float[3];
 		android.graphics.Color.colorToHSV(ColorToIntRGB(c), hsv);
-		System.out.println("HSV: " + Arrays.toString(hsv));
 		return hsv[2];
 	}
 

@@ -45,6 +45,7 @@ public abstract class Property<T> {
 	protected boolean visible;
 	protected LinkedList<PropertyUpdateListener<T>> updateListeners = new LinkedList<PropertyUpdateListener<T>>();
 	
+	private PropertyListAdapter propAdapter;
 	private List<Property<?>> propList = new ArrayList<Property<?>>();
 	private int propListIdx = 0;
 	protected Map<String, Integer> subProps = new HashMap<String, Integer>();
@@ -53,6 +54,7 @@ public abstract class Property<T> {
 		this.name = name;
 		this.value = value;
 		this.enabled = true;
+		this.visible = true;
 		addUpdateListener(updateListener);
 	}
 
@@ -62,9 +64,10 @@ public abstract class Property<T> {
 	}
 
 	public void setValue(T value) {
-		if(this.value != value)
+		if(this.value == null || !this.value.equals(value)) {
 			this.value = value;
-		informListeners(value);
+			informListeners(value);
+		}
 	}
 
 	protected void informListeners(T newvalue) {
@@ -72,6 +75,16 @@ public abstract class Property<T> {
 			if(pul != null)
 				pul.onPropertyChanged(newvalue);
 		}
+	}
+	
+	public void registerPropListAdapter(PropertyListAdapter pla) {
+		this.propAdapter = pla;
+	}
+	
+	protected void redraw() {
+		System.out.println("Property redraw triggered");
+		if(propAdapter != null)
+			propAdapter.notifyDataSetChanged();
 	}
 
 	public abstract View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title);
@@ -89,7 +102,10 @@ public abstract class Property<T> {
 	}
 	
 	public void setVisible(boolean isVisible) {
-		this.visible = isVisible;
+		if(isVisible != this.visible) {
+			this.visible = isVisible;
+			redraw();
+		}
 	}
 
 	public String getDescription() {
@@ -138,6 +154,9 @@ public abstract class Property<T> {
 	}
 
 	public void addSubProperty(Property<?> p, String... levels) {
+		if(propAdapter != null)
+			p.registerPropListAdapter(propAdapter);
+		
 		Property<?> cur = this;
 		for(int i = 0; i < levels.length; i++) {
 			cur = (Property<?>) propList.get(cur.subProps.get(levels[i]));
