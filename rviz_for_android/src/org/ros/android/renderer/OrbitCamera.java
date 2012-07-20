@@ -35,7 +35,7 @@ public class OrbitCamera implements Camera {
 	 * 
 	 * TODO(moesenle): make this the root of the TF tree.
 	 */
-	private static final GraphName DEFAULT_FIXED_FRAME = new GraphName("/world");
+	private static final GraphName DEFAULT_FIXED_FRAME = GraphName.of("/world");
 
 	/**
 	 * The default target frame is null which means that the renderer uses the user set camera.

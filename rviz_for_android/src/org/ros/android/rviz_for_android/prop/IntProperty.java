@@ -36,10 +36,10 @@ public class IntProperty extends Property<Integer> {
 	private int newInt;
 	private int min = Integer.MIN_VALUE;
 	private int max = Integer.MAX_VALUE;
-	
+
 	private TextView textView;
 	private EditText et;
-	
+
 	public IntProperty(String name, int value, PropertyUpdateListener<Integer> updateListener) {
 		super(name, value, updateListener);
 		newInt = value;
@@ -47,49 +47,51 @@ public class IntProperty extends Property<Integer> {
 
 	@Override
 	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		convertView = inflater.inflate(R.layout.row_property_numericfield, parent, false);
-		final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-		
-		textView = (TextView) convertView.findViewById(R.id.tvProp_NumericField_Name);	
-		if(title != null)
-			textView.setText(title);
-		else
-			textView.setText(super.name);
+		if(super.visible) {
+			convertView = inflater.inflate(R.layout.row_property_numericfield, parent, false);
+			final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 
-		// Show the numeric input field
-		et = (EditText) convertView.findViewById(R.id.etProp_NumericField_DecimalValue);
-		et.setVisibility(EditText.VISIBLE);		
-		et.setText(Integer.toString(newInt));
-		et.setSelectAllOnFocus(true);
-		et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
-		
-		et.setEnabled(super.enabled);
-		
-		et.setOnKeyListener(new OnKeyListener() {
-			public boolean onKey(View v, int keyCode, KeyEvent event) {
-				try {
-					newInt = Integer.parseInt(et.getText().toString());
-				} catch(NumberFormatException e) {
-					newInt = value;
+			textView = (TextView) convertView.findViewById(R.id.tvProp_NumericField_Name);
+			if(title != null)
+				textView.setText(title);
+			else
+				textView.setText(super.name);
+
+			// Show the numeric input field
+			et = (EditText) convertView.findViewById(R.id.etProp_NumericField_DecimalValue);
+			et.setVisibility(EditText.VISIBLE);
+			et.setText(Integer.toString(newInt));
+			et.setSelectAllOnFocus(true);
+			et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
+
+			et.setEnabled(super.enabled);
+
+			et.setOnKeyListener(new OnKeyListener() {
+				public boolean onKey(View v, int keyCode, KeyEvent event) {
+					try {
+						newInt = Integer.parseInt(et.getText().toString());
+					} catch(NumberFormatException e) {
+						newInt = value;
+					}
+					if(keyCode == KeyEvent.KEYCODE_ENTER) {
+						setValue(newInt);
+						imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
+						return true;
+					}
+					return false;
 				}
-				if(keyCode == KeyEvent.KEYCODE_ENTER) {
-					setValue(newInt);
-					imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
-					return true;
+			});
+
+			this.addUpdateListener(new PropertyUpdateListener<Integer>() {
+				public void onPropertyChanged(Integer newval) {
+					et.setText(Integer.toString(newval));
 				}
-				return false;
-			}
-		});
-		
-		this.addUpdateListener(new PropertyUpdateListener<Integer>() {
-			public void onPropertyChanged(Integer newval) {
-				et.setText(Integer.toString(newval));
-			}
-		});
-		
+			});
+		} else
+			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
 		return convertView;
 	}
-	
+
 	public IntProperty setValidRange(int min, int max) {
 		this.min = min;
 		this.max = max;
@@ -116,5 +118,5 @@ public class IntProperty extends Property<Integer> {
 		if(et != null)
 			et.setEnabled(enabled);
 		super.setEnabled(enabled);
-	}	
+	}
 }

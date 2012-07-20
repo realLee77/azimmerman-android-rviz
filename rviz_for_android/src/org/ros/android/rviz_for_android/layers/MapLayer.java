@@ -151,7 +151,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 
 		tiles = new Plane[hTileCount][wTileCount];
 
-		initTextures(u, v, msg.getData());
+		initTextures(u, v, msg.getData().array());
 
 		for(int col = 0; col < wTileCount; col++) {
 			for(int row = 0; row < hTileCount; row++) {
@@ -284,7 +284,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		return prop;
 	}
 
-	private static final GraphName mapGraphName = new GraphName("/map");
+	private static final GraphName mapGraphName = GraphName.of("/map");
 
 	@Override
 	public GraphName getFrame() {
@@ -299,6 +299,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 				for(Plane p : pRow)
 					p.cleanup();
 		}
-		getSubscriber().removeMessageListener(subListener);
+		// TODO: Uh oh
+		//getSubscriber().removeMessageListener(subListener);
 	}
 }

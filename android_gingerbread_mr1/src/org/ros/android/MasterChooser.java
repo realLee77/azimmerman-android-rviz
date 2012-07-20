@@ -16,12 +16,7 @@
 
 package org.ros.android;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-
-import org.ros.node.NodeConfiguration;
-import org.ros.android.android_gingerbread_mr1.R;
+import com.google.common.base.Preconditions;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -33,8 +28,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+import org.ros.android.android_gingerbread_mr1.R;
+import org.ros.node.NodeConfiguration;
 
-import com.google.common.base.Preconditions;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * Allows the user to configue a master {@link URI} then it returns that
@@ -82,8 +81,7 @@ public class MasterChooser extends Activity {
     // If the Barcode Scanner returned a string then display that string.
     if (requestCode == 0) {
       if (resultCode == RESULT_OK) {
-        String format = intent.getStringExtra("SCAN_RESULT_FORMAT");
-		Preconditions.checkState(format.equals("QR_CODE"));
+        Preconditions.checkState(intent.getStringExtra("SCAN_RESULT_FORMAT").equals("TEXT_TYPE"));
         String contents = intent.getStringExtra("SCAN_RESULT");
         uriText.setText(contents);
       }

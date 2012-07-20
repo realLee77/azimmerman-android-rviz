@@ -31,6 +31,7 @@ import org.ros.android.rviz_for_android.layers.CubeLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
 import org.ros.android.rviz_for_android.layers.MapLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
+import org.ros.android.rviz_for_android.layers.PointCloud2Layer;
 import org.ros.android.rviz_for_android.layers.PointCloudLayer;
 import org.ros.android.rviz_for_android.layers.RobotModelLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
@@ -72,7 +73,7 @@ public class MainActivity extends RosActivity {
 
 	// Tracking layers
 	private static enum AvailableLayerType {
-		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud"), CubeLayer("CUBE LAYER");
+		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud"), PointCloud2("Point Cloud2"), CubeLayer("CUBE LAYER");
 		private String printName;
 		private int count = 0;
 		AvailableLayerType(String printName) {
@@ -292,10 +293,13 @@ public class MainActivity extends RosActivity {
 			newLayer = new RobotModelLayer(cam, mfd);
 			break;
 		case Map:
-			newLayer = new MapLayer(cam, new GraphName("/map"), nav_msgs.OccupancyGrid._TYPE, this);
+			newLayer = new MapLayer(cam, GraphName.of("/map"), nav_msgs.OccupancyGrid._TYPE, this);
 			break;
 		case PointCloud:
-			newLayer = new PointCloudLayer(cam, new GraphName("/lots_of_points"), sensor_msgs.PointCloud._TYPE);
+			newLayer = new PointCloudLayer(cam, GraphName.of("/lots_of_points"), sensor_msgs.PointCloud._TYPE);
+			break;
+		case PointCloud2:
+			newLayer = new PointCloud2Layer(GraphName.of("/lots_of_points2"), cam, this);
 			break;
 		// TODO: Remove the cube layer!
 		case CubeLayer:

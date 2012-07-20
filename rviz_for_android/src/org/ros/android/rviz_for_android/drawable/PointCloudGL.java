@@ -28,150 +28,49 @@ import org.ros.android.renderer.Utility;
 import org.ros.android.renderer.Vertices;
 import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
+import org.ros.android.rviz_for_android.drawable.PCShaders.ColorMode;
 
 import sensor_msgs.ChannelFloat32;
 import android.opengl.GLES20;
+import android.util.Log;
 
 public class PointCloudGL extends BaseShape {
-
-	// Color mode and shaders
-	public static enum ColorMode {
-		FLAT_COLOR("Flat color", 0,0), GRADIENT_X("Gradient X", 1,1,0), GRADIENT_Y("Gradient Y", 1,2,1), GRADIENT_Z("Gradient Z", 1,3,2), CHANNEL("Channel",2,4);
-		private String name;
-		public int shaderArrayPos;
-		public int nameArrayPos;
-		public int extraInfo = -1;
-
-		ColorMode(String name, int shaderPos, int namePos) {
-			this.name = name;
-			this.shaderArrayPos = shaderPos;
-			this.nameArrayPos = namePos;
-		}
-
-		ColorMode(String name, int shaderPos, int namePos, int extraInfo) {
-			this.name = name;
-			this.shaderArrayPos = shaderPos;
-			this.nameArrayPos = namePos;
-			this.extraInfo = extraInfo;
-		}
-		
-		@Override
-		public String toString() {
-			return name;
-		}
-	}
-	private ColorMode mode = ColorMode.FLAT_COLOR;
-	public static final String[] colorModeNames = new String[ColorMode.values().length]; 
-	private static GLSLProgram[] programs;
-	static {
-		int size = 0;
-		for(ColorMode cm : ColorMode.values()) {
-			colorModeNames[cm.nameArrayPos] = cm.toString();
-			size = Math.max(size, cm.shaderArrayPos);
-		}
-		programs = new GLSLProgram[size+1];	
-	}
-
-	private static final String vChannelShader =
-			"attribute vec2 aChannel;	\n" +
-			"attribute vec4 aPosition;	\n" +
-			"uniform mat4 uMvp;			\n" +
-			"uniform float minVal;      \n" +
-			"uniform float maxVal;      \n" +
-			"varying vec4 vColor;		\n" + 
-			"void main() {				\n" +
-		    "	gl_Position = uMvp * aPosition;												\n"+
-		    "	float mixlevel = max(min((aChannel.x - minVal)/(maxVal-minVal),1.0),0.0);	\n" +
-		    "	vColor = mix(vec4(0.0, 0.0, 0.0, 1.0), vec4(1.0,1.0,1.0,1.0), mixlevel);	\n"+
-		    "	gl_PointSize = 3.0;															\n"+
-		    "}";
-	private static final String hToRGB = 
-		    "vec4 hToRGB(float h) {		\n" +
-		    "   float hs = 2.0*h;		\n" +
-		    "	float hi = floor(hs);				\n"+
-		    "   float f = (hs) - floor(hs);				\n"+			
-		    "	float q = 1.0 - f;							\n"+
-		    "	if (hi <= 0.0)								\n"+
-		    "		return vec4(1.0, f, 0.0, 1.0);			\n"+
-		    "	if (hi <= 1.0)								\n"+
-		    "		return vec4(q, 1.0, 0.0, 1.0);			\n"+
-		    "	if (hi <= 2.0)								\n"+
-		    "		return vec4(0.0, 1.0, f, 1.0);			\n"+
-		    "	if (hi <= 3.0)								\n"+
-		    "		return vec4(0.0, q, 1.0, 1.0);			\n"+
-		    "	if (hi <= 4.0)								\n"+
-		    "		return vec4(f, 0.0, 1.0, 1.0);			\n"+
-		    "	else										\n"+
-		    "		return vec4(1.0, 0.0, q, 1.0);					\n"+
-		    "}\n";
-	private static final String vFlatColorShader = 
-			"precision mediump float; 	\n" +
-			"uniform mat4 uMvp;			\n" +
-			"uniform vec4 uColor;		\n" +
-			"attribute vec4 aPosition;	\n" +
-			"varying vec4 vColor;		\n" +
-			"void main() {				\n" +
-		    "	gl_Position = uMvp * aPosition;	\n"+
-		    "	vColor = uColor;								\n"+
-		    "	gl_PointSize = 3.0;								\n"+
-		    "}";
-	private static final String vGradientShader = 
-			"precision mediump float; 	\n" +
-			"uniform mat4 uMvp;			\n" +
-			"uniform vec4 uColor;		\n" +
-			"uniform int uDirSelect;		\n" +
-			"attribute vec4 aPosition;	\n" +
-			"varying vec4 vColor;		\n" + hToRGB + 
-			"void main() {				\n" +
-		    "	gl_Position = uMvp * aPosition;					\n"+
-		    "	vColor = hToRGB(mod(abs(aPosition[uDirSelect]),3.0));			\n"+
-		    "	gl_PointSize = 3.0;								\n"+
-		    "}";					
-	private static final String fShader = 
-			"precision mediump float; 	\n" +
-			"varying vec4 vColor;		\n" +
-			"void main()				\n" + 
-			"{							\n" +
-		    "	gl_FragColor = vColor;	\n" +
-			"}";
-	
 	// Point cloud data	
-	private Buffer selectedChannelBuffer;
-	private float[][] channels;
+	private FloatBuffer selectedChannelBuffer;
+	private static final float[][] DEFAULT_CHANNELS = new float[0][0];
+	private float[][] channels = DEFAULT_CHANNELS;
 	private float[] channelMin;
 	private float[] channelMax;
+	
+	private float minRange = 0f;
+	private float maxRange = 1f;
+	private boolean autoRange = true;
+	
+	public void setAutoRanging(boolean ar) {
+		autoRange = ar;
+	}
+	public void setManualRange(float min, float max) {
+		if(min == max)
+			throw new IllegalArgumentException("Min and max can't be equal!");
+		minRange = min;
+		maxRange = max;
+	}
+	
 	private int channelSelected = 0;
 	private List<String> channelNames = new ArrayList<String>();
 	private FloatBuffer points;
 	private int cloudSize;
-	private boolean draw = false;
+	private volatile boolean drawCloud = false;
+	private ColorMode mode = ColorMode.FLAT_COLOR;
 	
 	public PointCloudGL(Camera cam) {
 		super(cam);
-		programs[ColorMode.FLAT_COLOR.shaderArrayPos] = new GLSLProgram(vFlatColorShader, fShader);
-		programs[ColorMode.FLAT_COLOR.shaderArrayPos].setAttributeName(ShaderVal.POSITION, "aPosition");
-		programs[ColorMode.FLAT_COLOR.shaderArrayPos].setAttributeName(ShaderVal.UNIFORM_COLOR, "uColor");
-		programs[ColorMode.FLAT_COLOR.shaderArrayPos].setAttributeName(ShaderVal.MVP_MATRIX, "uMvp");
-		
-		programs[ColorMode.GRADIENT_X.shaderArrayPos] = new GLSLProgram(vGradientShader, fShader);
-		programs[ColorMode.GRADIENT_X.shaderArrayPos].setAttributeName(ShaderVal.POSITION, "aPosition");
-		programs[ColorMode.GRADIENT_X.shaderArrayPos].setAttributeName(ShaderVal.UNIFORM_COLOR, "uColor");
-		programs[ColorMode.GRADIENT_X.shaderArrayPos].setAttributeName(ShaderVal.MVP_MATRIX, "uMvp");
-		programs[ColorMode.GRADIENT_X.shaderArrayPos].setAttributeName(ShaderVal.EXTRA, "uDirSelect");
-		
-		programs[ColorMode.CHANNEL.shaderArrayPos] = new GLSLProgram(vChannelShader, fShader);
-		programs[ColorMode.CHANNEL.shaderArrayPos].setAttributeName(ShaderVal.POSITION, "aPosition");
-		programs[ColorMode.CHANNEL.shaderArrayPos].setAttributeName(ShaderVal.MVP_MATRIX, "uMvp");
-		programs[ColorMode.CHANNEL.shaderArrayPos].setAttributeName(ShaderVal.ATTRIB_COLOR, "aChannel");
-		programs[ColorMode.CHANNEL.shaderArrayPos].setAttributeName(ShaderVal.EXTRA, "minVal");
-		programs[ColorMode.CHANNEL.shaderArrayPos].setAttributeName(ShaderVal.EXTRA_2, "maxVal");
-				
-		super.setProgram(programs[mode.shaderArrayPos]);
+		super.setProgram(PCShaders.getProgram(mode));
 	}
 	
 	@Override
 	public void draw(GL10 glUnused) {
-		if(draw) {
+		if(drawCloud) {
 			super.draw(glUnused);
 			
 			calcMVP();
@@ -179,8 +78,13 @@ public class PointCloudGL extends BaseShape {
 			if(mode == ColorMode.CHANNEL) {
 				GLES20.glEnableVertexAttribArray(ShaderVal.ATTRIB_COLOR.loc);
 				GLES20.glVertexAttribPointer(ShaderVal.ATTRIB_COLOR.loc, 1, GLES20.GL_FLOAT, false, 0, selectedChannelBuffer);
-				GLES20.glUniform1f(getUniform(ShaderVal.EXTRA), channelMin[channelSelected]);
-				GLES20.glUniform1f(getUniform(ShaderVal.EXTRA_2), channelMax[channelSelected]);
+				if(autoRange) {
+					GLES20.glUniform1f(getUniform(ShaderVal.EXTRA), channelMin[channelSelected]);
+					GLES20.glUniform1f(getUniform(ShaderVal.EXTRA_2), channelMax[channelSelected]);
+				} else {
+					GLES20.glUniform1f(getUniform(ShaderVal.EXTRA), minRange);
+					GLES20.glUniform1f(getUniform(ShaderVal.EXTRA_2), maxRange);
+				}
 			} else {
 				GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
 				GLES20.glUniform1i(getUniform(ShaderVal.EXTRA), mode.extraInfo);
@@ -194,8 +98,8 @@ public class PointCloudGL extends BaseShape {
 	}
 
 	public void setData(float[] points, List<sensor_msgs.ChannelFloat32> channels) {
+		drawCloud = false;
 		if(points == null || points.length == 0) {
-			draw = false;
 			return;
 		}
 		
@@ -215,10 +119,11 @@ public class PointCloudGL extends BaseShape {
 				channelMax[idx] = Utility.arrayMax(this.channels[idx]);
 				idx++;
 			}
-			selectedChannelBuffer = Vertices.toFloatBuffer(this.channels[channelSelected]);
+			selectedChannelBuffer = moveToBuffer(this.channels[channelSelected], selectedChannelBuffer);
+			//selectedChannelBuffer = Vertices.toFloatBuffer(this.channels[channelSelected]);
 		} else {
 			// If no channels are available
-			this.channels = new float[0][0];
+			this.channels = DEFAULT_CHANNELS;
 			mode = ColorMode.FLAT_COLOR;
 			channelSelected = 0;
 		}
@@ -228,24 +133,24 @@ public class PointCloudGL extends BaseShape {
 			channelSelected = 0;
 		}
 		
-		this.points = Vertices.toFloatBuffer(points);
+		this.points = moveToBuffer(points, this.points);
+		//this.points = Vertices.toFloatBuffer(points);
 		cloudSize = points.length / 3;
-		draw = (cloudSize > 0);
+		drawCloud = (cloudSize > 0);
 	}
 	
-/*	private boolean channelsChanged(List<sensor_msgs.ChannelFloat32> channels) {
-		if(channels.size() != channelNames.length)
-			return true;
-		
-		Set<String> newChannelNames = new HashSet<String>();
-		for(ChannelFloat32 cf : channels)
-			newChannelNames.add(cf.getName());
-		
-		for(String s : channelNames)
-			newChannelNames.remove(s);
-		
-		return newChannelNames.size() != 0;
-	}*/
+	private FloatBuffer moveToBuffer(float[] points, FloatBuffer buffer) {
+		if(buffer == null || points.length > buffer.capacity()) {
+			Log.i("PointCloud","Allocating a new buffer!");
+			buffer = null;
+			buffer = Vertices.toFloatBuffer(points);
+		} else {
+			buffer.position(0);
+			buffer.put(points);
+			buffer.position(0);
+		}
+		return buffer;
+	}
 	
 	public void setChannelSelection(int selected) {
 		channelSelected = selected;
@@ -254,15 +159,15 @@ public class PointCloudGL extends BaseShape {
 	
 	public void setColorMode(int selected) {
 		this.mode = ColorMode.values()[selected];
-		if(programs[mode.shaderArrayPos] != null)
-			super.setProgram(programs[mode.shaderArrayPos]);
+		if(PCShaders.getProgram(mode) != null)
+			super.setProgram(PCShaders.getProgram(mode));
 		
 		if(channelSelected > channels.length)
 			channelSelected = 0;
 		
 		if(mode == ColorMode.CHANNEL && channels.length == 0) {
 			this.mode = ColorMode.FLAT_COLOR;
-			super.setProgram(programs[mode.shaderArrayPos]);
+			super.setProgram(PCShaders.getProgram(mode));
 		}
 	}
 	

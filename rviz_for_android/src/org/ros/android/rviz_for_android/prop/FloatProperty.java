@@ -47,6 +47,7 @@ public class FloatProperty extends Property<Float> {
 
 	@Override
 	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
+		if(super.visible) {
 		convertView = inflater.inflate(R.layout.row_property_numericfield, parent, false);
 		final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 		
@@ -86,7 +87,8 @@ public class FloatProperty extends Property<Float> {
 				et.setText(Float.toString(newval));
 			}
 		});
-
+		} else 
+			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
 		return convertView;
 	}
 
@@ -100,8 +102,11 @@ public class FloatProperty extends Property<Float> {
 	public void setValue(Float value) {
 		if(Utility.inRange(value, min, max))
 			super.setValue(value);
-		else
+		else {
 			super.setValue(super.value);
+			if(et != null)
+				et.setText(Float.toString(super.value));
+		}
 	}
 
 	@Override

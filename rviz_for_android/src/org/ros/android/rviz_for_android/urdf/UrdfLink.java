@@ -14,7 +14,7 @@ public class UrdfLink {
 	public UrdfLink(Component visual, Component collision, String name) {
 		this.visual = visual;
 		this.collision = collision;
-		this.name = new GraphName(name);
+		this.name = GraphName.of(name);
 		
 		if(visual != null)
 			componentList.add(visual);

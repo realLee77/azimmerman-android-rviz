@@ -21,6 +21,7 @@ import java.util.List;
 import org.ros.android.renderer.layer.Layer;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
+import org.ros.namespace.NameResolver;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.node.NodeMain;
@@ -33,7 +34,6 @@ import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 /**
@@ -67,7 +67,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 				requestRender();
 			}
 		};
-		frameTransformTree = new FrameTransformTree();
+		frameTransformTree = new org.ros.rosjava_geometry.FrameTransformTree(NameResolver.newRoot());
 		camera = new OrbitCamera(frameTransformTree);
 		renderer = new VisViewRenderer(frameTransformTree, camera);
 		layers = Lists.newArrayList();
@@ -80,12 +80,12 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 
 	@Override
 	public GraphName getDefaultNodeName() {
-		return new GraphName("android_honeycomb_mr2/visualization_view");
+		return GraphName.of("android_honeycomb_mr2/visualization_view");
 	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		for(Layer layer : Iterables.reverse(layers)) {
+		for(Layer layer : Lists.reverse(layers)) {
 			if(layer != null && layer.onTouchEvent(this, event)) {
 				return true;
 			}
@@ -134,9 +134,6 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 
 	private void startTransformListener() {
 		String tfPrefix = connectedNode.getParameterTree().getString("~tf_prefix", "");
-		if(!tfPrefix.isEmpty()) {
-			frameTransformTree.setPrefix(tfPrefix);
-		}
 		Subscriber<tf.tfMessage> tfSubscriber = connectedNode.newSubscriber("tf", tf.tfMessage._TYPE);
 		tfSubscriber.addMessageListener(new MessageListener<tf.tfMessage>() {
 			@Override

@@ -1,7 +1,13 @@
 package org.ros.android.renderer;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.ros.android.renderer.shapes.Color;
 import org.ros.rosjava_geometry.Vector3;
+
+import android.content.Context;
 
 public final class Utility {
 	private Utility() {
@@ -20,19 +26,19 @@ public final class Utility {
 			return a2;
 		}
 	}
-	
+
 	public static float arrayMax(float[] arr) {
 		float max = Float.MIN_VALUE;
 		for(float f : arr)
 			max = Math.max(f, max);
-		return max; 
+		return max;
 	}
-	
+
 	public static float arrayMin(float[] arr) {
 		float min = Float.MIN_VALUE;
 		for(float f : arr)
 			min = Math.min(f, min);
-		return min; 
+		return min;
 	}
 
 	// Common value manipulation and comparison functions
@@ -100,11 +106,11 @@ public final class Utility {
 	public static int ColorToIntARGB(Color c) {
 		return android.graphics.Color.argb(cap((int) (c.getAlpha() * 255), 0, 255), cap((int) (c.getRed() * 255), 0, 255), cap((int) (c.getGreen() * 255), 0, 255), cap((int) (c.getBlue() * 255), 0, 255));
 	}
-	
+
 	public static int ColorToIntRGB(Color c) {
 		return android.graphics.Color.rgb(cap((int) (c.getRed() * 255), 0, 255), cap((int) (c.getGreen() * 255), 0, 255), cap((int) (c.getBlue() * 255), 0, 255));
 	}
-	
+
 	public static float ColorToBrightness(Color c) {
 		float[] hsv = new float[3];
 		android.graphics.Color.colorToHSV(ColorToIntRGB(c), hsv);
@@ -124,10 +130,10 @@ public final class Utility {
 		double x, y, z;
 		Vector3 retval = null;
 		String[] parts = str.split("[ ,:/]+");
-		
+
 		if(parts.length != 3)
 			return null;
-		
+
 		try {
 			x = Double.parseDouble(parts[0]);
 			y = Double.parseDouble(parts[1]);
@@ -138,5 +144,23 @@ public final class Utility {
 		}
 
 		return retval;
+	}
+
+	public static String readStream(InputStream is) throws IOException {
+		byte[] buffer = new byte[is.available()];
+		is.read(buffer);
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		os.write(buffer);
+		os.close();
+		is.close();
+		return os.toString();
+	}
+
+	public static String assetToString(Context context, String filename) {
+		try {
+			return readStream(context.getAssets().open(filename));
+		} catch(IOException e) {
+			return null;
+		}
 	}
 }

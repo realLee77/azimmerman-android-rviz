@@ -48,7 +48,6 @@ public class SubscriberLayer<T> extends DefaultLayer {
   public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
     super.onStart(connectedNode, handler, frameTransformTree, camera);
     subscriber = connectedNode.newSubscriber(topicName, messageType);
-    subscriber.setQueueLimit(1);
   }
   
   @Override

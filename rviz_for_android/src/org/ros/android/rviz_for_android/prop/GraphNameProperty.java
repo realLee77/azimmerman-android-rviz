@@ -151,7 +151,7 @@ public class GraphNameProperty extends Property<GraphName> {
 				if(elementsToIgnore.contains(selection))
 					setValue(null);
 				else {
-					setValue(new GraphName(spinnerFrameList.get(selection)));
+					setValue(GraphName.of(spinnerFrameList.get(selection)));
 				}
 			}
 
