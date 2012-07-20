@@ -38,20 +38,23 @@ public class BoolProperty extends Property<Boolean> {
 
 	@Override
 	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		convertView = inflater.inflate(R.layout.row_property_boolean, parent, false);
-		textView = (TextView) convertView.findViewById(R.id.tvProp_Boolean_Name);
-		if(title != null)
-			textView.setText(title);
-		else
-			textView.setText(super.name);
-		cb = (CheckBox) convertView.findViewById(R.id.cbProp_Checkbox);
-		cb.setFocusable(false);
-		cb.setChecked(super.value);
-		cb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				setValue(isChecked);
-			}
-		});
+		if(super.visible) {
+			convertView = inflater.inflate(R.layout.row_property_boolean, parent, false);
+			textView = (TextView) convertView.findViewById(R.id.tvProp_Boolean_Name);
+			if(title != null)
+				textView.setText(title);
+			else
+				textView.setText(super.name);
+			cb = (CheckBox) convertView.findViewById(R.id.cbProp_Checkbox);
+			cb.setFocusable(false);
+			cb.setChecked(super.value);
+			cb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+					setValue(isChecked);
+				}
+			});
+		} else
+			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
 		return convertView;
 	}
 

@@ -79,7 +79,7 @@ public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer i
 			cam.resetTargetFrame();
 			super.enableScrolling = true;
 		} else {
-			cam.setTargetFrame(new GraphName(newval));
+			cam.setTargetFrame(GraphName.of(newval));
 			super.enableScrolling = false;
 		}
 	}

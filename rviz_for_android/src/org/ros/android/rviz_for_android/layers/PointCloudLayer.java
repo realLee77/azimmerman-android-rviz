@@ -18,8 +18,6 @@ package org.ros.android.rviz_for_android.layers;
 
 import geometry_msgs.Point32;
 
-import java.util.Random;
-
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
@@ -27,10 +25,12 @@ import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.SubscriberLayer;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.Color;
+import org.ros.android.rviz_for_android.drawable.PCShaders;
 import org.ros.android.rviz_for_android.drawable.PointCloudGL;
-import org.ros.android.rviz_for_android.drawable.PointCloudGL.ColorMode;
+import org.ros.android.rviz_for_android.drawable.PCShaders.ColorMode;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.ColorProperty;
+import org.ros.android.rviz_for_android.prop.FloatProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.ListProperty;
 import org.ros.android.rviz_for_android.prop.Property;
@@ -78,7 +78,7 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 				prop.<ListProperty> getProperty("Channels").setList(pc.getChannelNames());
 
 				if(frame == null || !frame.equals(msg.getHeader().getFrameId()))
-					frame = new GraphName(msg.getHeader().getFrameId());
+					frame = GraphName.of(msg.getHeader().getFrameId());
 			}
 		};
 
@@ -91,25 +91,10 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 		pc.draw(glUnused);
 	}
 
-	private float[] generateTestData() {
-		Random rand = new Random();
-		int pointCount = rand.nextInt(5000) + 5000;
-		float[] retval = new float[pointCount * 3];
-
-		for(int i = 0; i < retval.length; i += 3) {
-			retval[i] = rand.nextFloat() * 8 - 4;
-			retval[i + 1] = rand.nextFloat() * 8 - 4;
-			retval[i + 2] = retval[i + 2] = rand.nextFloat() * 4 - 2;
-		}
-
-		return retval;
-	}
-
 	public PointCloudLayer(Camera cam, GraphName topicName, String messageType) {
 		super(topicName, messageType, cam);
 
 		pc = new PointCloudGL(cam);
-		pc.setData(generateTestData(), null);
 
 		// Enabled property
 		prop = new BoolProperty("Enabled", true, null);
@@ -132,7 +117,9 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 		propTopic.setValidator(new StringPropertyValidator() {
 			@Override
 			public boolean isAcceptable(String newval) {
-				return GraphName.validate(newval);
+				return true;//
+				// TODO: Uh oh
+				//GraphName.validate(newval);
 			}
 		});
 		// Flat color selection property
@@ -142,30 +129,76 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 				pc.setColor(newval);
 			}
 		});
+		
+		// Auto ranging input properties
+		final FloatProperty propMaxRange = new FloatProperty("Maximum", 1f, null).setValidRange(0f+Float.MIN_VALUE, Float.POSITIVE_INFINITY);
+		final FloatProperty propMinRange = new FloatProperty("Minimum", 0f, null).setValidRange(Float.NEGATIVE_INFINITY, 1f-Float.MIN_VALUE);
+		
+		pc.setAutoRanging(true);
+		pc.setManualRange(propMinRange.getValue(), propMaxRange.getValue());
+		
+		propMinRange.addUpdateListener(new PropertyUpdateListener<Float>() {
+			@Override
+			public void onPropertyChanged(Float newval) {
+				propMaxRange.setValidRange(newval+Float.MIN_VALUE, Float.POSITIVE_INFINITY);
+				pc.setManualRange(newval, propMaxRange.getValue());
+			}
+		});
+		propMaxRange.addUpdateListener(new PropertyUpdateListener<Float>() {
+			@Override
+			public void onPropertyChanged(Float newval) {
+				propMinRange.setValidRange(Float.NEGATIVE_INFINITY, newval-Float.MIN_VALUE);
+				pc.setManualRange(propMinRange.getValue(), newval);
+			}
+		});
+		final BoolProperty propEnableAutorange = new BoolProperty("Auto-range", true, new PropertyUpdateListener<Boolean>() {
+			@Override
+			public void onPropertyChanged(Boolean newval) {
+				propMinRange.setVisible(!newval);
+				propMaxRange.setVisible(!newval);
+				pc.setAutoRanging(newval);
+			}
+		});
+		propEnableAutorange.setVisible(false);
+		
 		// Color mode selection property
 		ListProperty propColorMode = new ListProperty("Color Mode", 0, new PropertyUpdateListener<Integer>() {
 			@Override
 			public void onPropertyChanged(Integer newval) {
 				pc.setColorMode(newval);
-				propChannels.setVisible(PointCloudGL.ColorMode.values()[newval] == ColorMode.CHANNEL);
-				propFlatColor.setVisible(PointCloudGL.ColorMode.values()[newval] == ColorMode.FLAT_COLOR);
-				System.out.println("Newval: " + newval);
+				boolean isChannel = PCShaders.ColorMode.values()[newval] == PCShaders.ColorMode.CHANNEL;
+				propChannels.setVisible(isChannel);
+				propEnableAutorange.setVisible(isChannel);
+				if(isChannel) {
+					propMinRange.setVisible(!propEnableAutorange.getValue());
+					propMaxRange.setVisible(!propEnableAutorange.getValue());
+				} else {
+					propMinRange.setVisible(false);
+					propMaxRange.setVisible(false);
+				}
+				propFlatColor.setVisible(PCShaders.ColorMode.values()[newval] == PCShaders.ColorMode.FLAT_COLOR);
 			}
-		}).setList(PointCloudGL.colorModeNames);
+		}).setList(PCShaders.shaderNames);
 		
-		propChannels.setVisible(PointCloudGL.ColorMode.values()[propChannels.getValue()] == ColorMode.CHANNEL);
-		propFlatColor.setVisible(PointCloudGL.ColorMode.values()[propChannels.getValue()] == ColorMode.FLAT_COLOR);
+		propChannels.setVisible(PCShaders.ColorMode.values()[propChannels.getValue()] == PCShaders.ColorMode.CHANNEL);
+		propFlatColor.setVisible(PCShaders.ColorMode.values()[propChannels.getValue()] == PCShaders.ColorMode.FLAT_COLOR);
+		propMinRange.setVisible(!propEnableAutorange.getValue());
+		propMaxRange.setVisible(!propEnableAutorange.getValue());
 		
 		prop.addSubProperty(propTopic);
 		prop.addSubProperty(propColorMode);
 		prop.addSubProperty(propChannels);
 		prop.addSubProperty(propFlatColor);
+		prop.addSubProperty(propEnableAutorange);
+		prop.addSubProperty(propMinRange);
+		prop.addSubProperty(propMaxRange);
 		
 		pc.setColor(propFlatColor.getValue());
 	}
 
 	private void clearSubscriber() {
-		sub.removeMessageListener(subListener);
+		// TODO: Uh oh
+		//sub.removeMessageListener(subListener);
 		sub.shutdown();
 	}
 
@@ -189,7 +222,8 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 		super.onShutdown(view, node);
 
 		// Clear the subscriber
-		getSubscriber().removeMessageListener(subListener);
+		// TODO: Uh oh
+		//getSubscriber().removeMessageListener(subListener);
 	}
 
 	@Override

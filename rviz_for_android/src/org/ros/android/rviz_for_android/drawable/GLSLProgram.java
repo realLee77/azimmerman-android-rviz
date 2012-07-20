@@ -36,7 +36,7 @@ public class GLSLProgram {
 
 	public static enum ShaderVal {
 		// Attributes - location refers to OpenGL index
-		POSITION(false, 0), ATTRIB_COLOR(false, 1), TEXCOORD(false, 2), NORMAL(false, 3),
+		POSITION(false, 0), ATTRIB_COLOR(false, 1), TEXCOORD(false, 2), NORMAL(false, 3), AX(false, 4), AY(false, 5), AZ(false, 6), A_EXTRA(false,7),
 		// Uniforms - location refers to uniform int array
 		MVP_MATRIX(true, 0), TIME(true, 1), UNIFORM_COLOR(true, 3), MV_MATRIX(true, 4), LIGHTPOS(true, 5), M_MATRIX(true, 6), LIGHTVEC(true, 7), TEXTURE(true, 8), EXTRA(true, 9), EXTRA_2(true, 10), EXTRA_3(true, 11);
 

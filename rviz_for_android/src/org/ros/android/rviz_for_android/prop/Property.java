@@ -82,7 +82,6 @@ public abstract class Property<T> {
 	}
 	
 	protected void redraw() {
-		System.out.println("Property redraw triggered");
 		if(propAdapter != null)
 			propAdapter.notifyDataSetChanged();
 	}
