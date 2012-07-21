@@ -16,6 +16,10 @@
 
 package org.ros.android.renderer;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.commons.logging.impl.WeakHashtable;
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Transform;
@@ -311,5 +315,13 @@ public class OrbitCamera implements Camera {
 	@Override
 	public SelectionManager getSelectionManager() {
 		return sm;
+	}
+
+	
+	private Set<TargetFrameListener> targetFrameListeners = new HashSet<TargetFrameListener>();
+	
+	@Override
+	public void addTargetFrameChangeListener(TargetFrameListener l) {
+		
 	}
 }
