@@ -153,8 +153,8 @@ public abstract class Property<T> {
 	}
 
 	public void addSubProperty(Property<?> p, String... levels) {
-		if(propAdapter != null)
-			p.registerPropListAdapter(propAdapter);
+//		if(propAdapter != null)
+//			p.registerPropListAdapter(propAdapter);
 		
 		Property<?> cur = this;
 		for(int i = 0; i < levels.length; i++) {

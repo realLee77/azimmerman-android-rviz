@@ -86,4 +86,10 @@ public interface Camera {
 	public abstract void applyTransform(Transform t);
 	
 	public abstract SelectionManager getSelectionManager();
+	
+	public abstract void addTargetFrameChangeListener(TargetFrameListener l);
+	
+	public interface TargetFrameListener {
+		public void targetFrameChanged(GraphName newFrame);
+	}
 }

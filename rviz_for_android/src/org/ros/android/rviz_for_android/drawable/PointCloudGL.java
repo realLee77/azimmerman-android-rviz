@@ -16,7 +16,6 @@
  */
 package org.ros.android.rviz_for_android.drawable;
 
-import java.nio.Buffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,11 +104,9 @@ public class PointCloudGL extends BaseShape {
 		
 		// Determine which channels of data are available
 		if(channels != null && channels.size() > 0) {
-			//if(channelsChanged(channels)) {
 			channelNames.clear();
 			channelMin = new float[channels.size()];
 			channelMax = new float[channels.size()];
-			//}
 			this.channels = new float[channels.size()][points.length/3];
 			int idx = 0;
 			for(ChannelFloat32 cf : channels) {
@@ -120,7 +117,6 @@ public class PointCloudGL extends BaseShape {
 				idx++;
 			}
 			selectedChannelBuffer = moveToBuffer(this.channels[channelSelected], selectedChannelBuffer);
-			//selectedChannelBuffer = Vertices.toFloatBuffer(this.channels[channelSelected]);
 		} else {
 			// If no channels are available
 			this.channels = DEFAULT_CHANNELS;
@@ -134,7 +130,6 @@ public class PointCloudGL extends BaseShape {
 		}
 		
 		this.points = moveToBuffer(points, this.points);
-		//this.points = Vertices.toFloatBuffer(points);
 		cloudSize = points.length / 3;
 		drawCloud = (cloudSize > 0);
 	}
