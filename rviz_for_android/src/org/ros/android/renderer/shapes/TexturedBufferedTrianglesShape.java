@@ -21,7 +21,7 @@ import android.opengl.ETC1;
 import android.opengl.ETC1Util.ETC1Texture;
 import android.opengl.GLES20;
 
-public class TexturedBufferedTrianglesShape extends BaseShape implements CleanableShape {
+public class TexturedBufferedTrianglesShape extends BaseShape implements Cleanable {
 	public static enum TextureSmoothing {Linear, Nearest};
 	private static final Color baseColor = new Color(1f, 1f, 1f, 1f);
 

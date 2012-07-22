@@ -19,28 +19,27 @@ package org.ros.android.rviz_for_android.layers;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
+import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.FloatProperty;
+import org.ros.android.rviz_for_android.prop.FrameCheckStatusPropertyController;
 import org.ros.android.rviz_for_android.prop.GraphNameProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
-import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
-import org.ros.android.rviz_for_android.prop.StatusPropertyController;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
-import org.ros.rosjava_geometry.AvailableFrameTracker.FrameAddedListener;
+import org.ros.node.Node;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.opengl.GLES20;
@@ -68,14 +67,13 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	private ByteBuffer indexBuffer;
 
 	private BoolProperty prop;
+	private GraphNameProperty propParent;
 
 	private int[] uniformHandles;
 	private float[] MVP = new float[16];
 	private float scale = 1f;
 
-	private StatusPropertyController spc;
-
-	
+	private FrameCheckStatusPropertyController statusController;
 
 	private void calcMVP() {
 		Matrix.multiplyMM(MVP, 0, camera.getViewMatrix(), 0, camera.getModelMatrix(), 0);
@@ -92,9 +90,15 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 				scale = newval;
 			}
 		}).setValidRange(0.001f, 10000f));
-		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
 		
-		spc = new StatusPropertyController(prop.<ReadOnlyProperty> getProperty("Status"));
+		propParent = new GraphNameProperty("Parent", null, new PropertyUpdateListener<GraphName>() {
+			@Override
+			public void onPropertyChanged(GraphName newval) {
+				statusController.setTargetFrame(newval);
+			}
+		}, null);
+		prop.addSubProperty(propParent);
+		
 		axisShader = GLSLProgram.ColoredVertex();
 		uniformHandles = axisShader.getUniformHandles();
 	}
@@ -121,8 +125,6 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		GLES20.glDrawElements(GLES20.GL_LINES, 18, GLES20.GL_UNSIGNED_BYTE, indexBuffer);
 		camera.popM();
 	}
-
-	private FrameTransformTree frameTransformTree;
 	
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
@@ -131,23 +133,8 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		vertexBuffer = Vertices.toFloatBuffer(VERTICES);
 		colorBuffer = Vertices.toFloatBuffer(COLORS);
 		indexBuffer = Vertices.toByteBuffer(INDEX);
-
-		this.frameTransformTree = frameTransformTree; 
 		
-		frameTransformTree.getFrameTracker().addListener(new FrameAddedListener() {
-			@Override
-			public void informFrameAdded(Set<String> newFrames) {
-				checkFrameStatus();
-			}
-		});
-	}
-	
-	private void checkFrameStatus() {
-		GraphName parentFrame = prop.<GraphNameProperty> getProperty("Parent").getValue();
-		if(frameTransformTree.canTransform(camera.getFixedFrame(), parentFrame))
-			spc.setOk();
-		else
-			spc.setStatus("No transform exists from " + camera.getFixedFrame() + " to " + parentFrame + "!", StatusColor.WARN);		
+		statusController = new FrameCheckStatusPropertyController(prop.<ReadOnlyProperty> getProperty("Status"), camera, frameTransformTree);
 	}
 
 	public Property<?> getProperties() {
@@ -155,11 +142,17 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	}
 
 	public GraphName getFrame() {
-		return prop.<GraphNameProperty> getProperty("Parent").getValue();
+		return propParent.getValue();
 	}
 
 	@Override
 	public boolean isEnabled() {
 		return prop.getValue();
+	}
+
+	@Override
+	public void onShutdown(VisualizationView view, Node node) {
+		statusController.cleanup();
+		super.onShutdown(view, node);
 	}
 }

@@ -219,6 +219,7 @@ public class MainActivity extends RosActivity {
 		for(Layer l : layers)
 			visualizationView.addLayer(l);
 		
+		visualizationView.setPreserveEGLContextOnPause(true);
 
 		elv = (ExpandableListView) findViewById(R.id.expandableListView1);
 		propAdapter = new PropertyListAdapter(layers, getApplicationContext());

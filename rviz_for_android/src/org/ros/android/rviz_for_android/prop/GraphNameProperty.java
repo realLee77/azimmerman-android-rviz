@@ -85,10 +85,12 @@ public class GraphNameProperty extends Property<GraphName> {
 		if(ftt != null) {
 			framesToList.clear();
 			framesToList.addAll(0, defaultList);
-			Set<String> framesFromFtt = new HashSet<String>(ftt.getFrameTracker().getAvailableFrames());
-			for(String s : framesFromFtt) {
-				if(!framesToList.contains(s))
-					framesToList.add(s);
+			Set<String> framesFromFtt = ftt.getFrameTracker().getAvailableFrames();
+			synchronized(framesFromFtt) {
+				for(String s : framesFromFtt) {
+					if(!framesToList.contains(s))
+						framesToList.add(s);
+				}
 			}
 			spinnerFrameList = framesToList;
 		} else {

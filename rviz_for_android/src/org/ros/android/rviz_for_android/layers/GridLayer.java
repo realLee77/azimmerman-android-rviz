@@ -25,6 +25,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
+import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.Color;
@@ -33,6 +34,7 @@ import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.ColorProperty;
 import org.ros.android.rviz_for_android.prop.FloatProperty;
+import org.ros.android.rviz_for_android.prop.FrameCheckStatusPropertyController;
 import org.ros.android.rviz_for_android.prop.GraphNameProperty;
 import org.ros.android.rviz_for_android.prop.IntProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
@@ -44,6 +46,7 @@ import org.ros.android.rviz_for_android.prop.StatusPropertyController;
 import org.ros.android.rviz_for_android.prop.Vector3Property;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
+import org.ros.node.Node;
 import org.ros.rosjava_geometry.AvailableFrameTracker.FrameAddedListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Vector3;
@@ -68,14 +71,22 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	private float zOffset = 0f;
 	
 	private GLSLProgram gridShader;
-	private StatusPropertyController spc;
+	private FrameCheckStatusPropertyController statusController;
+	private GraphNameProperty propParent;
 
 	public GridLayer(Camera cam, int cells, float spacing) {
 		super(cam);
 
 		prop = new BoolProperty("enabled", true, null);
 		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
-		prop.addSubProperty(new GraphNameProperty("Parent", null, null, null));
+		propParent = new GraphNameProperty("Parent", null, new PropertyUpdateListener<GraphName>() {
+			@Override
+			public void onPropertyChanged(GraphName newval) {
+				statusController.setTargetFrame(newval);
+			}
+		}, null);
+		prop.addSubProperty(propParent);
+
 		prop.addSubProperty(new IntProperty("Cells", cells, new PropertyUpdateListener<Integer>() {
 			@Override
 			public void onPropertyChanged(Integer newval) {
@@ -104,8 +115,6 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			}
 		}));
 		
-		spc = new StatusPropertyController(prop.<ReadOnlyProperty>getProperty("Status"));
-		
 		initGrid();
 		gridShader = GLSLProgram.FlatColor();
 		uniformHandles = gridShader.getUniformHandles();
@@ -114,17 +123,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
 		prop.<GraphNameProperty> getProperty("Parent").setTransformTree(frameTransformTree);
-		
-		frameTransformTree.getFrameTracker().addListener(new FrameAddedListener() {
-			@Override
-			public void informFrameAdded(Set<String> newFrames) {
-				GraphName parentFrame = prop.<GraphNameProperty> getProperty("Parent").getValue();
-				if(frameTransformTree.canTransform(camera.getFixedFrame(), parentFrame))
-					spc.setOk();
-				else
-					spc.setStatus("No transform exists from " + camera.getFixedFrame() + " to " + parentFrame + "!", StatusColor.WARN);
-			}
-		});
+		statusController = new FrameCheckStatusPropertyController(prop.<ReadOnlyProperty>getProperty("Status"), camera, frameTransformTree);
 	}
 
 	private void onValueChanged() {
@@ -234,11 +233,18 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	}
 
 	public GraphName getFrame() {
-		return prop.<GraphNameProperty> getProperty("Parent").getValue();
+		return propParent.getValue();
 	}
 
 	@Override
 	public boolean isEnabled() {
 		return prop.getValue();
 	}
+
+	@Override
+	public void onShutdown(VisualizationView view, Node node) {
+		statusController.cleanup();
+		super.onShutdown(view, node);
+	}
+
 }

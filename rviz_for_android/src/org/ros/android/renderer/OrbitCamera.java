@@ -39,7 +39,7 @@ public class OrbitCamera implements Camera {
 	 * 
 	 * TODO(moesenle): make this the root of the TF tree.
 	 */
-	private static final GraphName DEFAULT_FIXED_FRAME = GraphName.of("/world");
+	private static final GraphName DEFAULT_FIXED_FRAME = GraphName.of("world");
 
 	/**
 	 * The default target frame is null which means that the renderer uses the user set camera.
@@ -183,11 +183,13 @@ public class OrbitCamera implements Camera {
 	public void setFixedFrame(GraphName fixedFrame) {
 		Preconditions.checkNotNull(fixedFrame, "Fixed frame must be specified.");
 		this.fixedFrame = fixedFrame;
+		informFixedFrameListeners();
 	}
 
 	public void resetFixedFrame() {
 		synchronized(fixedFrame) {
 			fixedFrame = DEFAULT_FIXED_FRAME;
+			informFixedFrameListeners();
 		}
 	}
 
@@ -317,11 +319,20 @@ public class OrbitCamera implements Camera {
 		return sm;
 	}
 
-	
-	private Set<TargetFrameListener> targetFrameListeners = new HashSet<TargetFrameListener>();
+	private Set<FixedFrameListener> fixedFrameListeners = new HashSet<FixedFrameListener>();
 	
 	@Override
-	public void addTargetFrameChangeListener(TargetFrameListener l) {
-		
+	public void addFixedFrameListener(FixedFrameListener l) {
+		fixedFrameListeners.add(l);
+	}
+	
+	private void informFixedFrameListeners() {
+		for(FixedFrameListener l : fixedFrameListeners)
+			l.fixedFrameChanged(targetFrame);
+	}
+
+	@Override
+	public void removeFixedFrameListener(FixedFrameListener l) {
+		fixedFrameListeners.remove(l);
 	}
 }

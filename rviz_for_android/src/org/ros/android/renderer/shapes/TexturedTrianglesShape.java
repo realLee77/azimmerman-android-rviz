@@ -21,7 +21,7 @@ import android.opengl.GLES20;
  * @author azimmerman
  *
  */
-public class TexturedTrianglesShape extends TrianglesShape implements CleanableShape {
+public class TexturedTrianglesShape extends TrianglesShape implements Cleanable {
 	public static enum TextureSmoothing {Linear, Nearest};
 	private static final Color baseColor = new Color(1f, 1f, 1f, 1f);
 
