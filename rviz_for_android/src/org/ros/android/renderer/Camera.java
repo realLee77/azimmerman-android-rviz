@@ -87,9 +87,11 @@ public interface Camera {
 	
 	public abstract SelectionManager getSelectionManager();
 	
-	public abstract void addTargetFrameChangeListener(TargetFrameListener l);
+	public abstract void addFixedFrameListener(FixedFrameListener l);
 	
-	public interface TargetFrameListener {
-		public void targetFrameChanged(GraphName newFrame);
+	public abstract void removeFixedFrameListener(FixedFrameListener l);
+	
+	public interface FixedFrameListener {
+		public void fixedFrameChanged(GraphName newFrame);
 	}
 }

@@ -32,11 +32,11 @@ import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.TexturedTrianglesShape;
 import org.ros.android.rviz_for_android.drawable.Plane;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
+import org.ros.android.rviz_for_android.prop.FrameCheckStatusPropertyController;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
-import org.ros.android.rviz_for_android.prop.StatusPropertyController;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -90,19 +90,21 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		this.context = context;
 	}
 
-	private StatusPropertyController spc;
+	private FrameCheckStatusPropertyController statusController;
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
 
-		spc = new StatusPropertyController(prop.<ReadOnlyProperty> getProperty("Status"));
+		statusController = new FrameCheckStatusPropertyController(prop.<ReadOnlyProperty> getProperty("Status"), camera, frameTransformTree);
+		statusController.setTargetFrame(mapGraphName);
 
 		Subscriber<nav_msgs.OccupancyGrid> sub = getSubscriber();
 		subListener = new MessageListener<OccupancyGrid>() {
 			@Override
 			public void onNewMessage(OccupancyGrid arg0) {
-				spc.setStatus("Map loading...", StatusColor.OK);
+				statusController.setFrameChecking(false);
+				statusController.setStatus("Map loading...", StatusColor.OK);
 				mostRecent = arg0;
 				isReady = false;
 				generateMapTiles(arg0);
@@ -124,12 +126,16 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 
 	private void updateStatus(FrameTransformTree frameTransformTree, Camera camera) {
 		if(!isReady) {
-			spc.setStatus("No map exists!", StatusColor.ERROR);
-		} else if(!frameTransformTree.canTransform(camera.getFixedFrame(), mapGraphName)) {
-			spc.setStatus("No transform exists from " + camera.getFixedFrame() + " to " + mapGraphName.toString() + "!", StatusColor.WARN);
+			statusController.setStatus("No map exists!", StatusColor.ERROR);
 		} else {
-			spc.setOk();
+			statusController.setFrameChecking(true);
 		}
+		// if(!frameTransformTree.canTransform(camera.getFixedFrame(), mapGraphName)) {
+		// }
+		// statusController.setStatus("No transform exists from " + camera.getFixedFrame() + " to " + mapGraphName.toString() + "!", StatusColor.WARN);
+		// } else {
+		// statusController.setOk();
+		// }
 	}
 
 	private Bitmap mapImage;
@@ -284,7 +290,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		return prop;
 	}
 
-	private static final GraphName mapGraphName = GraphName.of("/map");
+	private static final GraphName mapGraphName = GraphName.of("map");
 
 	@Override
 	public GraphName getFrame() {
@@ -299,7 +305,9 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 				for(Plane p : pRow)
 					p.cleanup();
 		}
+		
+		statusController.cleanup();
 		// TODO: Uh oh
-		//getSubscriber().removeMessageListener(subListener);
+		// getSubscriber().removeMessageListener(subListener);
 	}
 }

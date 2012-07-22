@@ -28,19 +28,19 @@ import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.Selectable;
 import org.ros.android.renderer.layer.SelectableLayer;
-import org.ros.android.renderer.shapes.CleanableShape;
+import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.rviz_for_android.drawable.ColladaMesh;
 import org.ros.android.rviz_for_android.drawable.Cube;
 import org.ros.android.rviz_for_android.drawable.Cylinder;
 import org.ros.android.rviz_for_android.drawable.Sphere;
 import org.ros.android.rviz_for_android.drawable.StlMesh;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
+import org.ros.android.rviz_for_android.prop.FrameCheckStatusPropertyController;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
-import org.ros.android.rviz_for_android.prop.StatusPropertyController;
 import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.rviz_for_android.urdf.Component;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
@@ -62,7 +62,7 @@ import android.widget.Toast;
 public class RobotModelLayer extends DefaultLayer implements LayerWithProperties, SelectableLayer {
 
 	private static final String DEFAULT_PARAM_VALUE = "/robot_description";
-	private String current_param_value = DEFAULT_PARAM_VALUE;
+	// private String current_param_value = DEFAULT_PARAM_VALUE;
 	private BoolProperty prop = new BoolProperty("Enabled", true, null);
 	private FrameTransformTree ftt;
 	private Camera cam;
@@ -79,8 +79,8 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 	private Activity context;
 	private MeshFileDownloader mfd;
-	
-	private StatusPropertyController spc;
+
+	private FrameCheckStatusPropertyController statusController;
 
 	public RobotModelLayer(Camera cam, MeshFileDownloader mfd) {
 		super(cam);
@@ -91,25 +91,13 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		this.mfd = mfd;
 
 		reader = new UrdfReader();
-		
-		prop.addSubProperty(new ReadOnlyProperty("Status","OK",null));
-		
-		spc = new StatusPropertyController(prop.<ReadOnlyProperty>getProperty("Status"));
+
+		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
 
 		prop.addSubProperty(new StringProperty("Parameter", DEFAULT_PARAM_VALUE, new PropertyUpdateListener<String>() {
 			@Override
 			public void onPropertyChanged(String newval) {
-				if(!newval.equals(current_param_value)) {
-					if(params.has(newval)) {
-						current_param_value = newval;
-						reloadUrdf(newval);
-						spc.setOk();
-					} else {
-						prop.<StringProperty> getProperty("Parameter").setValue(current_param_value);
-						Toast.makeText(context, "Invalid parameter " + newval, Toast.LENGTH_LONG).show();
-						spc.setStatus("Invalid parameter", StatusColor.ERROR);
-					}
-				}
+				reloadUrdf(newval);
 			}
 		}));
 		prop.addSubProperty(new BoolProperty("Visual", drawVis, new PropertyUpdateListener<Boolean>() {
@@ -126,7 +114,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 				requestRender();
 			}
 		}));
-		
+
 		cyl = new Cylinder(cam);
 		cube = new Cube(cam);
 		sphere = new Sphere(cam);
@@ -154,7 +142,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			cam.pushM();
 			// Transform to the URDF link's frame
 			cam.applyTransform(ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
-			
+
 			// Draw the shape
 			if(drawVis && vis != null) {
 				drawComponent(glUnused, vis);
@@ -162,7 +150,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			if(drawCol && col != null) {
 				drawComponent(glUnused, col);
 			}
-			
+
 			cam.popM();
 		}
 	}
@@ -203,8 +191,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			StlMesh sm = StlMesh.newFromFile(meshResourceName, mfd, cam);
 			sm.registerSelectable();
 			ud = (UrdfDrawable) sm;
-		}
-		else {
+		} else {
 			Log.e("RobotModel", "Unknown mesh type! " + meshResourceName);
 			return false;
 		}
@@ -221,10 +208,15 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		this.params = node.getParameterTree();
 
 		reloadUrdf(DEFAULT_PARAM_VALUE);
+
+		statusController = new FrameCheckStatusPropertyController(prop.<ReadOnlyProperty> getProperty("Status"), camera, frameTransformTree);
 	}
 
 	private void reloadUrdf(final String param) {
 		final LoadUrdf lu = new LoadUrdf();
+		Log.d("RobotModel", "Reloading URDF");
+		clearMeshes();
+
 		context.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
@@ -272,12 +264,14 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			String param = parameters[0];
 
 			// Parse the URDF
+			statusController.setFrameChecking(false);
 			String urdf_xml = null;
-			if(params.has(param))
+			if(params.has(param)) {
 				urdf_xml = params.getString(param);
-			else {
+				statusController.setStatus("Loading URDF...", StatusColor.OK);
+			} else {
 				publishProgress("Invalid parameter " + param);
-				spc.setStatus("Invalid parameter", StatusColor.ERROR);
+				statusController.setStatus("Invalid parameter", StatusColor.ERROR);
 				return null;
 			}
 			reader.addListener(new UrdfReadingProgressListener() {
@@ -319,7 +313,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 					}
 				}
 			}
-			spc.setOk();
+			statusController.setFrameChecking(true);
 			return null;
 		}
 	}
@@ -327,10 +321,26 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	@Override
 	public void onShutdown(VisualizationView view, Node node) {
 		super.onShutdown(view, node);
-		
-		for(UrdfDrawable ud : meshes.values()) {
-			if(ud instanceof CleanableShape)
-				((CleanableShape) ud).cleanup();
+
+		clearMeshes();
+
+		statusController.cleanup();
+	}
+
+	private void clearMeshes() {
+		Log.i("RobotModel", "Clearing meshes and URDF");
+
+		if(meshes != null) {
+			for(UrdfDrawable ud : meshes.values()) {
+				if(ud instanceof Cleanable)
+					((Cleanable) ud).cleanup();
+			}
+			meshes.clear();
+		}
+
+		if(urdf != null) {
+			urdf.clear();
+			urdf = null;
 		}
 	}
 
@@ -347,7 +357,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			cam.pushM();
 			// Transform to the URDF link's frame
 			cam.applyTransform(ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
-			
+
 			// Draw the shape
 			if(drawVis && vis != null) {
 				selectDrawComponent(glUnused, vis);
@@ -355,11 +365,11 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			if(drawCol && col != null) {
 				selectDrawComponent(glUnused, col);
 			}
-			
+
 			cam.popM();
 		}
 	}
-	
+
 	private void selectDrawComponent(GL10 glUnused, Component com) {
 		switch(com.getType()) {
 		case BOX:

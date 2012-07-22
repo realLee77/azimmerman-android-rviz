@@ -27,15 +27,17 @@ import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.PCShaders;
 import org.ros.android.rviz_for_android.drawable.PointCloudGL;
-import org.ros.android.rviz_for_android.drawable.PCShaders.ColorMode;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.ColorProperty;
 import org.ros.android.rviz_for_android.prop.FloatProperty;
+import org.ros.android.rviz_for_android.prop.FrameCheckStatusPropertyController;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.ListProperty;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
 import org.ros.android.rviz_for_android.prop.StringProperty;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
 import org.ros.android.rviz_for_android.prop.StringProperty.StringPropertyValidator;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
@@ -50,6 +52,8 @@ import android.os.Handler;
 public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> implements LayerWithProperties, TfLayer {
 
 	private BoolProperty prop;
+	private ReadOnlyProperty propStatus;
+	private FrameCheckStatusPropertyController statusController;
 	private int pointCount = -1;
 	private GraphName frame;
 
@@ -63,6 +67,11 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
 		sub = getSubscriber();
+		
+		statusController = new FrameCheckStatusPropertyController(propStatus, camera, frameTransformTree);	
+		statusController.setFrameChecking(false);
+		statusController.setStatus("No PointCloud messages received", StatusColor.WARN);
+		
 		subListener = new MessageListener<PointCloud>() {
 			@Override
 			public void onNewMessage(PointCloud msg) {
@@ -77,8 +86,11 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 				pc.setData(vertices, msg.getChannels());
 				prop.<ListProperty> getProperty("Channels").setList(pc.getChannelNames());
 
-				if(frame == null || !frame.equals(msg.getHeader().getFrameId()))
-					frame = GraphName.of(msg.getHeader().getFrameId());
+				if(frame == null || !frame.equals(msg.getHeader().getFrameId())) {
+					frame = GraphName.of(msg.getHeader().getFrameId());					
+					statusController.setTargetFrame(frame);
+					statusController.setFrameChecking(true);  // TODO: Optimize with message count?
+				}
 			}
 		};
 
@@ -117,9 +129,7 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 		propTopic.setValidator(new StringPropertyValidator() {
 			@Override
 			public boolean isAcceptable(String newval) {
-				return true;//
-				// TODO: Uh oh
-				//GraphName.validate(newval);
+				return true;
 			}
 		});
 		// Flat color selection property
@@ -185,6 +195,9 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 		propMinRange.setVisible(!propEnableAutorange.getValue());
 		propMaxRange.setVisible(!propEnableAutorange.getValue());
 		
+		propStatus = new ReadOnlyProperty("Status", "OK", null);
+		
+		prop.addSubProperty(propStatus);
 		prop.addSubProperty(propTopic);
 		prop.addSubProperty(propColorMode);
 		prop.addSubProperty(propChannels);

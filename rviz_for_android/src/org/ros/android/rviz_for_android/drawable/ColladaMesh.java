@@ -24,7 +24,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.BaseShape;
-import org.ros.android.renderer.shapes.CleanableShape;
+import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.rviz_for_android.drawable.loader.ColladaLoader;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
@@ -32,7 +32,7 @@ import org.ros.rosjava_geometry.Transform;
 
 import android.util.Log;
 
-public class ColladaMesh implements UrdfDrawable, CleanableShape {
+public class ColladaMesh implements UrdfDrawable, Cleanable {
 	protected static final ColladaLoader loader = new ColladaLoader();
 	
 	/**
@@ -107,8 +107,8 @@ public class ColladaMesh implements UrdfDrawable, CleanableShape {
 	@Override
 	public void cleanup() {
 		for(BaseShape g : geometries) {
-			if(g instanceof CleanableShape) {
-				CleanableShape cs = (CleanableShape) g;
+			if(g instanceof Cleanable) {
+				Cleanable cs = (Cleanable) g;
 				cs.cleanup();
 			}
 		}
