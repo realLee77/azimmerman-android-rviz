@@ -40,7 +40,6 @@ import android.widget.TextView;
 public class ListProperty extends Property<Integer> {
 
 	private List<String> list = new ArrayList<String>();
-	private TextView textView;
 	private Spinner spin;
 	private ArrayAdapter<String> aa;
 
@@ -67,37 +66,34 @@ public class ListProperty extends Property<Integer> {
 	}
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		if(super.visible) {
-			convertView = inflater.inflate(R.layout.row_property_spinner, parent, false);
+	public View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
+		convertView = inflater.inflate(R.layout.row_property_spinner, parent, false);
 
-			textView = (TextView) convertView.findViewById(R.id.tvProp_Spinner_Name);
-			if(title != null)
-				textView.setText(title);
-			else
-				textView.setText(super.name);
+		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_Spinner_Name);
+		if(title != null)
+			tvTitle.setText(title);
+		else
+			tvTitle.setText(super.name);
 
-			if(aa == null) {
-				aa = new ArrayAdapter<String>(parent.getContext(), android.R.layout.simple_spinner_item, this.list);
-				aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		if(aa == null) {
+			aa = new ArrayAdapter<String>(parent.getContext(), android.R.layout.simple_spinner_item, this.list);
+			aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		}
+
+		spin = (Spinner) convertView.findViewById(R.id.spProp_Spinner);
+
+		spin.setAdapter(aa);
+		spin.setOnItemSelectedListener(new OnItemSelectedListener() {
+			public void onItemSelected(AdapterView<?> arg0, View v, int position, long id) {
+				setValue(position);
 			}
 
-			spin = (Spinner) convertView.findViewById(R.id.spProp_Spinner);
+			public void onNothingSelected(AdapterView<?> arg0) {
+			}
+		});
 
-			spin.setAdapter(aa);
-			spin.setOnItemSelectedListener(new OnItemSelectedListener() {
-				public void onItemSelected(AdapterView<?> arg0, View v, int position, long id) {
-					setValue(position);
-				}
-
-				public void onNothingSelected(AdapterView<?> arg0) {
-				}
-			});
-
-			spin.setSelection(getValue());
-			spin.setEnabled(super.enabled);
-		} else
-			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
+		spin.setSelection(getValue());
+		spin.setEnabled(super.enabled);
 		return convertView;
 	}
 

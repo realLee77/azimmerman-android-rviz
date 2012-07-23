@@ -38,43 +38,39 @@ public class ColorProperty extends Property<Color> {
 		super(name, value, updateListener);
 	}
 
-	private TextView textView;
 	private Button btn;
 
 	@Override
-	public View getGUI(View convertView, final ViewGroup parent, LayoutInflater inflater, String title) {
-		if(super.visible) {
-			convertView = inflater.inflate(R.layout.row_property_button, parent, false);
-			textView = (TextView) convertView.findViewById(R.id.tvProp_Button_Name);
-			if(title != null)
-				textView.setText(title);
-			else
-				textView.setText(super.name);
+	public View getUi(View convertView, final ViewGroup parent, LayoutInflater inflater, String title) {
+		convertView = inflater.inflate(R.layout.row_property_button, parent, false);
+		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_Button_Name);
+		if(title != null)
+			tvTitle.setText(title);
+		else
+			tvTitle.setText(super.name);
 
-			btn = (Button) convertView.findViewById(R.id.btProp_Button);
-			btn.setText(" ");
-			btn.setBackgroundColor(Utility.ColorToIntRGB(value));
+		btn = (Button) convertView.findViewById(R.id.btProp_Button);
+		btn.setText(" ");
+		btn.setBackgroundColor(Utility.ColorToIntRGB(value));
 
-			btn.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(parent.getContext());
-					final ColorPickerDialog d = new ColorPickerDialog(parent.getContext(), prefs.getInt("dialog", Utility.ColorToIntRGB(value)));
-					d.setAlphaSliderVisible(true);
-					d.setButton("Ok", new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-							setValue(Utility.IntToColor(d.getColor()));
+		btn.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(parent.getContext());
+				final ColorPickerDialog d = new ColorPickerDialog(parent.getContext(), prefs.getInt("dialog", Utility.ColorToIntRGB(value)));
+				d.setAlphaSliderVisible(true);
+				d.setButton("Ok", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						setValue(Utility.IntToColor(d.getColor()));
 
-							setButtonBackground();
-						}
-					});
-					d.show();
-				}
-			});
-			btn.setText("Pick Color");
-			btn.setEnabled(super.enabled);
-			setButtonBackground();
-		} else
-			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
+						setButtonBackground();
+					}
+				});
+				d.show();
+			}
+		});
+		btn.setText("Pick Color");
+		btn.setEnabled(super.enabled);
+		setButtonBackground();
 		return convertView;
 	}
 

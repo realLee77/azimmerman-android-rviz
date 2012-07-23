@@ -37,25 +37,30 @@ public class FloatProperty extends Property<Float> {
 	private float min = Float.MIN_VALUE;
 	private float max = Float.MAX_VALUE;
 
-	private TextView textView;
 	private EditText et;
 
 	public FloatProperty(String name, Float value, PropertyUpdateListener<Float> updateListener) {
 		super(name, value, updateListener);
 		newFloat = value;
+		
+		this.addUpdateListener(new PropertyUpdateListener<Float>() {
+			public void onPropertyChanged(Float newval) {
+				if(et != null)
+					et.setText(Float.toString(newval));
+			}
+		});
 	}
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		if(super.visible) {
+	public View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
 		convertView = inflater.inflate(R.layout.row_property_numericfield, parent, false);
 		final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 		
-		textView = (TextView) convertView.findViewById(R.id.tvProp_NumericField_Name);
+		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_NumericField_Name);
 		if(title != null)
-			textView.setText(title);
+			tvTitle.setText(title);
 		else
-			textView.setText(super.name);
+			tvTitle.setText(super.name);
 
 		// Show the numeric input field
 		et = (EditText) convertView.findViewById(R.id.etProp_NumericField_DecimalValue);
@@ -81,14 +86,6 @@ public class FloatProperty extends Property<Float> {
 		});
 
 		et.setEnabled(super.enabled);
-		
-		this.addUpdateListener(new PropertyUpdateListener<Float>() {
-			public void onPropertyChanged(Float newval) {
-				et.setText(Float.toString(newval));
-			}
-		});
-		} else 
-			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
 		return convertView;
 	}
 

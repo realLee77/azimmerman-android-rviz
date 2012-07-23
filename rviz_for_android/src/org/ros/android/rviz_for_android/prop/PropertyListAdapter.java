@@ -59,7 +59,7 @@ public class PropertyListAdapter extends BaseExpandableListAdapter {
 	}
 
 	public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-		return props.get(groupPosition).get(childPosition).getGUI(convertView, parent, inflater, null);
+		return props.get(groupPosition).get(childPosition).getPropertyUi(convertView, parent, inflater, null);
 	}
 
 	public int getChildrenCount(int groupPosition) {
@@ -85,7 +85,7 @@ public class PropertyListAdapter extends BaseExpandableListAdapter {
 	}
 
 	public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-		return layers.get(groupPosition).getProperties().getGUI(convertView, parent, inflater, layers.get(groupPosition).getName());
+		return layers.get(groupPosition).getProperties().getPropertyUi(convertView, parent, inflater, layers.get(groupPosition).getName());
 	}
 
 	public boolean hasStableIds() {

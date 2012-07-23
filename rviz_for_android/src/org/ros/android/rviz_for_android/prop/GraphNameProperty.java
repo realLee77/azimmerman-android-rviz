@@ -63,7 +63,6 @@ public class GraphNameProperty extends Property<GraphName> {
 
 	private int selection = 0;
 	private FrameTransformTree ftt;
-	private TextView textView;
 	private Spinner spin;
 
 	public GraphNameProperty(String name, GraphName value, PropertyUpdateListener<GraphName> updateListener, FrameTransformTree ftt) {
@@ -129,14 +128,14 @@ public class GraphNameProperty extends Property<GraphName> {
 	}
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
+	public View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
 		convertView = inflater.inflate(R.layout.row_property_spinner, parent, false);
 
-		textView = (TextView) convertView.findViewById(R.id.tvProp_Spinner_Name);
+		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_Spinner_Name);
 		if(title != null)
-			textView.setText(title);
+			tvTitle.setText(title);
 		else
-			textView.setText(super.name);
+			tvTitle.setText(super.name);
 
 		generateSpinnerContents();
 		if(aa == null) {

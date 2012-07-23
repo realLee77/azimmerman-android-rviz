@@ -35,8 +35,6 @@ import android.widget.TextView;
 public class Vector3Property extends Property<Vector3> {
 
 	private Vector3 newVector;
-
-	private TextView textView;
 	private EditText et;
 
 	public Vector3Property(String name, Vector3 value, PropertyUpdateListener<Vector3> updateListener) {
@@ -45,37 +43,34 @@ public class Vector3Property extends Property<Vector3> {
 	}
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		if(super.visible) {
-			convertView = inflater.inflate(R.layout.row_property_textfield, parent, false);
-			final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-			textView = (TextView) convertView.findViewById(R.id.tvProp_TextField_Name);
-			if(title != null)
-				textView.setText(title);
-			else
-				textView.setText(super.name);
-			et = (EditText) convertView.findViewById(R.id.etProp_TextField_Value);
-			et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_CLASS_TEXT);
-			et.setText(newVector.getX() + ", " + newVector.getY() + ", " + newVector.getZ());
-			et.setSelectAllOnFocus(true);
-			et.setOnKeyListener(new OnKeyListener() {
-				public boolean onKey(View v, int keyCode, KeyEvent event) {
-					if(keyCode == KeyEvent.KEYCODE_ENTER) {
-						newVector = Utility.newVector3FromString(et.getText().toString());
-						if(newVector != null)
-							setValue(newVector);
-						else
-							newVector = value;
-						et.setText(newVector.getX() + ", " + newVector.getY() + ", " + newVector.getZ());
-						imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
-						return true;
-					}
-					return false;
+	public View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
+		convertView = inflater.inflate(R.layout.row_property_textfield, parent, false);
+		final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_TextField_Name);
+		if(title != null)
+			tvTitle.setText(title);
+		else
+			tvTitle.setText(super.name);
+		et = (EditText) convertView.findViewById(R.id.etProp_TextField_Value);
+		et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_CLASS_TEXT);
+		et.setText(newVector.getX() + ", " + newVector.getY() + ", " + newVector.getZ());
+		et.setSelectAllOnFocus(true);
+		et.setOnKeyListener(new OnKeyListener() {
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				if(keyCode == KeyEvent.KEYCODE_ENTER) {
+					newVector = Utility.newVector3FromString(et.getText().toString());
+					if(newVector != null)
+						setValue(newVector);
+					else
+						newVector = value;
+					et.setText(newVector.getX() + ", " + newVector.getY() + ", " + newVector.getZ());
+					imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
+					return true;
 				}
-			});
-			et.setEnabled(super.enabled);
-		} else
-			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
+				return false;
+			}
+		});
+		et.setEnabled(super.enabled);
 		return convertView;
 	}
 
