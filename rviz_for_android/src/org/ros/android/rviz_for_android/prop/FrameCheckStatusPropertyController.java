@@ -66,8 +66,10 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 	}
 	
 	public void setTargetFrame(GraphName newFrame) {
-		targetFrame = newFrame; 
-		checkFrameExists();
+		if(!newFrame.equals(targetFrame)) {
+			targetFrame = newFrame;
+			checkFrameExists();
+		}
 	}
 	
 	public void setFrameChecking(boolean frameCheck) {

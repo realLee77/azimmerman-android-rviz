@@ -30,9 +30,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 public class StringProperty extends Property<String> {
-	String newText;
+	private String newText;
 
-	private TextView textView;
 	private EditText et;
 
 	public interface StringPropertyValidator {
@@ -60,42 +59,39 @@ public class StringProperty extends Property<String> {
 	}
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		if(super.visible) {
-			convertView = inflater.inflate(R.layout.row_property_textfield, parent, false);
-			final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-			textView = (TextView) convertView.findViewById(R.id.tvProp_TextField_Name);
-			if(title != null)
-				textView.setText(title);
-			else
-				textView.setText(super.name);
-			et = (EditText) convertView.findViewById(R.id.etProp_TextField_Value);
-			et.setText(newText);
-			et.setSelectAllOnFocus(true);
-			et.setOnKeyListener(new OnKeyListener() {
-				public boolean onKey(View v, int keyCode, KeyEvent event) {
-					newText = et.getText().toString();
-					if(keyCode == KeyEvent.KEYCODE_ENTER && validator.isAcceptable(newText)) {
-						setValue(newText);
-						imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
-						return true;
-					} else if(!validator.isAcceptable(newText)) {
-						et.setText(getValue());
-						imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
-						return true;
-					}
-					return false;
+	public View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
+		convertView = inflater.inflate(R.layout.row_property_textfield, parent, false);
+		final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_TextField_Name);
+		if(title != null)
+			tvTitle.setText(title);
+		else
+			tvTitle.setText(super.name);
+		et = (EditText) convertView.findViewById(R.id.etProp_TextField_Value);
+		et.setText(newText);
+		et.setSelectAllOnFocus(true);
+		et.setOnKeyListener(new OnKeyListener() {
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				newText = et.getText().toString();
+				if(keyCode == KeyEvent.KEYCODE_ENTER && validator.isAcceptable(newText)) {
+					setValue(newText);
+					imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
+					return true;
+				} else if(!validator.isAcceptable(newText)) {
+					et.setText(getValue());
+					imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
+					return true;
 				}
-			});
-			et.setEnabled(super.enabled);
-			super.addUpdateListener(new PropertyUpdateListener<String>() {
-				@Override
-				public void onPropertyChanged(String newval) {
-					et.setText(newval);
-				}
-			});
-		} else
-			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
+				return false;
+			}
+		});
+		et.setEnabled(super.enabled);
+		super.addUpdateListener(new PropertyUpdateListener<String>() {
+			@Override
+			public void onPropertyChanged(String newval) {
+				et.setText(newval);
+			}
+		});
 		return convertView;
 	}
 

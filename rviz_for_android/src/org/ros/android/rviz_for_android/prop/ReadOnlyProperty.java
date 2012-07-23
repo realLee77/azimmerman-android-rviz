@@ -52,7 +52,6 @@ public class ReadOnlyProperty extends Property<String> {
 		}
 	}
 
-	private TextView textView;
 	private TextView display;
 	private ImageView statusIcon;
 	private StatusColor textColor = StatusColor.OK;
@@ -68,40 +67,37 @@ public class ReadOnlyProperty extends Property<String> {
 	}
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		if(super.visible) {
-			convertView = inflater.inflate(R.layout.row_property_readonly, parent, false);
-			final View accessView = convertView;
-			textView = (TextView) convertView.findViewById(R.id.tvProp_ReadOnly_Name);
-			if(title != null)
-				textView.setText(title);
-			else
-				textView.setText(super.name);
-	
-			statusIcon = (ImageView) convertView.findViewById(R.id.imgStatus);
-			statusIcon.setImageResource(textColor.getDrawable());
-	
-			display = (TextView) convertView.findViewById(R.id.tvProp_ReadOnly_Value);
-			display.setText(super.value);
-			display.setTextColor(textColor.getColor());
-	
-			// When the layer updates the read only property, update the view
-			// This must be done by posting a runnable to the view, which is executed by the UI thread
-			super.addUpdateListener(new PropertyUpdateListener<String>() {
-				@Override
-				public void onPropertyChanged(final String newval) {
-					accessView.post(new Runnable() {
-						@Override
-						public void run() {
-							display.setText(newval);
-							display.setTextColor(textColor.getColor());
-							statusIcon.setImageResource(textColor.getDrawable());
-						}
-					});
-				}
-			});
-		} else 
-			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
+	public View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
+		convertView = inflater.inflate(R.layout.row_property_readonly, parent, false);
+		final View accessView = convertView;
+		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_ReadOnly_Name);
+		if(title != null)
+			tvTitle.setText(title);
+		else
+			tvTitle.setText(super.name);
+
+		statusIcon = (ImageView) convertView.findViewById(R.id.imgStatus);
+		statusIcon.setImageResource(textColor.getDrawable());
+
+		display = (TextView) convertView.findViewById(R.id.tvProp_ReadOnly_Value);
+		display.setText(super.value);
+		display.setTextColor(textColor.getColor());
+
+		// When the layer updates the read only property, update the view
+		// This must be done by posting a runnable to the view, which is executed by the UI thread
+		super.addUpdateListener(new PropertyUpdateListener<String>() {
+			@Override
+			public void onPropertyChanged(final String newval) {
+				accessView.post(new Runnable() {
+					@Override
+					public void run() {
+						display.setText(newval);
+						display.setTextColor(textColor.getColor());
+						statusIcon.setImageResource(textColor.getDrawable());
+					}
+				});
+			}
+		});
 		return convertView;
 	}	
 }

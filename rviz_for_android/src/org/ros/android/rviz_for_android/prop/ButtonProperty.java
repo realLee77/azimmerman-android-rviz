@@ -31,30 +31,26 @@ public class ButtonProperty extends Property<String> {
 		super(name, value, updateListener);
 	}
 
-	private TextView textView;
 	private Button btn;
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		if(super.visible) {
-			convertView = inflater.inflate(R.layout.row_property_button, parent, false);
-			textView = (TextView) convertView.findViewById(R.id.tvProp_Button_Name);
-			if(title != null)
-				textView.setText(title);
-			else
-				textView.setText(super.name);
+	public View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
+		convertView = inflater.inflate(R.layout.row_property_button, parent, false);
+		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_Button_Name);
+		if(title != null)
+			tvTitle.setText(title);
+		else
+			tvTitle.setText(super.name);
 
-			btn = (Button) convertView.findViewById(R.id.btProp_Button);
+		btn = (Button) convertView.findViewById(R.id.btProp_Button);
 
-			btn.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					ButtonProperty.this.informListeners("");
-				}
-			});
-			btn.setText(super.value);
-			btn.setEnabled(super.enabled);
-		} else
-			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
+		btn.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				ButtonProperty.this.informListeners("");
+			}
+		});
+		btn.setText(super.value);
+		btn.setEnabled(super.enabled);
 		return convertView;
 	}
 

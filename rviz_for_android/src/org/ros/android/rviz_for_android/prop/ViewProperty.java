@@ -26,7 +26,7 @@ import android.widget.TextView;
 
 public class ViewProperty extends Property<Object> {
 
-	private TextView textView;
+	private TextView tvTitle;
 	private CheckBox cb;
 	
 	public ViewProperty(String name, Object value, PropertyUpdateListener<Object> updateListener) {
@@ -34,13 +34,13 @@ public class ViewProperty extends Property<Object> {
 	}
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
+	public View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
 		convertView = inflater.inflate(R.layout.row_property_boolean, parent, false);
-		textView = (TextView) convertView.findViewById(R.id.tvProp_Boolean_Name);
+		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_Boolean_Name);
 		if(title != null)
-			textView.setText(title);
+			tvTitle.setText(title);
 		else
-			textView.setText(super.name);
+			tvTitle.setText(super.name);
 		cb = (CheckBox) convertView.findViewById(R.id.cbProp_Checkbox);
 		cb.setFocusable(false);
 		cb.setEnabled(false);

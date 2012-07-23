@@ -57,8 +57,9 @@ public class PointCloud2GL extends BaseShape {
 	private List<String> channelNames = new ArrayList<String>();
 
 	private Object dataSync = new Object();
-	
-	private List<PointField> fields;
+
+	private static final List<PointField> DEFAULT_LIST = new ArrayList<PointField>();
+	private List<PointField> fields = DEFAULT_LIST;
 
 	public PointCloud2GL(Camera cam, Context context) {
 		super(cam);
@@ -93,17 +94,17 @@ public class PointCloud2GL extends BaseShape {
 			drawOffset = fields.get(channel).getOffset();
 		}
 	}
-	
+
 	public List<String> getChannelNames() {
 		return channelNames;
 	}
-	
-	public void setData(sensor_msgs.PointCloud2 msg) {
-		drawCloud = false;
+
+	public synchronized void setData(sensor_msgs.PointCloud2 msg) {
+		// drawCloud = false;
 		channelNames.clear();
 		this.fields = msg.getFields();
 		this.stride = msg.getPointStep();
-		pointCount = (msg.getData().capacity()/stride);
+		pointCount = (msg.getData().capacity() / stride);
 
 		synchronized(dataSync) {
 			if(data == null || data.capacity() < msg.getData().array().length) {
@@ -116,7 +117,6 @@ public class PointCloud2GL extends BaseShape {
 			}
 		}
 
-		// TODO: Check what kind of data we're receiving?
 		// TODO: Optimize this somehow?
 		for(PointField pf : fields) {
 			channelNames.add(pf.getName());
@@ -133,26 +133,26 @@ public class PointCloud2GL extends BaseShape {
 	}
 
 	/**
-	 * Iterate through the data for the latest received message and determine the range of the data for the selected channel.
-	 * This sets the current range to the computed range.
+	 * Iterate through the data for the latest received message and determine the range of the data for the selected channel. This sets the current range to the computed range.
+	 * 
 	 * @return two element float array [min, max]
 	 */
-	public float[] computeRange() {		
+	public float[] computeRange() {
 		if(fields == null || currentChannel < 0 || currentChannel >= fields.size())
-			return new float[] {0f,1f};
-		
-		byte datatype = fields.get(currentChannel).getDatatype(); 
+			return new float[] { 0f, 1f };
+
+		byte datatype = fields.get(currentChannel).getDatatype();
 		int offset = fields.get(currentChannel).getOffset();
-		
+
 		double max = Float.NEGATIVE_INFINITY;
 		double min = Float.POSITIVE_INFINITY;
 		double val = 0;
-		
+
 		// Iterate through the data and find the range of the selected channel
 		synchronized(dataSync) {
 			for(int i = 0; i < pointCount; i++) {
-				int readPos = offset + (i*stride);
-				
+				int readPos = offset + (i * stride);
+
 				switch(datatype) {
 				case PointField.FLOAT32:
 					val = data.getFloat(readPos);
@@ -181,57 +181,58 @@ public class PointCloud2GL extends BaseShape {
 				default:
 					val = 0;
 				}
-				
+
 				max = Math.max(val, max);
 				min = Math.min(val, min);
 			}
 		}
-		
+
 		minVal = (float) min;
 		maxVal = (float) max;
 		Log.d("PointCloud2", "Computed data range: " + minVal + " -> " + maxVal);
-		return new float[] {(float)min,(float)max};
+		return new float[] { (float) min, (float) max };
 	}
 
 	public void setRange(float min, float max) {
 		minVal = min;
 		maxVal = max;
 	}
-	
-	
+
 	@Override
 	public void draw(GL10 glUnused) {
 		if(drawCloud) {
-			super.draw(glUnused);
+			synchronized(dataSync) {
+				super.draw(glUnused);
 
-			calcMVP();
-			GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
-	
-			GLES20.glEnableVertexAttribArray(ShaderVal.AX.loc);
-			data.position(xOffset);
-			GLES20.glVertexAttribPointer(ShaderVal.AX.loc, 1, GLES20.GL_FLOAT, false, stride, data);
-	
-			GLES20.glEnableVertexAttribArray(ShaderVal.AY.loc);
-			data.position(yOffset);
-			GLES20.glVertexAttribPointer(ShaderVal.AY.loc, 1, GLES20.GL_FLOAT, false, stride, data);
-	
-			GLES20.glEnableVertexAttribArray(ShaderVal.AZ.loc);
-			data.position(zOffset);
-			GLES20.glVertexAttribPointer(ShaderVal.AZ.loc, 1, GLES20.GL_FLOAT, false, stride, data);
-	
-			if(flatColorMode) {
-				GLES20.glUniform1i(getUniform(ShaderVal.EXTRA), 1);
-				GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
-			} else {
-				GLES20.glUniform1i(getUniform(ShaderVal.EXTRA), 0);
-				GLES20.glEnableVertexAttribArray(ShaderVal.A_EXTRA.loc);
-				data.position(drawOffset);
-				GLES20.glVertexAttribPointer(ShaderVal.A_EXTRA.loc, 1, GLES20.GL_FLOAT, false, stride, data);
-				GLES20.glUniform1f(getUniform(ShaderVal.EXTRA_2), minVal);
-				GLES20.glUniform1f(getUniform(ShaderVal.EXTRA_3), maxVal);
+				calcMVP();
+				GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
+
+				GLES20.glEnableVertexAttribArray(ShaderVal.AX.loc);
+				data.position(xOffset);
+				GLES20.glVertexAttribPointer(ShaderVal.AX.loc, 1, GLES20.GL_FLOAT, false, stride, data);
+
+				GLES20.glEnableVertexAttribArray(ShaderVal.AY.loc);
+				data.position(yOffset);
+				GLES20.glVertexAttribPointer(ShaderVal.AY.loc, 1, GLES20.GL_FLOAT, false, stride, data);
+
+				GLES20.glEnableVertexAttribArray(ShaderVal.AZ.loc);
+				data.position(zOffset);
+				GLES20.glVertexAttribPointer(ShaderVal.AZ.loc, 1, GLES20.GL_FLOAT, false, stride, data);
+
+				if(flatColorMode) {
+					GLES20.glUniform1i(getUniform(ShaderVal.EXTRA), 1);
+					GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
+				} else {
+					GLES20.glUniform1i(getUniform(ShaderVal.EXTRA), 0);
+					GLES20.glEnableVertexAttribArray(ShaderVal.A_EXTRA.loc);
+					data.position(drawOffset);
+					GLES20.glVertexAttribPointer(ShaderVal.A_EXTRA.loc, 1, GLES20.GL_FLOAT, false, stride, data);
+					GLES20.glUniform1f(getUniform(ShaderVal.EXTRA_2), minVal);
+					GLES20.glUniform1f(getUniform(ShaderVal.EXTRA_3), maxVal);
+				}
+
+				GLES20.glDrawArrays(GLES20.GL_POINTS, 0, pointCount);
 			}
-	
-			GLES20.glDrawArrays(GLES20.GL_POINTS, 0, pointCount);
 		}
 	}
 }

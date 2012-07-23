@@ -23,9 +23,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.ros.android.rviz_for_android.R;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 /**
  * @author azimmerman
@@ -43,6 +46,8 @@ public abstract class Property<T> {
 	protected String description = "Not implemented! ಠ_ಠ";
 	protected boolean enabled;
 	protected boolean visible;
+	protected boolean indented;
+	protected TextView tvTitle;
 	protected LinkedList<PropertyUpdateListener<T>> updateListeners = new LinkedList<PropertyUpdateListener<T>>();
 	
 	private PropertyListAdapter propAdapter;
@@ -55,6 +60,7 @@ public abstract class Property<T> {
 		this.value = value;
 		this.enabled = true;
 		this.visible = true;
+		this.indented = false;
 		addUpdateListener(updateListener);
 	}
 
@@ -86,7 +92,19 @@ public abstract class Property<T> {
 			propAdapter.notifyDataSetChanged();
 	}
 
-	public abstract View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title);
+	public View getPropertyUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
+		if(visible) {
+			View retval = getUi(convertView, parent, inflater, title);
+			if(indented && tvTitle != null)
+				tvTitle.setText("    " + tvTitle.getText());
+			return retval;
+		} else {
+			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
+			return convertView;
+		}
+	}
+	
+	public abstract View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title);
 
 	public T getValue() {
 		return value;
@@ -105,6 +123,10 @@ public abstract class Property<T> {
 			this.visible = isVisible;
 			redraw();
 		}
+	}
+	
+	public void setIndented(boolean isIndented) {
+		indented = isIndented;
 	}
 
 	public String getDescription() {
@@ -155,7 +177,7 @@ public abstract class Property<T> {
 	public void addSubProperty(Property<?> p, String... levels) {
 //		if(propAdapter != null)
 //			p.registerPropListAdapter(propAdapter);
-		
+		p.setIndented(true);
 		Property<?> cur = this;
 		for(int i = 0; i < levels.length; i++) {
 			cur = (Property<?>) propList.get(cur.subProps.get(levels[i]));

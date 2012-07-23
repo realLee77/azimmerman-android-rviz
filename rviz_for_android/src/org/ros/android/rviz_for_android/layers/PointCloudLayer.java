@@ -62,6 +62,8 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 	private Subscriber<sensor_msgs.PointCloud> sub;
 
 	private PointCloudGL pc;
+	
+	private int msgCount = 0;
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
@@ -75,6 +77,7 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 		subListener = new MessageListener<PointCloud>() {
 			@Override
 			public void onNewMessage(PointCloud msg) {
+				msgCount ++;
 				pointCount = msg.getPoints().size();
 				float[] vertices = new float[pointCount * 3];
 				int i = 0;
@@ -89,7 +92,8 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 				if(frame == null || !frame.equals(msg.getHeader().getFrameId())) {
 					frame = GraphName.of(msg.getHeader().getFrameId());					
 					statusController.setTargetFrame(frame);
-					statusController.setFrameChecking(true);  // TODO: Optimize with message count?
+					if(msgCount == 1)
+						statusController.setFrameChecking(true);
 				}
 			}
 		};
@@ -210,14 +214,16 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 	}
 
 	private void clearSubscriber() {
-		// TODO: Uh oh
-		//sub.removeMessageListener(subListener);
 		sub.shutdown();
 	}
 
 	private void initSubscriber(String topic) {
 		sub = connectedNode.newSubscriber(topic, sensor_msgs.PointCloud._TYPE);
 		sub.addMessageListener(subListener);
+		
+		msgCount = 0;
+		statusController.setFrameChecking(false);
+		statusController.setStatus("No PointCloud messages received", StatusColor.WARN);
 	}
 
 	@Override
@@ -232,11 +238,8 @@ public class PointCloudLayer extends SubscriberLayer<sensor_msgs.PointCloud> imp
 
 	@Override
 	public void onShutdown(VisualizationView view, Node node) {
+		statusController.cleanup();
 		super.onShutdown(view, node);
-
-		// Clear the subscriber
-		// TODO: Uh oh
-		//getSubscriber().removeMessageListener(subListener);
 	}
 
 	@Override

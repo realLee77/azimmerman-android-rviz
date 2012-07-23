@@ -33,28 +33,24 @@ public class BoolProperty extends Property<Boolean> {
 		super(name, value, updateListener);
 	}
 
-	private TextView textView;
 	private CheckBox cb;
 
 	@Override
-	public View getGUI(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
-		if(super.visible) {
-			convertView = inflater.inflate(R.layout.row_property_boolean, parent, false);
-			textView = (TextView) convertView.findViewById(R.id.tvProp_Boolean_Name);
-			if(title != null)
-				textView.setText(title);
-			else
-				textView.setText(super.name);
-			cb = (CheckBox) convertView.findViewById(R.id.cbProp_Checkbox);
-			cb.setFocusable(false);
-			cb.setChecked(super.value);
-			cb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					setValue(isChecked);
-				}
-			});
-		} else
-			convertView = inflater.inflate(R.layout.row_property_hidden, parent, false);
+	public View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
+		convertView = inflater.inflate(R.layout.row_property_boolean, parent, false);
+		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_Boolean_Name);
+		if(title != null)
+			tvTitle.setText(title);
+		else
+			tvTitle.setText(super.name);
+		cb = (CheckBox) convertView.findViewById(R.id.cbProp_Checkbox);
+		cb.setFocusable(false);
+		cb.setChecked(super.value);
+		cb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				setValue(isChecked);
+			}
+		});
 		return convertView;
 	}
 
