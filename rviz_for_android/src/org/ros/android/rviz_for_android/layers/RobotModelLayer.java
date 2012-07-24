@@ -43,6 +43,7 @@ import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
 import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.rviz_for_android.urdf.Component;
+import org.ros.android.rviz_for_android.urdf.InvalidXMLException;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.android.rviz_for_android.urdf.UrdfLink;
@@ -131,27 +132,28 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 	@Override
 	public void draw(GL10 glUnused) {
-		if(!readyToDraw || ftt == null || urdf == null) {
+		if(!readyToDraw || ftt == null || urdf == null)
 			return;
-		}
 
-		for(UrdfLink ul : urdf) {
-			vis = ul.getVisual();
-			col = ul.getCollision();
+		synchronized(urdf) {
+			for(UrdfLink ul : urdf) {
+				vis = ul.getVisual();
+				col = ul.getCollision();
 
-			cam.pushM();
-			// Transform to the URDF link's frame
-			cam.applyTransform(ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
+				cam.pushM();
+				// Transform to the URDF link's frame
+				cam.applyTransform(ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
 
-			// Draw the shape
-			if(drawVis && vis != null) {
-				drawComponent(glUnused, vis);
+				// Draw the shape
+				if(drawVis && vis != null) {
+					drawComponent(glUnused, vis);
+				}
+				if(drawCol && col != null) {
+					drawComponent(glUnused, col);
+				}
+
+				cam.popM();
 			}
-			if(drawCol && col != null) {
-				drawComponent(glUnused, col);
-			}
-
-			cam.popM();
 		}
 	}
 
@@ -292,10 +294,18 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 					publishProgress(sb.toString());
 				}
 			});
-			reader.readUrdf(urdf_xml);
+			try {
+				reader.readUrdf(urdf_xml);
+			} catch(InvalidXMLException e1) {
+				publishProgress("Improperly formatted URDF!");
+				statusController.setStatus("URDF is improperly formatted!", StatusColor.ERROR);
+				return null;
+			}
+			
 			urdf = reader.getUrdf();
-
+		
 			// Load any referenced models
+			statusController.setStatus("Loading meshes and textures...", StatusColor.OK);
 			for(UrdfLink ul : urdf) {
 				for(Component c : ul.getComponents()) {
 					if(c.getType() == Component.GEOMETRY.MESH && !meshes.containsKey(c.getMesh())) {
@@ -313,6 +323,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 					}
 				}
 			}
+		
 			statusController.setFrameChecking(true);
 			return null;
 		}
@@ -321,9 +332,8 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	@Override
 	public void onShutdown(VisualizationView view, Node node) {
 		super.onShutdown(view, node);
-
+		readyToDraw = false;
 		clearMeshes();
-
 		statusController.cleanup();
 	}
 
@@ -346,27 +356,28 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 	@Override
 	public void selectionDraw(GL10 glUnused) {
-		if(!readyToDraw || ftt == null || urdf == null) {
+		if(!readyToDraw || ftt == null || urdf == null)
 			return;
-		}
 
-		for(UrdfLink ul : urdf) {
-			vis = ul.getVisual();
-			col = ul.getCollision();
+		synchronized(urdf) {
+			for(UrdfLink ul : urdf) {
+				vis = ul.getVisual();
+				col = ul.getCollision();
 
-			cam.pushM();
-			// Transform to the URDF link's frame
-			cam.applyTransform(ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
+				cam.pushM();
+				// Transform to the URDF link's frame
+				cam.applyTransform(ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
 
-			// Draw the shape
-			if(drawVis && vis != null) {
-				selectDrawComponent(glUnused, vis);
+				// Draw the shape
+				if(drawVis && vis != null) {
+					selectDrawComponent(glUnused, vis);
+				}
+				if(drawCol && col != null) {
+					selectDrawComponent(glUnused, col);
+				}
+
+				cam.popM();
 			}
-			if(drawCol && col != null) {
-				selectDrawComponent(glUnused, col);
-			}
-
-			cam.popM();
 		}
 	}
 

@@ -3,7 +3,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.ximpleware.AutoPilot;
+import com.ximpleware.EOFException;
+import com.ximpleware.EncodingException;
+import com.ximpleware.EntityException;
 import com.ximpleware.NavException;
+import com.ximpleware.ParseException;
 import com.ximpleware.VTDGen;
 import com.ximpleware.VTDNav;
 import com.ximpleware.XPathEvalException;
@@ -17,13 +21,19 @@ public abstract class VTDXmlReader {
 	public VTDXmlReader() {
 	}
 
-	protected void parse(String xml) throws Exception {
+	protected boolean parse(String xml) {
 		final VTDGen vg = new VTDGen();
 		vg.setDoc(xml.getBytes());
-		vg.parse(false);
+		try {
+			vg.parse(false);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return false;
+		}
 
 		vn = vg.getNav();
 		ap = new AutoPilot(vn);
+		return true;
 	}
 
 	protected void getExpression(String... xPathExpression) {

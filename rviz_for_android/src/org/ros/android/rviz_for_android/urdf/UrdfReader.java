@@ -52,16 +52,14 @@ public class UrdfReader extends VTDXmlReader {
 		super();
 	}
 
-	public void readUrdf(String urdf) {
+	public void readUrdf(String urdf) throws InvalidXMLException {
 		this.urdf.clear();
-		try {
-			super.parse(urdf);
-		} catch(Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(super.parse(urdf)) {
+			parseUrdf();
+			buildColors();
+		} else {
+			throw new InvalidXMLException();
 		}
-		parseUrdf();
-		buildColors();
 	}
 
 	private void buildColors() {

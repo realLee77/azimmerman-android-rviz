@@ -66,7 +66,8 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 	}
 	
 	public void setTargetFrame(GraphName newFrame) {
-		if(!newFrame.equals(targetFrame)) {
+		// Only check for existence if the target frame changed
+		if(targetFrame == null || !newFrame.equals(targetFrame)) {
 			targetFrame = newFrame;
 			checkFrameExists();
 		}
