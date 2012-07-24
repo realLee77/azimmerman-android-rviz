@@ -26,6 +26,7 @@ import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.rviz_for_android.drawable.loader.ColladaLoader;
+import org.ros.android.rviz_for_android.urdf.InvalidXMLException;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.rosjava_geometry.Transform;
@@ -62,6 +63,8 @@ public class ColladaMesh implements UrdfDrawable, Cleanable {
 			try {				
 				loader.readDae(mfd.getContext().openFileInput(loadedFilename), imgPrefix);
 			} catch(IOException e) {
+				return null;
+			} catch(InvalidXMLException e) {
 				return null;
 			}
 			retval = loader.getGeometries();

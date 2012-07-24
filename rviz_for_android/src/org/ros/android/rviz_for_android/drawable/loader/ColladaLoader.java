@@ -36,6 +36,7 @@ import org.ros.android.renderer.shapes.BufferedTrianglesShape;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.renderer.shapes.TexturedBufferedTrianglesShape;
 import org.ros.android.renderer.shapes.TrianglesShape;
+import org.ros.android.rviz_for_android.urdf.InvalidXMLException;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.VTDXmlReader;
 
@@ -87,20 +88,21 @@ public class ColladaLoader extends VTDXmlReader {
 		this.cam = cam;
 	}
 
-	public void readDae(InputStream fileStream, String imgPrefix) {
+	public void readDae(InputStream fileStream, String imgPrefix) throws InvalidXMLException {
 		if(fileStream == null)
 			throw new IllegalArgumentException("Invalid DAE file contents passed to ColladaLoader");
 		this.imgPrefix = imgPrefix;
+		
+		boolean result = false;
 		try {
-			super.parse(IOUtils.toString(fileStream));
+			result = super.parse(IOUtils.toString(fileStream));
 		} catch(IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch(Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		parseDae();
+		} 
+		if(result)
+			parseDae();
+		else
+			throw new InvalidXMLException();
 	}
 
 	private void parseDae() {

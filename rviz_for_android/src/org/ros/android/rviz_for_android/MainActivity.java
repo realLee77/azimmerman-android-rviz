@@ -34,6 +34,7 @@ import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer
 import org.ros.android.rviz_for_android.layers.PointCloud2Layer;
 import org.ros.android.rviz_for_android.layers.PointCloudLayer;
 import org.ros.android.rviz_for_android.layers.RobotModelLayer;
+import org.ros.android.rviz_for_android.layers.TfFrameLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
@@ -73,7 +74,7 @@ public class MainActivity extends RosActivity {
 
 	// Tracking layers
 	private static enum AvailableLayerType {
-		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud"), PointCloud2("Point Cloud2"), CubeLayer("CUBE LAYER");
+		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud"), PointCloud2("Point Cloud2"), TFLayer("TF"), CubeLayer("CUBE LAYER");
 		private String printName;
 		private int count = 0;
 		AvailableLayerType(String printName) {
@@ -274,7 +275,7 @@ public class MainActivity extends RosActivity {
 	protected void init(NodeMainExecutor nodeMainExecutor) {
 		mfd = MeshFileDownloader.getMeshFileDownloader("http://" + getMasterUri().getHost().toString() + ":44644", this);
 		NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
-		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/map_view"));
+		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/rviz"));
 	}
 
 	private void addNewLayer(AvailableLayerType layertype) {
@@ -301,6 +302,9 @@ public class MainActivity extends RosActivity {
 			break;
 		case PointCloud2:
 			newLayer = new PointCloud2Layer(GraphName.of("/lots_of_points2"), cam, this);
+			break;
+		case TFLayer:
+			newLayer = new TfFrameLayer(cam);
 			break;
 		// TODO: Remove the cube layer!
 		case CubeLayer:

@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:layout_marginLeft="6dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginRight="28dp"
         android:textStyle="bold"
         android:ems="10"
         android:gravity="right"
