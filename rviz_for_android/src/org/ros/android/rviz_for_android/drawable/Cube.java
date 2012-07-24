@@ -114,7 +114,7 @@ public class Cube extends BufferedTrianglesShape implements UrdfDrawable, Select
 		super.setTransform(Transform.newIdentityTransform());
 	}
 
-	private float[] scale;
+	private float[] scale = new float[] {1f, 1f, 1f};
 	
 	public void draw(GL10 glUnused, Transform transform, float[] scale) {
 		this.setTransform(transform);

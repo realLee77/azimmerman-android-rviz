@@ -39,8 +39,8 @@ public class StlLoader {
 	public StlLoader() {
 	}
 
-	private Vector3 normalVec = Vector3.newIdentityVector3();
-	private Vector3[] vertexVec = { Vector3.newIdentityVector3(), Vector3.newIdentityVector3(), Vector3.newIdentityVector3(), Vector3.newIdentityVector3() };
+	private Vector3 normalVec = Vector3.newZeroVector();
+	private Vector3[] vertexVec = { Vector3.newZeroVector(), Vector3.newZeroVector(), Vector3.newZeroVector(), Vector3.newZeroVector() };
 
 	public void load(InputStream stream) {
 		try {

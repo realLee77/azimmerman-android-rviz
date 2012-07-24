@@ -21,11 +21,12 @@ import javax.microedition.khronos.opengles.GL10;
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.renderer.shapes.TriangleStripShape;
+import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.rosjava_geometry.Transform;
 
 import android.util.FloatMath;
 
-public class Sphere extends TriangleStripShape {
+public class Sphere extends TriangleStripShape implements UrdfDrawable {
 
 	private static float[] vertexData;
 	private static float[] normalData;
@@ -85,7 +86,7 @@ public class Sphere extends TriangleStripShape {
 		super(cam, vertexData, normalData, new Color(0.5f,0.5f,1f,1f));
 	}
 
-	private float radius;
+	private float radius = 1f;
 
 	public void draw(GL10 glUnused, Transform transform, float radius) {
 		this.radius = radius;
@@ -96,6 +97,13 @@ public class Sphere extends TriangleStripShape {
 	@Override
 	protected void scale(Camera cam) {
 		cam.scaleM(radius, radius, radius);
+	}
+
+	@Override
+	public void draw(GL10 glUnused, Transform transform, float[] scale) {
+		this.radius = scale[0];
+		super.setTransform(transform);
+		super.draw(glUnused);
 	}
 
 }

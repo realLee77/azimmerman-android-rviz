@@ -30,6 +30,7 @@ import org.ros.android.rviz_for_android.layers.AxisLayer;
 import org.ros.android.rviz_for_android.layers.CubeLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
 import org.ros.android.rviz_for_android.layers.MapLayer;
+import org.ros.android.rviz_for_android.layers.MarkerLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
 import org.ros.android.rviz_for_android.layers.PointCloud2Layer;
 import org.ros.android.rviz_for_android.layers.PointCloudLayer;
@@ -43,6 +44,7 @@ import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
+import visualization_msgs.Marker;
 import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -74,7 +76,15 @@ public class MainActivity extends RosActivity {
 
 	// Tracking layers
 	private static enum AvailableLayerType {
-		Axis("Axis"), Grid("Grid"), RobotModel("Robot Model"), Map("Map"), PointCloud("Point Cloud"), PointCloud2("Point Cloud2"), TFLayer("TF"), CubeLayer("CUBE LAYER");
+		Axis("Axis"),
+		Grid("Grid"),
+		RobotModel("Robot Model"),
+		Map("Map"),
+		PointCloud("Point Cloud"),
+		PointCloud2("Point Cloud2"),
+		TFLayer("TF"),
+		Marker("Marker"),
+		CubeLayer("CUBE LAYER");
 		private String printName;
 		private int count = 0;
 		AvailableLayerType(String printName) {
@@ -242,6 +252,7 @@ public class MainActivity extends RosActivity {
 		addNewLayer(AvailableLayerType.Axis);
 		addNewLayer(AvailableLayerType.Grid);
 
+		// TODO: Fix FPS layer to work with OGLES2?
 		//visualizationView.addLayer(new FPSLayer(visualizationView.getCamera()));
 	}
 
@@ -305,6 +316,9 @@ public class MainActivity extends RosActivity {
 			break;
 		case TFLayer:
 			newLayer = new TfFrameLayer(cam);
+			break;
+		case Marker:
+			newLayer = new MarkerLayer(GraphName.of("/markers"), Marker._TYPE, "Marker", cam);
 			break;
 		// TODO: Remove the cube layer!
 		case CubeLayer:

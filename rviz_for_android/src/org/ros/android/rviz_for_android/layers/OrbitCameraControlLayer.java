@@ -42,7 +42,7 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 	private GestureDetector gestureDetector;
 	private ScaleGestureDetector scaleGestureDetector;
 
-	private Vector3 prevScaleCenter = Vector3.newIdentityVector3();
+	private Vector3 prevScaleCenter = Vector3.newZeroVector();
 
 	public OrbitCameraControlLayer(Context context, Camera cam) {
 		super(cam);
