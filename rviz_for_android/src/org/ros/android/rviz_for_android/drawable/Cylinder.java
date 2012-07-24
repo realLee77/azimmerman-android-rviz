@@ -25,12 +25,13 @@ import org.ros.android.renderer.Vertices;
 import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
+import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.rosjava_geometry.Transform;
 
 import android.opengl.GLES20;
 import android.util.FloatMath;
 
-public class Cylinder extends BaseShape {
+public class Cylinder extends BaseShape implements UrdfDrawable {
 	private static final Color defaultColor = new Color(0.6f, 0.25f, 0.72f, 1f);
 	private static final float TWO_PI = (float) (2 * Math.PI);
 	private static int stripTriangleCount;
@@ -198,6 +199,11 @@ public class Cylinder extends BaseShape {
 
 		cam.popM();
 		super.selectionDrawCleanup();
+	}
+
+	@Override
+	public void draw(GL10 glUnused, Transform transform, float[] scale) {
+		draw(glUnused, transform, scale[0], scale[1]);
 	}
 	
 	

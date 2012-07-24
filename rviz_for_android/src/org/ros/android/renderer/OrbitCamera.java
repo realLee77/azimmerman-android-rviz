@@ -19,7 +19,6 @@ package org.ros.android.renderer;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.logging.impl.WeakHashtable;
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Transform;
@@ -86,8 +85,8 @@ public class OrbitCamera implements Camera {
 		fixedFrame = DEFAULT_FIXED_FRAME;
 
 		// Initialize the location
-		location = Vector3.newIdentityVector3();
-		lookTarget = Vector3.newIdentityVector3();
+		location = Vector3.newZeroVector();
+		lookTarget = Vector3.newZeroVector();
 		updateLocation();
 		location = location.add(lookTarget);
 
@@ -228,7 +227,7 @@ public class OrbitCamera implements Camera {
 	 * Set the camera look target to the fixed frame or the origin if one isn't set
 	 */
 	public void resetLookTarget() {
-		lookTarget = Vector3.newIdentityVector3();
+		lookTarget = Vector3.newZeroVector();
 	}
 
 	public void resetZoom() {
@@ -296,13 +295,22 @@ public class OrbitCamera implements Camera {
 
 	@Override
 	public void applyTransform(Transform transform) {
-		translateM((float) transform.getTranslation().getX(), (float) transform.getTranslation().getY(), (float) transform.getTranslation().getZ());
+		Matrix.multiplyMM(modelM, 0, toFloatArr(transform.toMatrix()), 0, modelM, 0);
+/*		translateM((float) transform.getTranslation().getX(), (float) transform.getTranslation().getY(), (float) transform.getTranslation().getZ());
 		double angleDegrees = Math.toDegrees(transform.getRotation().getAngle());
 		if(angleDegrees != 0) {
 			Vector3 axis = transform.getRotation().getAxis();
 			rotateM((float) angleDegrees, (float) axis.getX(), (float) axis.getY(), (float) axis.getZ());
-		}
+		}*/
 	}
+	
+	private float[] floatTransformMatrix = new float[16];
+	private float[] toFloatArr(double[] in) {
+		for(int i = 0; i < 16; i ++)
+			floatTransformMatrix[i] = (float) in[i];
+		return floatTransformMatrix;
+	}
+	
 
 	@Override
 	public String toString() {

@@ -49,6 +49,7 @@ public class PointCloud2GL extends BaseShape {
 	private float minVal = 0f;
 	private float maxVal = 1f;
 
+	private int arrayOffset = 0;
 	private int currentChannel = 0;
 	private int drawOffset = 0;
 	private volatile boolean flatColorMode = true;
@@ -91,7 +92,9 @@ public class PointCloud2GL extends BaseShape {
 			Log.i("PointCloud2", "Color mode set to channel " + channel);
 			currentChannel = channel;
 			flatColorMode = false;
-			drawOffset = fields.get(channel).getOffset();
+			drawOffset = arrayOffset + fields.get(channel).getOffset();
+		} else {
+			currentChannel = 0;
 		}
 	}
 
@@ -100,12 +103,16 @@ public class PointCloud2GL extends BaseShape {
 	}
 
 	public synchronized void setData(sensor_msgs.PointCloud2 msg) {
-		// drawCloud = false;
+		// TODO: Comment out to disable flickering
+		drawCloud = false;
 		channelNames.clear();
 		this.fields = msg.getFields();
 		this.stride = msg.getPointStep();
 		pointCount = (msg.getData().capacity() / stride);
 
+		Log.d("PointCloud", "Updated data with " + pointCount + " points. Data byte capacity is " + msg.getData().capacity() + " with offset " + msg.getData().arrayOffset());
+		arrayOffset = msg.getData().arrayOffset();
+		
 		synchronized(dataSync) {
 			if(data == null || data.capacity() < msg.getData().array().length) {
 				data = null;
@@ -113,7 +120,6 @@ public class PointCloud2GL extends BaseShape {
 			} else {
 				data.position(0);
 				data.put(msg.getData().array());
-				data.position(0);
 			}
 		}
 
@@ -122,13 +128,18 @@ public class PointCloud2GL extends BaseShape {
 			channelNames.add(pf.getName());
 			String name = pf.getName().toLowerCase();
 			if(name.equals("x"))
-				xOffset = pf.getOffset();
+				xOffset = arrayOffset + pf.getOffset();
 			else if(name.equals("y"))
-				yOffset = pf.getOffset();
+				yOffset = arrayOffset + pf.getOffset();
 			else if(name.equals("z"))
-				zOffset = pf.getOffset();
+				zOffset = arrayOffset + pf.getOffset();
+		}
+		
+		if(currentChannel >= fields.size()) {
+			currentChannel = 0;
 		}
 
+		data.position(0);
 		drawCloud = (pointCount > 0);
 	}
 
@@ -151,7 +162,7 @@ public class PointCloud2GL extends BaseShape {
 		// Iterate through the data and find the range of the selected channel
 		synchronized(dataSync) {
 			for(int i = 0; i < pointCount; i++) {
-				int readPos = offset + (i * stride);
+				int readPos = arrayOffset + offset + (i * stride);
 
 				switch(datatype) {
 				case PointField.FLOAT32:

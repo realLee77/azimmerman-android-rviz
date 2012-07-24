@@ -23,6 +23,7 @@ import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.SubscriberLayer;
 import org.ros.android.renderer.layer.TfLayer;
+import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.PointCloud2GL;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.ButtonProperty;
@@ -32,16 +33,15 @@ import org.ros.android.rviz_for_android.prop.FrameCheckStatusPropertyController;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.ListProperty;
 import org.ros.android.rviz_for_android.prop.Property;
-import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
-import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
+import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.node.topic.Subscriber;
-import org.ros.android.renderer.shapes.Color;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import sensor_msgs.PointCloud2;
@@ -184,7 +184,7 @@ public class PointCloud2Layer extends SubscriberLayer<sensor_msgs.PointCloud2> i
 				pc.setData(msg);
 				propChannelSelect.setList(pc.getChannelNames());
 				
-				if(frame == null || !frame.equals(msg.getHeader().getFrameId())) {
+				if(frame == null || !frame.toString().equals(msg.getHeader().getFrameId())) {
 					frame = GraphName.of(msg.getHeader().getFrameId());					
 					statusController.setTargetFrame(frame);
 					if(msgCount == 1)
