@@ -20,57 +20,31 @@ package org.ros.android.rviz_for_android.layers;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
-import org.ros.android.renderer.VisualizationView;
-import org.ros.android.renderer.layer.SubscriberLayer;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.PointCloud2GL;
-import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.ButtonProperty;
 import org.ros.android.rviz_for_android.prop.ColorProperty;
 import org.ros.android.rviz_for_android.prop.FloatProperty;
-import org.ros.android.rviz_for_android.prop.FrameCheckStatusPropertyController;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.ListProperty;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
-import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
-import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
 import org.ros.android.rviz_for_android.prop.StringProperty;
-import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
-import org.ros.node.ConnectedNode;
-import org.ros.node.Node;
-import org.ros.node.topic.Subscriber;
-import org.ros.rosjava_geometry.FrameTransformTree;
 
 import sensor_msgs.PointCloud2;
 import android.content.Context;
-import android.os.Handler;
 
-public class PointCloud2Layer extends SubscriberLayer<sensor_msgs.PointCloud2> implements TfLayer, LayerWithProperties {
+public class PointCloud2Layer extends EditableStatusSubscriberLayer<sensor_msgs.PointCloud2> implements TfLayer, LayerWithProperties {
 	private static final String[] COLOR_MODES = new String[]{"Flat Color", "Channel"};
-	
+	private ListProperty propChannelSelect;
 	private PointCloud2GL pc;
-
-	private GraphName frame;
-	
-	private ConnectedNode connectedNode;
-	private MessageListener<PointCloud2> subListener;
-	private Subscriber<PointCloud2> sub;
-	
-	private int msgCount = 0;
-	private BoolProperty prop;
-	private ReadOnlyProperty propStatus;
-	private FrameCheckStatusPropertyController statusController;
-	private final ListProperty propChannelSelect;
 	
 	public PointCloud2Layer(GraphName topicName, Camera cam, Context context) {
 		super(topicName, sensor_msgs.PointCloud2._TYPE, cam);
 		
 		pc = new PointCloud2GL(cam, context);
-		
-		prop = new BoolProperty("Enabled", true, null);
 		
 		// Color mode selection property
 		final ListProperty propColorMode = new ListProperty("Color Mode", 0, null).setList(COLOR_MODES);
@@ -107,8 +81,7 @@ public class PointCloud2Layer extends SubscriberLayer<sensor_msgs.PointCloud2> i
 		StringProperty propTopic = new StringProperty("Topic", "/lots_of_points2", new PropertyUpdateListener<String>() {
 			@Override
 			public void onPropertyChanged(String newval) {
-				clearSubscriber();
-				initSubscriber(newval);
+				PointCloud2Layer.this.changeTopic(newval);
 			}
 		});
 		
@@ -147,11 +120,7 @@ public class PointCloud2Layer extends SubscriberLayer<sensor_msgs.PointCloud2> i
 				propMaxRange.setVisible(isChannelColor);
 			}
 		});		
-		
-		propStatus = new ReadOnlyProperty("Status", "OK", null);
-		
-		prop.addSubProperty(propStatus);
-		prop.addSubProperty(propTopic);
+
 		prop.addSubProperty(propColorMode);
 		prop.addSubProperty(propChannelSelect);
 		prop.addSubProperty(propColorSelect);
@@ -169,68 +138,32 @@ public class PointCloud2Layer extends SubscriberLayer<sensor_msgs.PointCloud2> i
 	}
 	
 	@Override
-	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
-		super.onStart(connectedNode, handler, frameTransformTree, camera);
-		
-		statusController = new FrameCheckStatusPropertyController(propStatus, camera, frameTransformTree);	
-		statusController.setFrameChecking(false);
-		statusController.setStatus("No PointCloud2 messages received", StatusColor.WARN);
-		
-		sub = getSubscriber();
-		subListener = new MessageListener<PointCloud2>() {
-			@Override
-			public void onNewMessage(PointCloud2 msg) {
-				msgCount ++;
-				pc.setData(msg);
-				propChannelSelect.setList(pc.getChannelNames());
-				
-				if(frame == null || !frame.toString().equals(msg.getHeader().getFrameId())) {
-					frame = GraphName.of(msg.getHeader().getFrameId());					
-					statusController.setTargetFrame(frame);
-					if(msgCount == 1)
-						statusController.setFrameChecking(true);
-				}
-			}
-		};
-
-		sub.addMessageListener(subListener);
-		this.connectedNode = connectedNode;
-	}
-	
-	@Override
 	public void draw(GL10 glUnused) {
 		super.draw(glUnused);
 		pc.draw(glUnused);
 	}
 
-	private void clearSubscriber() {
-		sub.shutdown();
-	}
-
-	private void initSubscriber(String topic) {
-		sub = connectedNode.newSubscriber(topic, sensor_msgs.PointCloud2._TYPE);
-		sub.addMessageListener(subListener);
-		statusController.setFrameChecking(false);
-		statusController.setStatus("No PointCloud2 messages received", StatusColor.WARN);
-		msgCount = 0;
-	}
-	@Override
-	public boolean isEnabled() {
-		return prop.getValue();
-	}
 	@Override
 	public GraphName getFrame() {
 		return frame;
 	}
 
 	@Override
-	public void onShutdown(VisualizationView view, Node node) {
-		statusController.cleanup();
-		super.onShutdown(view, node);
-	}
-
-	@Override
 	public Property<?> getProperties() {
 		return prop;
 	}
+
+	@Override
+	protected String getMessageFrameId(PointCloud2 msg) {
+		return msg.getHeader().getFrameId();
+	}
+
+	@Override
+	public void onMessageReceived(PointCloud2 msg) {
+		super.onMessageReceived(msg);
+		pc.setData(msg);
+		propChannelSelect.setList(pc.getChannelNames());
+	}
+	
+	
 }

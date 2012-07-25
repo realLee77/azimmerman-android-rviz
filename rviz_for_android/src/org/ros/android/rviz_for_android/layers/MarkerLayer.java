@@ -49,8 +49,8 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 	private static final long PRUNE_PERIOD = 1000; // Milliseconds
 	private Object lockObj = new Object();
 
-	public MarkerLayer(GraphName topicName, String messageType, String messageTypeName, Camera cam) {
-		super(topicName, messageType, messageTypeName, cam);
+	public MarkerLayer(GraphName topicName, String messageType, Camera cam) {
+		super(topicName, messageType, cam);
 		nextPruneTime = System.currentTimeMillis() + PRUNE_PERIOD;
 	}
 

@@ -318,7 +318,7 @@ public class MainActivity extends RosActivity {
 			newLayer = new TfFrameLayer(cam);
 			break;
 		case Marker:
-			newLayer = new MarkerLayer(GraphName.of("/markers"), Marker._TYPE, "Marker", cam);
+			newLayer = new MarkerLayer(GraphName.of("/markers"), Marker._TYPE, cam);
 			break;
 		// TODO: Remove the cube layer!
 		case CubeLayer:
