@@ -40,7 +40,7 @@ public abstract class EditableStatusSubscriberLayer<T extends org.ros.internal.m
 	protected GraphName frame;
 	 
 	
-	public EditableStatusSubscriberLayer(GraphName topicName, String messageType, String messageTypeName, Camera cam) {
+	public EditableStatusSubscriberLayer(GraphName topicName, String messageType, Camera cam) {
 		super(topicName, messageType, cam);
 		
 		propTopic = new StringProperty("Topic", topicName.toString(), new PropertyUpdateListener<String>() {
@@ -53,7 +53,10 @@ public abstract class EditableStatusSubscriberLayer<T extends org.ros.internal.m
 		prop.addSubProperty(propStatus);
 		prop.addSubProperty(propTopic);
 		
-		this.messageTypeName = messageTypeName;
+		if(messageType.contains("/"))
+			messageTypeName = messageType.substring(messageType.indexOf("/")+1);
+		else
+			messageTypeName = messageType;
 	}
 
 	@Override

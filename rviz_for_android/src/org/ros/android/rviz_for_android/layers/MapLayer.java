@@ -130,12 +130,6 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		} else {
 			statusController.setFrameChecking(true);
 		}
-		// if(!frameTransformTree.canTransform(camera.getFixedFrame(), mapGraphName)) {
-		// }
-		// statusController.setStatus("No transform exists from " + camera.getFixedFrame() + " to " + mapGraphName.toString() + "!", StatusColor.WARN);
-		// } else {
-		// statusController.setOk();
-		// }
 	}
 
 	private Bitmap mapImage;
@@ -307,7 +301,5 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		}
 		
 		statusController.cleanup();
-		// TODO: Uh oh
-		// getSubscriber().removeMessageListener(subListener);
 	}
 }
