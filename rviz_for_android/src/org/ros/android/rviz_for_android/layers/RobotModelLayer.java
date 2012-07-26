@@ -63,7 +63,6 @@ import android.widget.Toast;
 public class RobotModelLayer extends DefaultLayer implements LayerWithProperties, SelectableLayer {
 
 	private static final String DEFAULT_PARAM_VALUE = "/robot_description";
-	// private String current_param_value = DEFAULT_PARAM_VALUE;
 	private BoolProperty prop = new BoolProperty("Enabled", true, null);
 	private FrameTransformTree ftt;
 	private Camera cam;
@@ -118,7 +117,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 		cyl = new Cylinder(cam);
 		cube = new Cube(cam);
-		sphere = new Sphere(cam);
+		sphere = new Sphere(cam, 1.0f);
 	}
 
 	private Component vis;
@@ -128,7 +127,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	private Cube cube;
 	private Sphere sphere;
 
-	private Map<String, UrdfDrawable> meshes = new HashMap<String, UrdfDrawable>();
+	private Map<Component, UrdfDrawable> meshes = new HashMap<Component, UrdfDrawable>();
 
 	@Override
 	public void draw(GL10 glUnused) {
@@ -172,16 +171,17 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			sphere.draw(glUnused, com.getOrigin(), com.getRadius());
 			break;
 		case MESH:
-			UrdfDrawable ud = meshes.get(com.getMesh());
+			UrdfDrawable ud = meshes.get(com);
 			if(ud != null)
 				ud.draw(glUnused, com.getOrigin(), com.getSize());
 			break;
 		}
 	}
 
-	private boolean loadMesh(String meshResourceName) {
+	// TODO: This method will cause a NullPointerException if either newFromFile method fails
+	private boolean loadMesh(String meshResourceName, Component com) {
 		// Don't reload the mesh if we already have a copy
-		if(meshes.containsKey(meshResourceName))
+		if(meshes.containsKey(com))
 			return true;
 
 		UrdfDrawable ud;
@@ -198,7 +198,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			return false;
 		}
 
-		meshes.put(meshResourceName, (UrdfDrawable) ud);
+		meshes.put(com, (UrdfDrawable) ud);
 
 		return (ud != null);
 	}
@@ -301,15 +301,15 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 				statusController.setStatus("URDF is improperly formatted!", StatusColor.ERROR);
 				return null;
 			}
-			
+
 			urdf = reader.getUrdf();
-		
+
 			// Load any referenced models
 			statusController.setStatus("Loading meshes and textures...", StatusColor.OK);
 			for(UrdfLink ul : urdf) {
 				for(Component c : ul.getComponents()) {
-					if(c.getType() == Component.GEOMETRY.MESH && !meshes.containsKey(c.getMesh())) {
-						if(loadMesh(c.getMesh()))
+					if(c.getType() == Component.GEOMETRY.MESH && !meshes.containsKey(c)) {
+						if(loadMesh(c.getMesh(), c))
 							publishProgress("Loaded " + c.getMesh());
 						else {
 							// If the model failed to load, show an error message and leave it visible for long enough for the user to know
@@ -323,7 +323,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 					}
 				}
 			}
-		
+
 			statusController.setFrameChecking(true);
 			return null;
 		}
@@ -396,7 +396,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			sphere.selectionDraw(glUnused);
 			break;
 		case MESH:
-			UrdfDrawable ud = meshes.get(com.getMesh());
+			UrdfDrawable ud = meshes.get(com);
 			if(ud != null)
 				ud.selectionDraw(glUnused);
 			break;

@@ -24,7 +24,9 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.BaseShape;
+import org.ros.android.renderer.shapes.BaseShapeInterface;
 import org.ros.android.renderer.shapes.Cleanable;
+import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.loader.ColladaLoader;
 import org.ros.android.rviz_for_android.urdf.InvalidXMLException;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
@@ -33,7 +35,7 @@ import org.ros.rosjava_geometry.Transform;
 
 import android.util.Log;
 
-public class ColladaMesh implements UrdfDrawable, Cleanable {
+public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable {
 	protected static final ColladaLoader loader = new ColladaLoader();
 	
 	/**
@@ -80,8 +82,8 @@ public class ColladaMesh implements UrdfDrawable, Cleanable {
 		this.geometries = geometries;	
 	}
 	
-	private float[] scale;
-	private Transform transform;
+	private float[] scale = new float[] {1f,1f,1f};
+	private Transform transform = Transform.newIdentityTransform();
 	@Override
 	public void draw(GL10 glUnused, Transform transform, float[] scale) {
 		cam.pushM();
@@ -90,6 +92,17 @@ public class ColladaMesh implements UrdfDrawable, Cleanable {
 		cam.scaleM(scale[0], scale[1], scale[2]);
 		cam.applyTransform(transform);
 
+		for(BaseShape g : geometries)
+			g.draw(glUnused);
+		
+		cam.popM();
+	}
+	
+	@Override
+	public void draw(GL10 glUnused) {
+		cam.pushM();		
+		cam.scaleM(scale[0], scale[1], scale[2]);
+		cam.applyTransform(transform);
 		for(BaseShape g : geometries)
 			g.draw(glUnused);
 		
@@ -109,7 +122,7 @@ public class ColladaMesh implements UrdfDrawable, Cleanable {
 
 	@Override
 	public void cleanup() {
-		for(BaseShape g : geometries) {
+		for(BaseShapeInterface g : geometries) {
 			if(g instanceof Cleanable) {
 				Cleanable cs = (Cleanable) g;
 				cs.cleanup();
@@ -131,5 +144,34 @@ public class ColladaMesh implements UrdfDrawable, Cleanable {
 	public void registerSelectable() {
 		for(BaseShape g : geometries)
 			g.registerSelectable();
+	}
+
+	@Override
+	public void setProgram(GLSLProgram shader) {
+		// TODO Auto-generated method stub
+	}
+
+	private Color color = new Color(0.25f, 0.6f, 0.15f, 1.0f);
+	
+	@Override
+	public Color getColor() {
+		return color;
+	}
+
+	@Override
+	public void setColor(Color color) {
+		this.color = color;
+		for(BaseShape g : geometries)
+			g.setColor(color);
+	}
+
+	@Override
+	public Transform getTransform() {
+		return transform;
+	}
+
+	@Override
+	public void setTransform(Transform pose) {
+		this.transform = pose;
 	}
 }

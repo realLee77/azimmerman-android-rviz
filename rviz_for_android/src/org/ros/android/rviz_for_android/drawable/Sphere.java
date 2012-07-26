@@ -82,8 +82,9 @@ public class Sphere extends TriangleStripShape implements UrdfDrawable {
 		}
 	}
 
-	public Sphere(Camera cam) {
+	public Sphere(Camera cam, float radius) {
 		super(cam, vertexData, normalData, new Color(0.5f,0.5f,1f,1f));
+		this.radius = radius;
 	}
 
 	private float radius = 1f;
@@ -105,5 +106,4 @@ public class Sphere extends TriangleStripShape implements UrdfDrawable {
 		super.setTransform(transform);
 		super.draw(glUnused);
 	}
-
 }

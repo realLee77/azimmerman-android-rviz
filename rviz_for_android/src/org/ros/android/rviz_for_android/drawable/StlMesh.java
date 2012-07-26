@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.shapes.BaseShapeInterface;
 import org.ros.android.renderer.shapes.BufferedTrianglesShape;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.loader.StlLoader;
@@ -28,7 +29,7 @@ import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.rosjava_geometry.Transform;
 
-public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable {
+public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable, BaseShapeInterface {
 
 	private static final StlLoader loader = new StlLoader();
 	
@@ -58,10 +59,11 @@ public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable {
 	
 	private float[] scale;
 	
-	public void draw(GL10 gl, Transform transform, float[] scale) {
+	@Override
+	public void draw(GL10 glUnused, Transform transform, float[] scale) {
 		super.transform = transform;
 		this.scale = scale;
-		super.draw(gl);
+		super.draw(glUnused);
 	}
 
 	@Override

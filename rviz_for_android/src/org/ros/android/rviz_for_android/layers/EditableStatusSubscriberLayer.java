@@ -52,11 +52,8 @@ public abstract class EditableStatusSubscriberLayer<T extends org.ros.internal.m
 		
 		prop.addSubProperty(propStatus);
 		prop.addSubProperty(propTopic);
-		
-		if(messageType.contains("/"))
-			messageTypeName = messageType.substring(messageType.indexOf("/")+1);
-		else
-			messageTypeName = messageType;
+
+		messageTypeName = messageType.substring(messageType.indexOf("/")+1);
 	}
 
 	@Override

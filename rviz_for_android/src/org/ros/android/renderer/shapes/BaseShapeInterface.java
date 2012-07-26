@@ -14,14 +14,27 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.ros.android.rviz_for_android.urdf;
+package org.ros.android.renderer.shapes;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import org.ros.android.renderer.layer.Selectable;
+import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.rosjava_geometry.Transform;
 
-public interface UrdfDrawable extends Selectable {
-	public void draw(GL10 glUnused, Transform transform, float[] scale);
-	public void draw(GL10 glUnused);
+public interface BaseShapeInterface {
+
+	public abstract void setProgram(GLSLProgram shader);
+
+	public abstract void draw(GL10 glUnused);
+
+	public abstract Color getColor();
+
+	public abstract void setColor(Color color);
+
+	public abstract Transform getTransform();
+
+	public abstract void setTransform(Transform pose);
+
+	public abstract void setSelected(boolean isSelected);
+
 }
