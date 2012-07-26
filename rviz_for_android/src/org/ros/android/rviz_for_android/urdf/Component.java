@@ -44,6 +44,8 @@ public class Component {
 	// Material
 	private String material_name;
 	private Color material_color;
+	
+	private long createTime;
 
 	public GEOMETRY getType() {
 		return type;
@@ -82,6 +84,7 @@ public class Component {
 	}
 
 	private Component() {
+		createTime = System.currentTimeMillis();
 	}
 
 	@Override
@@ -93,6 +96,7 @@ public class Component {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + (int) (createTime ^ (createTime >>> 32));
 		result = prime * result + Float.floatToIntBits(length);
 		result = prime * result + ((material_color == null) ? 0 : material_color.hashCode());
 		result = prime * result + ((material_name == null) ? 0 : material_name.hashCode());
@@ -113,6 +117,8 @@ public class Component {
 		if(getClass() != obj.getClass())
 			return false;
 		Component other = (Component) obj;
+		if(createTime != other.createTime)
+			return false;
 		if(Float.floatToIntBits(length) != Float.floatToIntBits(other.length))
 			return false;
 		if(material_color == null) {
@@ -143,6 +149,8 @@ public class Component {
 			return false;
 		return true;
 	}
+
+
 
 	public static class Builder {
 		private GEOMETRY type;

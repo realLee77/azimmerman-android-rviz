@@ -20,7 +20,7 @@ import com.google.common.base.Preconditions;
  * 
  * @author damonkohler@google.com (Damon Kohler)
  */
-public abstract class BaseShape implements Shape, Selectable {
+public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface {
 
 	private static final Transform defaultTransform = Transform.newIdentityTransform();
 	private static final Color defaultColor = new Color(1f, 1f, 1f, 1f);
@@ -39,6 +39,10 @@ public abstract class BaseShape implements Shape, Selectable {
 		this.cam = cam;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ros.android.renderer.shapes.BaseShapeInterface#setProgram(org.ros.android.rviz_for_android.drawable.GLSLProgram)
+	 */
+	@Override
 	public void setProgram(GLSLProgram shader) {
 		this.shader = shader;
 		uniformHandles = shader.getUniformHandles();
@@ -48,6 +52,9 @@ public abstract class BaseShape implements Shape, Selectable {
 		return uniformHandles[s.loc];
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ros.android.renderer.shapes.BaseShapeInterface#draw(javax.microedition.khronos.opengles.GL10)
+	 */
 	@Override
 	public void draw(GL10 glUnused) {
 		if(!shader.isCompiled()) {
@@ -71,11 +78,17 @@ public abstract class BaseShape implements Shape, Selectable {
 		// The default scale is in metric space.
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ros.android.renderer.shapes.BaseShapeInterface#getColor()
+	 */
 	@Override
 	public Color getColor() {
 		return color;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ros.android.renderer.shapes.BaseShapeInterface#setColor(org.ros.android.renderer.shapes.Color)
+	 */
 	@Override
 	public void setColor(Color color) {
 		Preconditions.checkNotNull(color);
@@ -87,18 +100,27 @@ public abstract class BaseShape implements Shape, Selectable {
 		Matrix.multiplyMM(MVP, 0, cam.getViewport().getProjectionMatrix(), 0, MV, 0);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ros.android.renderer.shapes.BaseShapeInterface#getTransform()
+	 */
 	@Override
 	public Transform getTransform() {
 		Preconditions.checkNotNull(transform);
 		return transform;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ros.android.renderer.shapes.BaseShapeInterface#setTransform(org.ros.rosjava_geometry.Transform)
+	 */
 	@Override
 	public void setTransform(Transform pose) {
 		this.transform = pose;
 	}
 	
 	private Color selectedTemp = null;
+	/* (non-Javadoc)
+	 * @see org.ros.android.renderer.shapes.BaseShapeInterface#setSelected(boolean)
+	 */
 	@Override
 	public void setSelected(boolean isSelected) {
 		if(isSelected) {

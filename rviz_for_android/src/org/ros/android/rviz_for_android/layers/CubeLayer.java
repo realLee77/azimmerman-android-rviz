@@ -44,7 +44,7 @@ public class CubeLayer extends DefaultLayer implements SelectableLayer {
 		super(cam);
 		myCube = new Cube(cam);
 		myCube2 = new Cube(cam);
-		mySphere = new Sphere(cam);
+		mySphere = new Sphere(cam, 1.0f);
 		myCyl = new Cylinder(cam);
 		startTime = System.currentTimeMillis();
 		

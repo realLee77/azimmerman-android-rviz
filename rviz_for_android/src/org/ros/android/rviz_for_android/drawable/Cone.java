@@ -31,7 +31,7 @@ import org.ros.rosjava_geometry.Transform;
 import android.opengl.GLES20;
 import android.util.FloatMath;
 
-public class Cylinder extends BaseShape implements UrdfDrawable {
+public class Cone extends BaseShape implements UrdfDrawable {
 	private static final Color DEFAULT_COLOR = new Color(0.6f, 0.25f, 0.72f, 1f);
 	private static final float TWO_PI = (float) (2 * Math.PI);
 	private static int stripTriangleCount;
@@ -39,9 +39,6 @@ public class Cylinder extends BaseShape implements UrdfDrawable {
 
 	private static FloatBuffer sideVerticesBuf;
 	private static FloatBuffer sideNormalsBuf;
-
-	private static FloatBuffer topVerticesBuf;
-	private static FloatBuffer topNormalsBuf;
 
 	private static FloatBuffer bottomVerticesBuf;
 	private static FloatBuffer bottomNormalsBuf;
@@ -56,20 +53,12 @@ public class Cylinder extends BaseShape implements UrdfDrawable {
 		int sideVidx = 0;
 		int sideNidx = 0;
 
-		float[] topVertices = new float[(sides + 2) * 3];
-		float[] topNormals = new float[(sides + 2) * 3];
 		float[] bottomVertices = new float[(sides + 2) * 3];
 		float[] bottomNormals = new float[(sides + 2) * 3];
 
 		int capVidx = 3;
 		int capNidx = 3;
 
-		topVertices[0] = 0f;
-		topVertices[1] = 0f;
-		topVertices[2] = .5f;
-		topNormals[0] = 0f;
-		topNormals[1] = 0f;
-		topNormals[2] = 1f;
 		bottomVertices[0] = 0f;
 		bottomVertices[1] = 0f;
 		bottomVertices[2] = -.5f;
@@ -78,51 +67,43 @@ public class Cylinder extends BaseShape implements UrdfDrawable {
 		bottomNormals[2] = -1f;
 
 		for(float theta = 0; theta <= (TWO_PI + dTheta); theta += dTheta) {
-			sideVertices[sideVidx++] = FloatMath.cos(theta); // X
-			sideVertices[sideVidx++] = FloatMath.sin(theta); // Y
+			sideVertices[sideVidx++] = 0f; // X
+			sideVertices[sideVidx++] = 0f; // Y
 			sideVertices[sideVidx++] = 0.5f; // Z
 
 			sideVertices[sideVidx++] = FloatMath.cos(theta); // X
 			sideVertices[sideVidx++] = FloatMath.sin(theta); // Y
 			sideVertices[sideVidx++] = -0.5f; // Z
 
-			sideNormals[sideNidx++] = FloatMath.cos(theta); // X
-			sideNormals[sideNidx++] = FloatMath.sin(theta); // Y
-			sideNormals[sideNidx++] = 0f; // Z
+			sideNormals[sideNidx++] = FloatMath.cos(theta)/1.224f; // X
+			sideNormals[sideNidx++] = FloatMath.sin(theta)/1.224f; // Y
+			sideNormals[sideNidx++] = .5f/1.224f;//0f; // Z
 
-			sideNormals[sideNidx++] = FloatMath.cos(theta); // X
-			sideNormals[sideNidx++] = FloatMath.sin(theta); // Y
-			sideNormals[sideNidx++] = 0f; // Z
+			sideNormals[sideNidx++] = FloatMath.cos(theta)/1.224f; // X
+			sideNormals[sideNidx++] = FloatMath.sin(theta)/1.224f; // Y
+			sideNormals[sideNidx++] = .5f/1.224f;//0f; // Z
 
 			// X
-			topVertices[capVidx] = FloatMath.cos(theta);
 			bottomVertices[capVidx++] = FloatMath.cos(TWO_PI - theta);
 			// Y
-			topVertices[capVidx] = FloatMath.sin(theta);
 			bottomVertices[capVidx++] = FloatMath.sin(TWO_PI - theta);
 			// Z
-			topVertices[capVidx] = 0.5f;
 			bottomVertices[capVidx++] = -0.5f;
 
 			// Normals
-			topNormals[capNidx] = 0f;
 			bottomNormals[capNidx++] = 0f;
-			topNormals[capNidx] = 0f;
 			bottomNormals[capNidx++] = 0f;
-			topNormals[capNidx] = 1f;
 			bottomNormals[capNidx++] = -1f;
 		}
 		stripTriangleCount = sideVertices.length / 3;
 		fanTriangleCount = sides + 2;
 		sideVerticesBuf = Vertices.toFloatBuffer(sideVertices);
 		sideNormalsBuf = Vertices.toFloatBuffer(sideNormals);
-		topVerticesBuf = Vertices.toFloatBuffer(topVertices);
-		topNormalsBuf = Vertices.toFloatBuffer(topNormals);
 		bottomVerticesBuf = Vertices.toFloatBuffer(bottomVertices);
 		bottomNormalsBuf = Vertices.toFloatBuffer(bottomNormals);
 	}
 
-	public Cylinder(Camera cam) {
+	public Cone(Camera cam) {
 		super(cam);
 		super.setProgram(GLSLProgram.FlatShaded());
 		super.setColor(DEFAULT_COLOR);
@@ -160,11 +141,6 @@ public class Cylinder extends BaseShape implements UrdfDrawable {
 		GLES20.glVertexAttribPointer(ShaderVal.NORMAL.loc, 3, GLES20.GL_FLOAT, false, 0, sideNormalsBuf);
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, stripTriangleCount);
 
-		// Draw top
-		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, topVerticesBuf);
-		GLES20.glVertexAttribPointer(ShaderVal.NORMAL.loc, 3, GLES20.GL_FLOAT, false, 0, topNormalsBuf);
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, fanTriangleCount);
-
 		// Draw bottom
 		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, bottomVerticesBuf);
 		GLES20.glVertexAttribPointer(ShaderVal.NORMAL.loc, 3, GLES20.GL_FLOAT, false, 0, bottomNormalsBuf);
@@ -188,10 +164,6 @@ public class Cylinder extends BaseShape implements UrdfDrawable {
 		// Draw sides
 		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, sideVerticesBuf);
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, stripTriangleCount);
-
-		// Draw top
-		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, topVerticesBuf);
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, fanTriangleCount);
 
 		// Draw bottom
 		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, bottomVerticesBuf);
