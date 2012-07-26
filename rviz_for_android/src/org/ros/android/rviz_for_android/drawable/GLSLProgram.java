@@ -86,7 +86,7 @@ public class GLSLProgram {
 	}
 
 	private static GLSLProgram MakeFlatColor() {
-		String vertexShader = "uniform mat4 u_MVPMatrix;\n" + "uniform vec4 u_Color;\n" + "attribute vec4 a_Position;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   v_Color = u_Color;\n" + "   gl_Position = u_MVPMatrix * a_Position;\n" + "}\n";
+		String vertexShader = "uniform mat4 u_MVPMatrix;\n" + "uniform vec4 u_Color;\n" + "attribute vec4 a_Position;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   v_Color = u_Color;\n" + "   gl_PointSize = 3.0;\n" + "   gl_Position = u_MVPMatrix * a_Position;\n" + "}\n";
 		String fragmentShader = "precision mediump float;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   gl_FragColor = v_Color;\n" + "}";
 
 		GLSLProgram retval = new GLSLProgram(vertexShader, fragmentShader);
@@ -97,7 +97,7 @@ public class GLSLProgram {
 	}
 
 	private static GLSLProgram MakeFlatShaded() {
-		String vertexShader = "uniform mat4 u_MVPMatrix;\n" + "uniform vec4 u_Color;\n" + "uniform vec3 u_lightVector;\n" + "uniform mat4 u_MMatrix;\n" + "attribute vec4 a_Position;\n" + "attribute vec3 a_Normal;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   vec3 modelViewNormal = vec3(u_MMatrix * vec4(a_Normal,0.0));\n" + "   float diffuse = max(dot(modelViewNormal, u_lightVector), 0.4);\n" + "   v_Color = vec4(diffuse*u_Color.xyz, u_Color[3]);\n" + "   gl_Position = u_MVPMatrix * a_Position;\n" + "}";
+		String vertexShader = "uniform mat4 u_MVPMatrix;\n" + "uniform vec4 u_Color;\n" + "uniform vec3 u_lightVector;\n" + "uniform mat4 u_MMatrix;\n" + "attribute vec4 a_Position;\n" + "attribute vec3 a_Normal;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   vec3 modelViewNormal = vec3(u_MMatrix * vec4(a_Normal,0.0));\n" + "   float diffuse = max(dot(modelViewNormal, u_lightVector), 0.4);\n" + "   v_Color = vec4(diffuse*u_Color.xyz, u_Color[3]);\n" + "   gl_PointSize = 3.0;\n" + "   gl_Position = u_MVPMatrix * a_Position;\n" + "}";
 		String fragmentShader = "precision mediump float;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   gl_FragColor = v_Color;\n" + "}";
 
 		GLSLProgram retval = new GLSLProgram(vertexShader, fragmentShader);
@@ -113,7 +113,7 @@ public class GLSLProgram {
 	}
 
 	private static GLSLProgram MakeColoredVertex() {
-		String vertexShader = "uniform mat4 u_MVPMatrix;\n" + "attribute vec4 a_Position;\n" + "attribute vec4 a_Color;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   v_Color = a_Color;\n" + "   gl_Position = u_MVPMatrix * a_Position;\n" + "}";
+		String vertexShader = "uniform mat4 u_MVPMatrix;\n" + "attribute vec4 a_Position;\n" + "attribute vec4 a_Color;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   v_Color = a_Color;\n" + "   gl_PointSize = 3.0;\n" + "   gl_Position = u_MVPMatrix * a_Position;\n" + "}";
 		String fragmentShader = "precision mediump float;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   gl_FragColor = v_Color;\n" + "}";
 
 		GLSLProgram retval = new GLSLProgram(vertexShader, fragmentShader);

@@ -27,49 +27,55 @@ import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 
 import android.opengl.GLES20;
 
-public class LineStripShape extends BaseShape {
+public class GenericColoredShape extends BaseShape {
 
 	protected final FloatBuffer vertices;
 	protected final FloatBuffer colors;
-	protected int lineCount = 0;
-	protected boolean useLineColors = false;
-
-	public LineStripShape(Camera cam, float[] vertices, float[] colors) {
+	protected int vertexCount = 0;
+	protected boolean useVertexColors = false;
+	private final int drawMode;
+	
+	public GenericColoredShape(Camera cam, int drawMode, float[] vertices, float[] colors) {
 		super(cam);
+		this.drawMode = drawMode;
 		this.vertices = Vertices.toFloatBuffer(vertices);
 		this.colors = Vertices.toFloatBuffer(colors);
-		lineCount = vertices.length / 2;
 		
-		useLineColors = true;
+		vertexCount = vertices.length / 3;
+		
+		useVertexColors = true;
 		super.setProgram(GLSLProgram.ColoredVertex());
 	}
 	
-	public LineStripShape(Camera cam, float[] vertices) {
+	public GenericColoredShape(Camera cam, int drawMode, float[] vertices) {
 		super(cam);
+		this.drawMode = drawMode;
 		this.vertices = Vertices.toFloatBuffer(vertices);
 		this.colors = null;
-		lineCount = vertices.length / 2;
-
-		useLineColors = false;
-		super.setProgram(GLSLProgram.FlatColor());
+		
+		vertexCount = vertices.length / 3;
+		
+		useVertexColors = false;
+		super.setProgram(GLSLProgram.FlatColor());		
 	}
-
+	
 	@Override
 	public void draw(GL10 glUnused) {
 		super.draw(glUnused);
-
+		GLES20.glDisable(GLES20.GL_CULL_FACE);
 		calcMVP();
 		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
 		GLES20.glEnableVertexAttribArray(ShaderVal.POSITION.loc);
 		GLES20.glVertexAttribPointer(ShaderVal.POSITION.loc, 3, GLES20.GL_FLOAT, false, 0, vertices);
 		
-		if(useLineColors) {
+		if(useVertexColors) {
 			GLES20.glEnableVertexAttribArray(ShaderVal.ATTRIB_COLOR.loc);
 			GLES20.glVertexAttribPointer(ShaderVal.ATTRIB_COLOR.loc, 4, GLES20.GL_FLOAT, false, 0, colors);
 		} else {
 			GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
 		}
 		
-		GLES20.glDrawArrays(GLES20.GL_LINES, 0, lineCount);
+		GLES20.glDrawArrays(drawMode, 0, vertexCount);
+		GLES20.glEnable(GLES20.GL_CULL_FACE);
 	}
 }

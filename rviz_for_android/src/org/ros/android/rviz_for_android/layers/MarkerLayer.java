@@ -29,15 +29,18 @@ import javax.microedition.khronos.opengles.GL10;
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.shapes.BaseShapeInterface;
 import org.ros.android.renderer.shapes.Color;
-import org.ros.android.renderer.shapes.LineStripShape;
+import org.ros.android.renderer.shapes.GenericColoredShape;
 import org.ros.android.rviz_for_android.drawable.Arrow;
 import org.ros.android.rviz_for_android.drawable.ColladaMesh;
 import org.ros.android.rviz_for_android.drawable.Cube;
 import org.ros.android.rviz_for_android.drawable.Cylinder;
 import org.ros.android.rviz_for_android.drawable.Sphere;
 import org.ros.android.rviz_for_android.drawable.StlMesh;
+import org.ros.android.rviz_for_android.prop.ButtonProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
+import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
+import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.namespace.GraphName;
@@ -46,12 +49,21 @@ import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Transform;
 
 import visualization_msgs.Marker;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.opengl.GLES20;
 import android.os.Handler;
 import android.util.Log;
 
 public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msgs.Marker> implements LayerWithProperties {
 
+	// List of all received namespaces and all namespaces to draw
+	private List<String> namespaceList = new LinkedList<String>();
+	private List<String> enabledNamespaces = new LinkedList<String>();
+
+	// Map from namespace to map from ID to marker
 	private Map<String, HashMap<Integer, MarkerObj>> markers = new HashMap<String, HashMap<Integer, MarkerObj>>();
+
 	private FrameTransformTree ftt;
 	private long nextPruneTime;
 	private static final long PRUNE_PERIOD = 300; // Milliseconds
@@ -62,6 +74,12 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 		super(topicName, messageType, cam);
 		this.mfd = mfd;
 		nextPruneTime = System.currentTimeMillis() + PRUNE_PERIOD;
+		super.prop.addSubProperty(new ButtonProperty("Namespaces ", "Select", new PropertyUpdateListener<String>() {
+			@Override
+			public void onPropertyChanged(String newval) {
+				showNamespaceSelectDialog();
+			}
+		}));
 	}
 
 	@Override
@@ -74,9 +92,11 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 		synchronized(lockObj) {
 			switch(msg.getAction()) {
 			case Marker.ADD:
-				Log.i("MarkerLayer", "Adding marker " + ns + ":" + id);
-				if(!markers.containsKey(ns))
+				if(!markers.containsKey(ns)) {
 					markers.put(ns, new HashMap<Integer, MarkerObj>());
+					enabledNamespaces.add(ns);
+					namespaceList.add(ns);
+				}
 				markers.get(ns).put(id, new MarkerObj(msg, super.camera, mfd));
 				break;
 			case Marker.DELETE:
@@ -94,12 +114,12 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 	@Override
 	public void draw(GL10 glUnused) {
 		synchronized(lockObj) {
-			for(HashMap<Integer, MarkerObj> hm : markers.values()) {
-				for(MarkerObj mo : hm.values()) {
+			for(String namespace : enabledNamespaces) {
+				for(MarkerObj mo : markers.get(namespace).values()) {
 					camera.pushM();
-					if(mo.getFrame() != null)
-						camera.applyTransform(ftt.newTransformIfPossible(camera.getFixedFrame(), mo.getFrame()));
-					camera.scaleM(mo.getScale()[0], mo.getScale()[1], mo.getScale()[2]);
+					if(mo.frame != null)
+						camera.applyTransform(ftt.newTransformIfPossible(camera.getFixedFrame(), mo.frame));
+					camera.scaleM(mo.scale[0], mo.scale[1], mo.scale[2]);
 					mo.draw(glUnused);
 					camera.popM();
 				}
@@ -110,16 +130,31 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 	}
 
 	private void pruneMarkers() {
+		boolean error = false;
+
+		// Prune markers which have expired
 		for(HashMap<Integer, MarkerObj> hm : markers.values()) {
 			List<Integer> removeIds = new LinkedList<Integer>();
-			for(Integer i : hm.keySet())
-				if(hm.get(i).isExpired())
+			for(Integer i : hm.keySet()) {
+				MarkerObj mo = hm.get(i);
+				if(mo.isExpired())
 					removeIds.add(i);
+				else if(mo.markerType == MarkerObj.DrawType.ERROR) {
+					super.statusController.setFrameChecking(false);
+					super.statusController.setStatus("Marker " + mo.namespace + ":" + mo.id + " has an invalid number of points", StatusColor.WARN);
+					error = true;
+				}
+			}
 			for(Integer i : removeIds) {
 				hm.remove(i);
 			}
 		}
+
+		if(!error)
+			super.statusController.setFrameChecking(true);
+
 		nextPruneTime += PRUNE_PERIOD;
+
 	}
 
 	@Override
@@ -143,9 +178,44 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 		return msg.getHeader().getFrameId();
 	}
 
+	protected void showNamespaceSelectDialog() {
+		int count = namespaceList.size();
+		boolean[] selected = new boolean[count];
+		CharSequence[] namespacesArray = new CharSequence[count];
+
+		for(int i = 0; i < count; i++) {
+			selected[i] = enabledNamespaces.contains(namespaceList.get(i));
+			namespacesArray[i] = namespaceList.get(i);
+		}
+
+		DialogInterface.OnMultiChoiceClickListener coloursDialogListener = new DialogInterface.OnMultiChoiceClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+				synchronized(lockObj) {
+					if(isChecked)
+						enabledNamespaces.add(namespaceList.get(which));
+					else
+						enabledNamespaces.remove(namespaceList.get(which));
+				}
+			}
+		};
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(mfd.getContext());
+		builder.setTitle("Select Namespaces");
+		builder.setMultiChoiceItems(namespacesArray, selected, coloursDialogListener);
+		builder.setNeutralButton("Ok", null);
+
+		AlertDialog dialog = builder.create();
+		dialog.show();
+	}
+
+	// TODO: Make MarkerObj its own class and clean it up?
 	private static class MarkerObj {
-		private static enum DrawType {PRIMITIVE, ARRAY, MESH, SHAPE};
-		
+		public static enum DrawType {
+			PRIMITIVE, ARRAY, MESH, SHAPE, ERROR
+		};
+
+		private static final float[] UNIT_SCALE = new float[] { 1f, 1f, 1f };
 		private static Map<String, BaseShapeInterface> loadedMeshes = new HashMap<String, BaseShapeInterface>();
 
 		private Camera cam;
@@ -160,13 +230,19 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 		private DrawType markerType = DrawType.PRIMITIVE;
 		private boolean useMaterials = false;
 		private Transform shapeTrans;
-		
+
+		private String namespace;
+		private int id;
+
 		private int shapeArraySize;
 		private List<Point> shapeArrayPositions;
 		private List<Color> shapeArrayColors;
 		private boolean individualShapeArrayColors;
 
 		public MarkerObj(Marker msg, Camera cam, MeshFileDownloader mfd) {
+			namespace = msg.getNs();
+			id = msg.getId();
+
 			this.cam = cam;
 			this.mfd = mfd;
 			this.type = msg.getType();
@@ -185,7 +261,7 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 				shape = new Sphere(cam, 0.5f);
 				break;
 			case Marker.CYLINDER:
-				shape = new Cylinder(cam);
+				shape = new Cylinder(cam, 0.5f, 1f);
 				break;
 			case Marker.ARROW:
 				shape = new Arrow(cam);
@@ -202,51 +278,92 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 			case Marker.CUBE_LIST:
 				shape = new Cube(cam);
 				initArray(msg);
+				if(!individualShapeArrayColors)
+					shape.setColor(color);
 				break;
 			case Marker.SPHERE_LIST:
 				shape = new Sphere(cam, 0.5f);
 				initArray(msg);
-			case Marker.POINTS:
-				
+				if(!individualShapeArrayColors)
+					shape.setColor(color);
 				break;
 			case Marker.LINE_LIST:
 				initArray(msg);
 				float[] vertices = initPrimitivePositions();
 				float[] colors = initPrimitiveColors();
-				if(colors == null)
-					shape = new LineStripShape(cam, vertices);
-				else
-					shape = new LineStripShape(cam, vertices, colors);
+				if(vertices.length % 2 == 0) {
+					if(colors == null)
+						shape = new GenericColoredShape(cam, GLES20.GL_LINES, vertices);
+					else
+						shape = new GenericColoredShape(cam, GLES20.GL_LINES, vertices, colors);
+					scale = UNIT_SCALE;
+				} else {
+					markerType = DrawType.ERROR;
+				}
 				break;
 			case Marker.LINE_STRIP:
-				
+				initArray(msg);
+				vertices = initPrimitivePositions();
+				colors = initPrimitiveColors();
+				if(vertices.length % 2 == 0) {
+					if(colors == null)
+						shape = new GenericColoredShape(cam, GLES20.GL_LINE_STRIP, vertices);
+					else
+						shape = new GenericColoredShape(cam, GLES20.GL_LINE_STRIP, vertices, colors);
+					scale = UNIT_SCALE;
+				} else {
+					markerType = DrawType.ERROR;
+				}
 				break;
 			case Marker.TRIANGLE_LIST:
-				
+				initArray(msg);
+				vertices = initPrimitivePositions();
+				colors = initPrimitiveColors();
+				if(vertices.length % 3 == 0) {
+					if(colors == null)
+						shape = new GenericColoredShape(cam, GLES20.GL_TRIANGLES, vertices);
+					else
+						shape = new GenericColoredShape(cam, GLES20.GL_TRIANGLES, vertices, colors);
+					scale = UNIT_SCALE;
+				} else {
+					markerType = DrawType.ERROR;
+				}
+				break;
+			case Marker.POINTS:
+				initArray(msg);
+				vertices = initPrimitivePositions();
+				colors = initPrimitiveColors();
+				if(colors == null)
+					shape = new GenericColoredShape(cam, GLES20.GL_POINTS, vertices);
+				else
+					shape = new GenericColoredShape(cam, GLES20.GL_POINTS, vertices, colors);
+				scale = UNIT_SCALE;
 				break;
 			}
 
-			shapeTrans = Transform.newFromPoseMessage(msg.getPose());
-			shape.setTransform(shapeTrans);
-			shape.setColor(this.color);
+			if(markerType != MarkerObj.DrawType.ERROR) {
+				shapeTrans = Transform.newFromPoseMessage(msg.getPose());
+				shape.setTransform(shapeTrans);
+				shape.setColor(this.color);
+			}
 		}
-
 
 		private float[] initPrimitivePositions() {
 			markerType = DrawType.PRIMITIVE;
-			float[] vertices = new float[shapeArraySize*3];
+			float[] vertices = new float[shapeArraySize * 3];
 			int idx = 0;
 			for(Point p : shapeArrayPositions) {
-				vertices[idx++] = (float)p.getX();
-				vertices[idx++] = (float)p.getY();
-				vertices[idx++] = (float)p.getZ();
+				vertices[idx++] = (float) p.getX();
+				vertices[idx++] = (float) p.getY();
+				vertices[idx++] = (float) p.getZ();
 			}
 			return vertices;
 		}
+
 		private float[] initPrimitiveColors() {
 			float[] colors = null;
 			if(individualShapeArrayColors) {
-				colors = new float[shapeArraySize*4];
+				colors = new float[shapeArraySize * 4];
 				int idx = 0;
 				for(Color c : shapeArrayColors) {
 					colors[idx++] = c.getRed();
@@ -261,20 +378,14 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 		private void initArray(Marker msg) {
 			markerType = DrawType.ARRAY;
 			shapeArrayPositions = msg.getPoints();
-			shapeArraySize = shapeArrayPositions.size(); 
+			shapeArraySize = shapeArrayPositions.size();
 			individualShapeArrayColors = (shapeArraySize == msg.getColors().size());
-			
+
 			if(individualShapeArrayColors) {
 				shapeArrayColors = new ArrayList<Color>();
 				for(std_msgs.ColorRGBA c : msg.getColors())
 					shapeArrayColors.add(new Color(c.getR(), c.getG(), c.getB(), c.getA()));
-			} else {
-				shape.setColor(color);
 			}
-		}
-
-		public GraphName getFrame() {
-			return frame;
 		}
 
 		private static final Color WHITE = new Color(1.0f, 1.0f, 1.0f, 1.0f);
@@ -293,14 +404,14 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 				for(int i = 0; i < shapeArraySize; i++) {
 					cam.pushM();
 					Point p = shapeArrayPositions.get(i);
-					cam.translateM((float)p.getX(), (float)p.getY(), (float)p.getZ());
+					cam.translateM((float) p.getX(), (float) p.getY(), (float) p.getZ());
 					if(individualShapeArrayColors)
 						shape.setColor(shapeArrayColors.get(i));
 					shape.draw(glUnused);
 					cam.popM();
 				}
 				cam.popM();
-			} else {
+			} else if(markerType != DrawType.ERROR) {
 				shape.draw(glUnused);
 			}
 		}
@@ -310,10 +421,6 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 				return false;
 			else
 				return System.currentTimeMillis() > endTime;
-		}
-
-		public float[] getScale() {
-			return scale;
 		}
 
 		private UrdfDrawable loadMesh(String meshResourceName) {

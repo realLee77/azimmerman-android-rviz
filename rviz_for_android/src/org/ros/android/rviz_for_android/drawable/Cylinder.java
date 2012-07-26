@@ -121,21 +121,24 @@ public class Cylinder extends BaseShape implements UrdfDrawable {
 		bottomVerticesBuf = Vertices.toFloatBuffer(bottomVertices);
 		bottomNormalsBuf = Vertices.toFloatBuffer(bottomNormals);
 	}
+	
+	private float radius;
+	private float length;
 
-	public Cylinder(Camera cam) {
+	public Cylinder(Camera cam, float radius, float length) {
 		super(cam);
 		super.setProgram(GLSLProgram.FlatShaded());
 		super.setColor(DEFAULT_COLOR);
 		super.setTransform(Transform.newIdentityTransform());
+		
+		this.radius = radius;
+		this.length = length; 
 	}
 
 	@Override
 	public void draw(GL10 glUnused) {
-		draw(glUnused, transform, 1f, 1f);
+		draw(glUnused, transform, length, radius);
 	}
-	
-	private float radius = 1f;
-	private float length = 1f;
 
 	public void draw(GL10 glUnused, Transform transform, float length, float radius) {
 		setTransform(transform);
@@ -203,7 +206,10 @@ public class Cylinder extends BaseShape implements UrdfDrawable {
 
 	@Override
 	public void draw(GL10 glUnused, Transform transform, float[] scale) {
-		draw(glUnused, transform, scale[0], scale[1]);
+		cam.pushM();
+		cam.scaleM(scale[0], scale[1], scale[2]);
+		draw(glUnused, transform, radius, length);
+		cam.popM();
 	}
 	
 	

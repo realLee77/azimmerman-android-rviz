@@ -115,9 +115,9 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 			}
 		}));
 
-		cyl = new Cylinder(cam);
+		cyl = new Cylinder(cam, 1f, 1f);
 		cube = new Cube(cam);
-		sphere = new Sphere(cam, 1.0f);
+		sphere = new Sphere(cam, 1f);
 	}
 
 	private Component vis;
