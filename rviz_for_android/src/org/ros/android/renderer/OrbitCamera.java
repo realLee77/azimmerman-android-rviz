@@ -85,8 +85,8 @@ public class OrbitCamera implements Camera {
 		fixedFrame = DEFAULT_FIXED_FRAME;
 
 		// Initialize the location
-		location = Vector3.newZeroVector();
-		lookTarget = Vector3.newZeroVector();
+		location = Vector3.zero();
+		lookTarget = Vector3.zero();
 		updateLocation();
 		location = location.add(lookTarget);
 
@@ -227,7 +227,7 @@ public class OrbitCamera implements Camera {
 	 * Set the camera look target to the fixed frame or the origin if one isn't set
 	 */
 	public void resetLookTarget() {
-		lookTarget = Vector3.newZeroVector();
+		lookTarget = Vector3.zero();
 	}
 
 	public void resetZoom() {

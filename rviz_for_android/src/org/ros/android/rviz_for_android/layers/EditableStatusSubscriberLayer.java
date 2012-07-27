@@ -34,48 +34,46 @@ public abstract class EditableStatusSubscriberLayer<T extends org.ros.internal.m
 	private String messageTypeName;
 	private StringProperty propTopic;
 	private final ReadOnlyProperty propStatus = new ReadOnlyProperty("Status", "OK", null);
-	
+
 	protected final BoolProperty prop = new BoolProperty("Enabled", true, null);
 	protected FrameCheckStatusPropertyController statusController;
 	protected GraphName frame;
-	 
-	
+
 	public EditableStatusSubscriberLayer(GraphName topicName, String messageType, Camera cam) {
 		super(topicName, messageType, cam);
-		
+
 		propTopic = new StringProperty("Topic", topicName.toString(), new PropertyUpdateListener<String>() {
 			@Override
 			public void onPropertyChanged(String newval) {
 				EditableStatusSubscriberLayer.this.changeTopic(newval);
 			}
 		});
-		
+
 		prop.addSubProperty(propStatus);
 		prop.addSubProperty(propTopic);
 
-		messageTypeName = messageType.substring(messageType.indexOf("/")+1);
+		messageTypeName = messageType.substring(messageType.indexOf("/") + 1);
 	}
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
-		
 		statusController = new FrameCheckStatusPropertyController(propStatus, camera, frameTransformTree);
 		statusController.setFrameChecking(false);
 		statusController.setStatus("No " + messageTypeName + " messages received", StatusColor.WARN);
 	}
-	
+
 	@Override
 	protected void changeTopic(String topic) {
 		super.changeTopic(topic);
 		statusController.setFrameChecking(false);
 		statusController.setStatus("No " + messageTypeName + " messages received", StatusColor.WARN);
 	}
-	
+
 	protected abstract String getMessageFrameId(T msg);
 
 	@Override
-	public void onMessageReceived(T msg) {
+	protected void onMessageReceived(T msg) {
 		String msgFrame = getMessageFrameId(msg);
 		if(frame == null || !frame.toString().equals(msgFrame)) {
 			frame = GraphName.of(msgFrame);

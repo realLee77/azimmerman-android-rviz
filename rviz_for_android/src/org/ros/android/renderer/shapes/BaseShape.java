@@ -21,13 +21,12 @@ import com.google.common.base.Preconditions;
  * @author damonkohler@google.com (Damon Kohler)
  */
 public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface {
-
-	private static final Transform defaultTransform = Transform.newIdentityTransform();
-	private static final Color defaultColor = new Color(1f, 1f, 1f, 1f);
+	protected static final Transform DEFAULT_TRANSFORM = Transform.identity();
+	private static final Color DEFAULT_COLOR = new Color(1f, 1f, 1f, 1f);
 	
 	protected Camera cam;
-	protected Color color = defaultColor;
-	protected Transform transform = defaultTransform;
+	protected Color color = DEFAULT_COLOR;
+	protected Transform transform = DEFAULT_TRANSFORM;
 	protected GLSLProgram shader;
 	protected int[] uniformHandles;
 	protected float[] MVP = new float[16];

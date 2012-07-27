@@ -74,10 +74,16 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 	}
 	
 	public void setFrameChecking(boolean frameCheck) {
-		// Only recheck on the "rising edge" of useFrameCheck
-		if(!useFrameCheck && frameCheck)
+		// Only run a frame check on the "rising edge" of useFrameCheck
+		if(frameCheck && !useFrameCheck) {
+			useFrameCheck = true;
 			checkFrameExists();
+		}
 		useFrameCheck = frameCheck;
+	}
+	
+	public boolean getFrameChecking() {
+		return useFrameCheck;
 	}
 
 	protected void checkFrameExists() {

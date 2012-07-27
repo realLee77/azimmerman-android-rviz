@@ -156,7 +156,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		for(int col = 0; col < wTileCount; col++) {
 			for(int row = 0; row < hTileCount; row++) {
 				tiles[row][col] = new Plane(super.camera, getTileTexture(row, col));
-				Transform tileTransform = new Transform(new Vector3(wTileScale * col, hTileScale * row, 0), Quaternion.newIdentityQuaternion());
+				Transform tileTransform = new Transform(new Vector3(wTileScale * col, hTileScale * row, 0), Quaternion.identity());
 				tiles[row][col].setTransform(tileTransform);
 				tiles[row][col].setScale(wTileScale, hTileScale);
 				tiles[row][col].setTextureSmoothing(TexturedTrianglesShape.TextureSmoothing.Nearest);

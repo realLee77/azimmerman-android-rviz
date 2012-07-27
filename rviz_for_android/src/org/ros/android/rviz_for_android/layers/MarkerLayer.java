@@ -83,9 +83,9 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 	}
 
 	@Override
-	public void onMessageReceived(Marker msg) {
+	protected void onMessageReceived(Marker msg) {
 		super.onMessageReceived(msg);
-
+//		Log.i("MarkerLayer", "MSGS: " + super.messageCount);
 		String ns = msg.getNs();
 		int id = msg.getId();
 
@@ -131,7 +131,7 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 
 	private void pruneMarkers() {
 		boolean error = false;
-
+		
 		// Prune markers which have expired
 		for(HashMap<Integer, MarkerObj> hm : markers.values()) {
 			List<Integer> removeIds = new LinkedList<Integer>();
@@ -141,7 +141,7 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 					removeIds.add(i);
 				else if(mo.markerType == MarkerObj.DrawType.ERROR) {
 					super.statusController.setFrameChecking(false);
-					super.statusController.setStatus("Marker " + mo.namespace + ":" + mo.id + " has an invalid number of points", StatusColor.WARN);
+					super.statusController.setStatus("Marker " + mo.id + " in " + mo.namespace + " is invalid", StatusColor.WARN);
 					error = true;
 				}
 			}
@@ -150,7 +150,7 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 			}
 		}
 
-		if(!error)
+		if(!error && super.messageCount > 0)
 			super.statusController.setFrameChecking(true);
 
 		nextPruneTime += PRUNE_PERIOD;
@@ -227,7 +227,7 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 		private int duration;
 		private float[] scale;
 		private int type;
-		private DrawType markerType = DrawType.PRIMITIVE;
+		private DrawType markerType = DrawType.SHAPE;
 		private boolean useMaterials = false;
 		private Transform shapeTrans;
 
@@ -278,17 +278,20 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 			case Marker.CUBE_LIST:
 				shape = new Cube(cam);
 				initArray(msg);
+				markerType = DrawType.ARRAY;
 				if(!individualShapeArrayColors)
 					shape.setColor(color);
 				break;
 			case Marker.SPHERE_LIST:
 				shape = new Sphere(cam, 0.5f);
 				initArray(msg);
+				markerType = DrawType.ARRAY;
 				if(!individualShapeArrayColors)
 					shape.setColor(color);
 				break;
 			case Marker.LINE_LIST:
 				initArray(msg);
+				markerType = DrawType.PRIMITIVE;
 				float[] vertices = initPrimitivePositions();
 				float[] colors = initPrimitiveColors();
 				if(vertices.length % 2 == 0) {
@@ -303,6 +306,7 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 				break;
 			case Marker.LINE_STRIP:
 				initArray(msg);
+				markerType = DrawType.PRIMITIVE;
 				vertices = initPrimitivePositions();
 				colors = initPrimitiveColors();
 				if(vertices.length % 2 == 0) {
@@ -317,6 +321,7 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 				break;
 			case Marker.TRIANGLE_LIST:
 				initArray(msg);
+				markerType = DrawType.PRIMITIVE;
 				vertices = initPrimitivePositions();
 				colors = initPrimitiveColors();
 				if(vertices.length % 3 == 0) {
@@ -331,6 +336,7 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 				break;
 			case Marker.POINTS:
 				initArray(msg);
+				markerType = DrawType.PRIMITIVE;
 				vertices = initPrimitivePositions();
 				colors = initPrimitiveColors();
 				if(colors == null)
@@ -339,10 +345,14 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 					shape = new GenericColoredShape(cam, GLES20.GL_POINTS, vertices, colors);
 				scale = UNIT_SCALE;
 				break;
+			default:
+				Log.e("MarkerLayer", "Unknown marker type: " + msg.getType());
+				markerType = DrawType.ERROR;
 			}
 
-			if(markerType != MarkerObj.DrawType.ERROR) {
-				shapeTrans = Transform.newFromPoseMessage(msg.getPose());
+			if(markerType != DrawType.ERROR) {
+				Log.d("MarkerLayer", "New marker, " + namespace + " : " + id + "  of type " + markerType.toString() + " : " + shape.toString());
+				shapeTrans = Transform.fromPoseMessage(msg.getPose());
 				shape.setTransform(shapeTrans);
 				shape.setColor(this.color);
 			}
@@ -376,7 +386,6 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 		}
 
 		private void initArray(Marker msg) {
-			markerType = DrawType.ARRAY;
 			shapeArrayPositions = msg.getPoints();
 			shapeArraySize = shapeArrayPositions.size();
 			individualShapeArrayColors = (shapeArraySize == msg.getColors().size());

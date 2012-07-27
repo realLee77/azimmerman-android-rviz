@@ -129,7 +129,6 @@ public class Cylinder extends BaseShape implements UrdfDrawable {
 		super(cam);
 		super.setProgram(GLSLProgram.FlatShaded());
 		super.setColor(DEFAULT_COLOR);
-		super.setTransform(Transform.newIdentityTransform());
 		
 		this.radius = radius;
 		this.length = length; 

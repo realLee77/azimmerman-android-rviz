@@ -49,7 +49,7 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 		this.messageType = messageType;
 	}
 
-	public abstract void onMessageReceived(T msg);
+	protected abstract void onMessageReceived(T msg);
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {

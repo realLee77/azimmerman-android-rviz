@@ -83,7 +83,7 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 	}
 	
 	private float[] scale = new float[] {1f,1f,1f};
-	private Transform transform = Transform.newIdentityTransform();
+	private Transform transform = Transform.identity();
 	@Override
 	public void draw(GL10 glUnused, Transform transform, float[] scale) {
 		cam.pushM();
