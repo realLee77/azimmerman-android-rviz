@@ -35,7 +35,7 @@ public class CubeLayer extends DefaultLayer implements SelectableLayer {
 	private Cube myCube2;
 	private Sphere mySphere;
 	private Cylinder myCyl;
-	private Transform transform = Transform.newIdentityTransform();
+	private Transform transform = Transform.identity();
 	private float[] scale = new float[]{1f,1f,1f};
 	
 	private long startTime;

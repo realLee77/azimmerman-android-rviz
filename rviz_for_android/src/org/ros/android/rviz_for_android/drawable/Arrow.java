@@ -25,7 +25,6 @@ import org.ros.android.renderer.Vertices;
 import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
-import org.ros.rosjava_geometry.Transform;
 
 import android.opengl.GLES20;
 import android.util.FloatMath;
@@ -180,7 +179,6 @@ public class Arrow extends BaseShape {
 		super(cam);
 		super.setProgram(GLSLProgram.FlatShaded());
 		super.setColor(DEFAULT_COLOR);
-		super.setTransform(Transform.newIdentityTransform());
 	}
 
 	@Override

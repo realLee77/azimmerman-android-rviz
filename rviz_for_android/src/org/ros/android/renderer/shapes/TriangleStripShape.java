@@ -11,12 +11,10 @@ import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
-import org.ros.rosjava_geometry.Transform;
 
 import android.opengl.GLES20;
 
 public class TriangleStripShape extends BaseShape {
-
 	private final FloatBuffer normals;
 	private final FloatBuffer vertices;
 	private final ShortBuffer indices;
@@ -39,7 +37,6 @@ public class TriangleStripShape extends BaseShape {
 		this.indices.position(0);
 
 		setColor(color);
-		setTransform(Transform.newIdentityTransform());
 		super.setProgram(GLSLProgram.FlatShaded());
 	}
 	
@@ -54,7 +51,6 @@ public class TriangleStripShape extends BaseShape {
 		this.indices = Vertices.toShortBuffer(indicesArray);
 		
 		setColor(color);
-		setTransform(Transform.newIdentityTransform());
 		super.setProgram(GLSLProgram.FlatShaded());
 	}
 

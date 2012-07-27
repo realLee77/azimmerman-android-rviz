@@ -44,7 +44,7 @@ public class Component {
 	// Material
 	private String material_name;
 	private Color material_color;
-	
+
 	private long createTime;
 
 	public GEOMETRY getType() {
@@ -78,7 +78,7 @@ public class Component {
 	public Color getMaterial_color() {
 		return material_color;
 	}
-	
+
 	public void setMaterial_color(Color color) {
 		material_color = color;
 	}
@@ -150,15 +150,13 @@ public class Component {
 		return true;
 	}
 
-
-
 	public static class Builder {
 		private GEOMETRY type;
 		private float radius = -1;
 		private float length = -1;
 		private float[] size = new float[] { 1f, 1f, 1f };
 		private String mesh;
-		private Transform origin = Transform.newIdentityTransform();
+		private Transform origin = Transform.identity();
 		private String material_name;
 		private Color material_color;
 
@@ -221,10 +219,31 @@ public class Component {
 		public void setRotation(float[] rotation) {
 			if(rotation.length == 3) {
 				for(int i = 0; i < 3; i++)
-					this.origin.setRotation(Quaternion.newFromRPY(rotation[0], rotation[1], rotation[2]));
+					this.origin.setRotation(rpyToQuaternion(rotation[0], rotation[1], rotation[2]));
 			} else {
 				throw new IllegalArgumentException("Can't set rotation!");
 			}
+		}
+
+		private Quaternion rpyToQuaternion(float roll, float pitch, float yaw) {
+			double halfroll = roll / 2;
+			double halfpitch = pitch / 2;
+			double halfyaw = yaw / 2;
+
+			double sin_r2 = Math.sin(halfroll);
+			double sin_p2 = Math.sin(halfpitch);
+			double sin_y2 = Math.sin(halfyaw);
+
+			double cos_r2 = Math.cos(halfroll);
+			double cos_p2 = Math.cos(halfpitch);
+			double cos_y2 = Math.cos(halfyaw);
+
+			float q0 = (float) (cos_r2 * cos_p2 * cos_y2 + sin_r2 * sin_p2 * sin_y2);
+			float q1 = (float) (sin_r2 * cos_p2 * cos_y2 - cos_r2 * sin_p2 * sin_y2);
+			float q2 = (float) (cos_r2 * sin_p2 * cos_y2 + sin_r2 * cos_p2 * sin_y2);
+			float q3 = (float) (cos_r2 * cos_p2 * sin_y2 - sin_r2 * sin_p2 * cos_y2);
+
+			return new Quaternion(q0, q1, q2, q3);
 		}
 
 		public void setMaterialName(String material_name) {
@@ -261,7 +280,7 @@ public class Component {
 
 			if(material_color != null && material_name == null)
 				throw new IllegalArgumentException("Forgot to name the color " + material_color);
-			
+
 			if(material_color == null)
 				material_color = new Color(1f, .5f, 0.15f, 1f);
 

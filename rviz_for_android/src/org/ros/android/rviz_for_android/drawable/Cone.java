@@ -107,7 +107,6 @@ public class Cone extends BaseShape implements UrdfDrawable {
 		super(cam);
 		super.setProgram(GLSLProgram.FlatShaded());
 		super.setColor(DEFAULT_COLOR);
-		super.setTransform(Transform.newIdentityTransform());
 	}
 
 	@Override

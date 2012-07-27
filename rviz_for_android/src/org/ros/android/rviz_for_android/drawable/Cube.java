@@ -111,7 +111,6 @@ public class Cube extends BufferedTrianglesShape implements UrdfDrawable, Select
 	public Cube(Camera cam) {
 		super(cam, cubeVertices, cubeNormals, baseColor);
 		super.setProgram(GLSLProgram.FlatShaded());
-		super.setTransform(Transform.newIdentityTransform());
 	}
 
 	private float[] scale = new float[] {1f, 1f, 1f};
