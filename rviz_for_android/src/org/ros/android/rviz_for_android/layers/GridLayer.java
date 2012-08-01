@@ -19,7 +19,6 @@ package org.ros.android.rviz_for_android.layers;
 
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
-import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -41,13 +40,10 @@ import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
-import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
-import org.ros.android.rviz_for_android.prop.StatusPropertyController;
 import org.ros.android.rviz_for_android.prop.Vector3Property;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
-import org.ros.rosjava_geometry.AvailableFrameTracker.FrameAddedListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Vector3;
 

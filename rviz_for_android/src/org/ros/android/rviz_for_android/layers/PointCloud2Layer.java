@@ -30,7 +30,6 @@ import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.ListProperty;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
-import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.namespace.GraphName;
 
 import sensor_msgs.PointCloud2;
@@ -77,14 +76,7 @@ public class PointCloud2Layer extends EditableStatusSubscriberLayer<sensor_msgs.
 				}
 			}
 		});
-		// Topic graph name property
-		StringProperty propTopic = new StringProperty("Topic", "/lots_of_points2", new PropertyUpdateListener<String>() {
-			@Override
-			public void onPropertyChanged(String newval) {
-				PointCloud2Layer.this.changeTopic(newval);
-			}
-		});
-		
+
 		propMaxRange.addUpdateListener(new PropertyUpdateListener<Float>() {
 			@Override
 			public void onPropertyChanged(Float newval) {

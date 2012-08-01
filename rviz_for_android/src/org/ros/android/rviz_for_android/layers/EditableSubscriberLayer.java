@@ -31,7 +31,7 @@ import android.os.Handler;
 public abstract class EditableSubscriberLayer<T extends org.ros.internal.message.Message> extends SubscriberLayer<T> {
 
 	private String messageType;
-	private ConnectedNode connectedNode;
+	protected ConnectedNode connectedNode;
 	private Subscriber<T> sub;
 	private final MessageListener<T> subListener = new MessageListener<T>() {
 		@Override
@@ -42,7 +42,7 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 	};
 	
 	protected int messageCount = 0;
-	protected String topic;
+	private String topic;
 	
 	public EditableSubscriberLayer(GraphName topicName, String messageType, Camera cam) {
 		super(topicName, messageType, cam);
@@ -54,7 +54,6 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
-		
 		sub = getSubscriber();
 		sub.addMessageListener(subListener);
 		this.connectedNode = connectedNode;
@@ -66,11 +65,11 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 		super.onShutdown(view, node);
 	}
 	
-	private void clearSubscriber() {
+	protected void clearSubscriber() {
 		sub.shutdown();
 	}
 
-	private void initSubscriber(String topic) {
+	protected void initSubscriber(String topic) {
 		this.topic = topic;
 		sub = connectedNode.newSubscriber(topic, messageType);
 		sub.addMessageListener(subListener);

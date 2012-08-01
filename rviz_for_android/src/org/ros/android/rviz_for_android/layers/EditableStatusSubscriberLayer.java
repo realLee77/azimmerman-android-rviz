@@ -75,6 +75,7 @@ public abstract class EditableStatusSubscriberLayer<T extends org.ros.internal.m
 	@Override
 	protected void onMessageReceived(T msg) {
 		String msgFrame = getMessageFrameId(msg);
+		camera.informNewFixedFrame(msgFrame);
 		if(frame == null || !frame.toString().equals(msgFrame)) {
 			frame = GraphName.of(msgFrame);
 			statusController.setTargetFrame(frame);

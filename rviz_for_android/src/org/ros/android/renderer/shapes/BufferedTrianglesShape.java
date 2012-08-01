@@ -70,7 +70,8 @@ public class BufferedTrianglesShape extends BaseShape {
 	private static final int POSITION_OFFSET = 0;
 	
 	@Override
-	public void draw(GL10 glUnused) {		
+	public void draw(GL10 glUnused) {	
+		cam.pushM();
 		if(!bufferPrepared)
 			bufferIdx = createVertexBuffer(glUnused);
 		
@@ -94,10 +95,12 @@ public class BufferedTrianglesShape extends BaseShape {
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, count);
 		
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+		cam.popM();
 	}
 	
 	@Override
 	public void selectionDraw(GL10 glUnused) {
+		cam.pushM();
 		if(!bufferPrepared)
 			bufferIdx = createVertexBuffer(glUnused);
 		
@@ -116,6 +119,7 @@ public class BufferedTrianglesShape extends BaseShape {
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 		
 		super.selectionDrawCleanup();
+		cam.popM();
 	}
 
 	private int createVertexBuffer(GL10 glUnused) {
