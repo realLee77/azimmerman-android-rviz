@@ -27,7 +27,6 @@ import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 
 import android.opengl.GLES20;
-import android.opengl.Matrix;
 
 public class Axis extends BaseShape {
 

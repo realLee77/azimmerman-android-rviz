@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.ros.android.renderer.shapes.Color;
+import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Vector3;
 
 import android.content.Context;
@@ -24,6 +25,36 @@ public final class Utility {
 			return a1;
 		} else {
 			return a2;
+		}
+	}
+	
+	public static Quaternion normalize(Quaternion q) {
+		double length = Math.sqrt(Math.pow(q.getX(), 2) + Math.pow(q.getY(), 2) + Math.pow(q.getZ(), 2) + Math.pow(q.getW(), 2));
+		q.setX(q.getX()/length);
+		q.setY(q.getY()/length);
+		q.setZ(q.getZ()/length);
+		q.setW(q.getW()/length);
+		return q;
+	}
+	
+	
+	/**
+	 * @param q
+	 * @return Angle in radians
+	 */
+	public static float getAngle(Quaternion q) {
+		return (float) (2*Math.acos(q.getW()));
+	}
+	
+	public static Vector3 getAxis(Quaternion q) {
+		double l = Math.sqrt(1 - (q.getW()*q.getW()));
+		if(l > 1e-9) {
+			double x = q.getX() / l;
+			double y = q.getY() / l;
+			double z = q.getZ() / l;
+			return new Vector3(x,y,z);
+		} else {
+			return Vector3.zero();
 		}
 	}
 

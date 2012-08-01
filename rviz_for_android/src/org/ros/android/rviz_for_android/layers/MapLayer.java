@@ -19,7 +19,6 @@ package org.ros.android.rviz_for_android.layers;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -27,22 +26,15 @@ import nav_msgs.OccupancyGrid;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.VisualizationView;
-import org.ros.android.renderer.layer.SubscriberLayer;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.TexturedTrianglesShape;
 import org.ros.android.rviz_for_android.drawable.Plane;
-import org.ros.android.rviz_for_android.prop.BoolProperty;
-import org.ros.android.rviz_for_android.prop.FrameCheckStatusPropertyController;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
-import org.ros.android.rviz_for_android.prop.ReadOnlyProperty;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
-import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
-import org.ros.node.topic.Subscriber;
-import org.ros.rosjava_geometry.AvailableFrameTracker.FrameAddedListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
@@ -61,7 +53,7 @@ import android.opengl.ETC1Util.ETC1Texture;
 import android.os.Handler;
 import android.util.Log;
 
-public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements LayerWithProperties, TfLayer {
+public class MapLayer extends EditableStatusSubscriberLayer<nav_msgs.OccupancyGrid> implements LayerWithProperties, TfLayer {
 
 	private static int MAX_TEXTURE_WIDTH = 1024;
 	private static int MAX_TEXTURE_HEIGHT = 1024;
@@ -73,57 +65,41 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 
 	private Plane[][] tiles;
 
-	private BoolProperty prop;
-
 	private volatile boolean isReady = false;
-
-	private MessageListener<OccupancyGrid> subListener;
 
 	private Context context;
 
 	private OccupancyGrid mostRecent;
 
+	private FrameTransformTree frameTransformTree;
+	
 	public MapLayer(Camera cam, GraphName topicName, String messageType, Context context) {
 		super(topicName, messageType, cam);
-		prop = new BoolProperty("Enabled", true, null);
-		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
 		this.context = context;
 	}
-
-	private FrameCheckStatusPropertyController statusController;
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
 
-		statusController = new FrameCheckStatusPropertyController(prop.<ReadOnlyProperty> getProperty("Status"), camera, frameTransformTree);
-		statusController.setTargetFrame(mapGraphName);
+		this.frameTransformTree = frameTransformTree;
 
-		Subscriber<nav_msgs.OccupancyGrid> sub = getSubscriber();
-		subListener = new MessageListener<OccupancyGrid>() {
-			@Override
-			public void onNewMessage(OccupancyGrid arg0) {
-				statusController.setFrameChecking(false);
-				statusController.setStatus("Map loading...", StatusColor.OK);
-				mostRecent = arg0;
-				isReady = false;
-				generateMapTiles(arg0);
-				isReady = true;
-				updateStatus(frameTransformTree, camera);
-			}
-		};
-
-		sub.addMessageListener(subListener);
-
-		frameTransformTree.getFrameTracker().addListener(new FrameAddedListener() {
-			@Override
-			public void informFrameAdded(Set<String> newFrames) {
-				updateStatus(frameTransformTree, camera);
-			}
-		});
 		updateStatus(frameTransformTree, camera);
 	}
 
+	@Override
+	protected void onMessageReceived(OccupancyGrid msg) {
+		super.onMessageReceived(msg);
+		
+		statusController.setFrameChecking(false);
+		statusController.setStatus("Map loading...", StatusColor.OK);
+		mostRecent = msg;
+		isReady = false;
+		generateMapTiles(msg);
+		isReady = true;
+		updateStatus(frameTransformTree, camera);
+	}
+	
 	private void updateStatus(FrameTransformTree frameTransformTree, Camera camera) {
 		if(!isReady) {
 			statusController.setStatus("No map exists!", StatusColor.ERROR);
@@ -247,7 +223,7 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 	}
 
 	/**
-	 * Super secret easter egg (currently unimplemented)
+	 * Super secret easter egg
 	 */
 	private boolean testLayerName() {
 		return super.layerName.equals("BRAINS");
@@ -284,13 +260,6 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 		return prop;
 	}
 
-	private static final GraphName mapGraphName = GraphName.of("map");
-
-	@Override
-	public GraphName getFrame() {
-		return mapGraphName;
-	}
-
 	@Override
 	public void onShutdown(VisualizationView view, Node node) {
 		super.onShutdown(view, node);
@@ -299,7 +268,15 @@ public class MapLayer extends SubscriberLayer<nav_msgs.OccupancyGrid> implements
 				for(Plane p : pRow)
 					p.cleanup();
 		}
-		
-		statusController.cleanup();
+	}
+
+	@Override
+	protected String getMessageFrameId(OccupancyGrid msg) {
+		return msg.getHeader().getFrameId();
+	}
+
+	@Override
+	public GraphName getFrame() {
+		return super.frame;
 	}
 }

@@ -165,7 +165,7 @@ public abstract class Property<T> {
 	}
 
 	// Nested property access functions
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "hiding" })
 	public <R extends Property<?>> R getProperty(String... levels) {
 		Property<?> cur = this;
 		for(int i = 0; i < levels.length; i++) {

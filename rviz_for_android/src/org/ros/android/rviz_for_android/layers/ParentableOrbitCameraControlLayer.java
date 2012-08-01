@@ -16,7 +16,11 @@
  */
 package org.ros.android.rviz_for_android.layers;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.Camera.AvailableFixedFrameListener;
 import org.ros.android.renderer.OrbitCamera;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.rviz_for_android.prop.GraphNameProperty;
@@ -35,6 +39,7 @@ import android.view.MotionEvent;
 public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer implements LayerWithProperties {
 
 	private ViewProperty prop = new ViewProperty("null", null, null);
+	private GraphNameProperty fixedFrameSelector;
 	private OrbitCamera cam;
 	
 	public ParentableOrbitCameraControlLayer(Context context, Camera cam) {
@@ -47,6 +52,8 @@ public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer i
 		return super.onTouchEvent(view, event);
 	}
 
+	private Set<String> availableFixedFrames = new HashSet<String>();
+	
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, final Camera camera) {
 		if(!(camera instanceof OrbitCamera))
@@ -54,16 +61,24 @@ public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer i
 
 		cam = (OrbitCamera) camera;
 		
-		GraphNameProperty subprop = (GraphNameProperty) prop.getProperty("Fixed");
-		subprop.setDefaultItem(camera.getFixedFrame().toString(), false);
-		subprop.setValue(camera.getFixedFrame());
-		subprop.setTransformTree(frameTransformTree);
-		subprop.addUpdateListener(new PropertyUpdateListener<GraphName>() {
+		fixedFrameSelector = (GraphNameProperty) prop.getProperty("Fixed");
+		fixedFrameSelector.setDefaultItem(camera.getFixedFrame().toString(), false);
+		fixedFrameSelector.setValue(camera.getFixedFrame());
+		fixedFrameSelector.setTransformTree(frameTransformTree);
+		fixedFrameSelector.addUpdateListener(new PropertyUpdateListener<GraphName>() {
 			public void onPropertyChanged(GraphName newval) {
 				if(newval == null)
 					camera.resetFixedFrame();
 				else
 					camera.setFixedFrame(newval);
+			}
+		});
+		
+		cam.setAvailableFixedFrameListener(new AvailableFixedFrameListener() {
+			@Override
+			public void newFixedFrameAvailable(String newFrame) {
+				if(availableFixedFrames.add(newFrame))
+					fixedFrameSelector.addToDefaultList(newFrame);
 			}
 		});
 

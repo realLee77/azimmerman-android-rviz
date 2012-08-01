@@ -54,7 +54,6 @@ public class GLSLProgram {
 	};
 
 	// Create an array to store handles to uniforms. The array must be the right size to hold all uniforms described in ShaderVal
-	// TODO: Determine if this is either clever or stupid:
 	private static int maxUniformLocation = 0;
 	static {
 		for(ShaderVal s : ShaderVal.values())

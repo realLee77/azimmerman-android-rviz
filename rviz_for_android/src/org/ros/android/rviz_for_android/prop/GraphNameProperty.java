@@ -117,6 +117,14 @@ public class GraphNameProperty extends Property<GraphName> {
 		}
 		return this;
 	}
+	
+	public GraphNameProperty addToDefaultList(String item) {
+		defaultList.add(item);
+		setDefaultList(defaultList);
+		generateSpinnerContents();
+		handler.sendEmptyMessage(0);
+		return this;
+	}
 
 	public GraphNameProperty setDefaultItem(String defaultItem, boolean toIgnore) {
 		ArrayList<String> newDefault = new ArrayList<String>();

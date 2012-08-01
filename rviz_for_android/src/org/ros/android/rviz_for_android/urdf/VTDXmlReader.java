@@ -3,11 +3,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.ximpleware.AutoPilot;
-import com.ximpleware.EOFException;
-import com.ximpleware.EncodingException;
-import com.ximpleware.EntityException;
 import com.ximpleware.NavException;
-import com.ximpleware.ParseException;
 import com.ximpleware.VTDGen;
 import com.ximpleware.VTDNav;
 import com.ximpleware.XPathEvalException;
@@ -132,7 +128,6 @@ public abstract class VTDXmlReader {
 		return result;
 	}
 
-	// TODO: There's probably a better way of doing this!
 	protected int nodeCount(String... xPathExpression) {
 		return getAttributeList(xPathExpression).size();
 	}

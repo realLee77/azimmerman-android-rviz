@@ -261,14 +261,12 @@ public class OrbitCamera implements Camera {
 
 	@Override
 	public void pushM() {
-		stackPointer++;
-		copyArray(modelM, stackM[stackPointer]);
+		copyArray(modelM, stackM[++stackPointer]);
 	}
 
 	@Override
 	public void popM() {
-		stackPointer--;
-		copyArray(stackM[stackPointer], modelM);
+		copyArray(stackM[stackPointer--], modelM);
 		if(stackPointer < 0)
 			throw new RuntimeException("Can not remove the last element in the model matrix stack!");
 	}
@@ -295,13 +293,15 @@ public class OrbitCamera implements Camera {
 
 	@Override
 	public void applyTransform(Transform transform) {
-		Matrix.multiplyMM(modelM, 0, toFloatArr(transform.toMatrix()), 0, modelM, 0);
-/*		translateM((float) transform.getTranslation().getX(), (float) transform.getTranslation().getY(), (float) transform.getTranslation().getZ());
-		double angleDegrees = Math.toDegrees(transform.getRotation().getAngle());
-		if(angleDegrees != 0) {
-			Vector3 axis = transform.getRotation().getAxis();
-			rotateM((float) angleDegrees, (float) axis.getX(), (float) axis.getY(), (float) axis.getZ());
-		}*/
+		Matrix.multiplyMM(modelM, 0, copyOf(modelM), 0, toFloatArr(transform.toMatrix()), 0);
+	}
+	
+	private float[] copyOf = new float[16];
+	private float[] copyOf(float[] matrix) {				
+		for( int i = 0; i < copyOf.length; i++)
+			copyOf[i] = matrix[i];
+		
+		return copyOf;
 	}
 	
 	private float[] floatTransformMatrix = new float[16];
@@ -342,5 +342,17 @@ public class OrbitCamera implements Camera {
 	@Override
 	public void removeFixedFrameListener(FixedFrameListener l) {
 		fixedFrameListeners.remove(l);
+	}
+
+	private AvailableFixedFrameListener availableFixedFrameListener;
+	@Override
+	public void setAvailableFixedFrameListener(AvailableFixedFrameListener listener) {
+		availableFixedFrameListener = listener;
+	}
+
+	@Override
+	public void informNewFixedFrame(String frame) {
+		if(availableFixedFrameListener != null)
+			availableFixedFrameListener.newFixedFrameAvailable(frame);
 	}
 }

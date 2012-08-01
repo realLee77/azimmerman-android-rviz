@@ -29,6 +29,7 @@ import org.ros.android.renderer.layer.Layer;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
 import org.ros.android.rviz_for_android.layers.CubeLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
+import org.ros.android.rviz_for_android.layers.InteractiveMarkerLayer;
 import org.ros.android.rviz_for_android.layers.MapLayer;
 import org.ros.android.rviz_for_android.layers.MarkerLayer;
 import org.ros.android.rviz_for_android.layers.ParentableOrbitCameraControlLayer;
@@ -84,6 +85,7 @@ public class MainActivity extends RosActivity {
 		PointCloud2("Point Cloud2"),
 		TFLayer("TF"),
 		Marker("Marker"),
+		InteractiveMarker("Interactive Marker"),
 		CubeLayer("CUBE LAYER");
 		private String printName;
 		private int count = 0;
@@ -319,6 +321,9 @@ public class MainActivity extends RosActivity {
 			break;
 		case Marker:
 			newLayer = new MarkerLayer(GraphName.of("/markers"), Marker._TYPE, cam, mfd);
+			break;
+		case InteractiveMarker:
+			newLayer = new InteractiveMarkerLayer(cam, mfd);
 			break;
 		// TODO: Remove the cube layer!
 		case CubeLayer:

@@ -94,4 +94,11 @@ public interface Camera {
 	public interface FixedFrameListener {
 		public void fixedFrameChanged(GraphName newFrame);
 	}
+	
+	public interface AvailableFixedFrameListener {
+		public void newFixedFrameAvailable(String newFrame);
+	}
+	
+	public abstract void setAvailableFixedFrameListener(AvailableFixedFrameListener l);
+	public abstract void informNewFixedFrame(String f);
 }
