@@ -41,6 +41,8 @@ import com.google.common.collect.Lists;
  */
 public class VisualizationView extends GLSurfaceView implements NodeMain {
 
+	private static final int TF_MESSAGE_QUEUE = 30;
+
 	private RenderRequestListener renderRequestListener;
 	
 	private FrameTransformTree frameTransformTree;
@@ -142,7 +144,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 					frameTransformTree.updateTransform(transform);
 				}
 			}
-		});
+		}, TF_MESSAGE_QUEUE);
 	}
 
 	private void startLayers() {

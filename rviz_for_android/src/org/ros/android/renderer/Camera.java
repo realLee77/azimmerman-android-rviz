@@ -85,6 +85,8 @@ public interface Camera {
 	
 	public abstract void applyTransform(Transform t);
 	
+	public abstract void loadMatrixM(float[] matrix);
+	
 	public abstract SelectionManager getSelectionManager();
 	
 	public abstract void addFixedFrameListener(FixedFrameListener l);

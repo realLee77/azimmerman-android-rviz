@@ -37,6 +37,16 @@ public final class Utility {
 		return q;
 	}
 	
+	public static Quaternion correctQuaternion(Quaternion q) {
+		if(q.getX() == 0 && q.getY() == 0 && q.getZ() == 0 && q.getW() == 0)
+			q.setW(1d);
+		return q;
+	}
+	
+	public static Color colorFromMessage(std_msgs.ColorRGBA c) {
+		return new Color(c.getR(), c.getG(), c.getB(), c.getA());
+	}
+	
 	
 	/**
 	 * @param q

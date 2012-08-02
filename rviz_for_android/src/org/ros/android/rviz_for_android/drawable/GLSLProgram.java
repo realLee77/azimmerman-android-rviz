@@ -38,7 +38,7 @@ public class GLSLProgram {
 		// Attributes - location refers to OpenGL index
 		POSITION(false, 0), ATTRIB_COLOR(false, 1), TEXCOORD(false, 2), NORMAL(false, 3), AX(false, 4), AY(false, 5), AZ(false, 6), A_EXTRA(false,7),
 		// Uniforms - location refers to uniform int array
-		MVP_MATRIX(true, 0), TIME(true, 1), UNIFORM_COLOR(true, 3), MV_MATRIX(true, 4), LIGHTPOS(true, 5), M_MATRIX(true, 6), LIGHTVEC(true, 7), TEXTURE(true, 8), EXTRA(true, 9), EXTRA_2(true, 10), EXTRA_3(true, 11);
+		MVP_MATRIX(true, 0), TIME(true, 1), UNIFORM_COLOR(true, 3), MV_MATRIX(true, 4), LIGHTPOS(true, 5), M_MATRIX(true, 6), LIGHTVEC(true, 7), TEXTURE(true, 8), EXTRA(true, 9), EXTRA_2(true, 10), EXTRA_3(true, 11), NORM_MATRIX(true, 12);
 
 		private boolean isUniform = false;
 		public int loc = -1;
@@ -96,7 +96,9 @@ public class GLSLProgram {
 	}
 
 	private static GLSLProgram MakeFlatShaded() {
-		String vertexShader = "uniform mat4 u_MVPMatrix;\n" + "uniform vec4 u_Color;\n" + "uniform vec3 u_lightVector;\n" + "uniform mat4 u_MMatrix;\n" + "attribute vec4 a_Position;\n" + "attribute vec3 a_Normal;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   vec3 modelViewNormal = vec3(u_MMatrix * vec4(a_Normal,0.0));\n" + "   float diffuse = max(dot(modelViewNormal, u_lightVector), 0.4);\n" + "   v_Color = vec4(diffuse*u_Color.xyz, u_Color[3]);\n" + "   gl_PointSize = 3.0;\n" + "   gl_Position = u_MVPMatrix * a_Position;\n" + "}";
+//		String vertexShader = "uniform mat4 u_MVPMatrix;\n uniform vec4 u_Color;\n uniform vec3 u_lightVector;\n uniform mat4 u_MMatrix;\n uniform mat3 u_NormMatrix;\n attribute vec4 a_Position;\n" + "attribute vec3 a_Normal;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   vec3 modelViewNormal = vec3(u_MMatrix * vec4(a_Normal,0.0));\n" + "   float diffuse = max(dot(modelViewNormal, u_lightVector), 0.4);\n" + "   v_Color = vec4(diffuse*u_Color.xyz, u_Color[3]);\n" + "   gl_PointSize = 3.0;\n" + "   gl_Position = u_MVPMatrix * a_Position;\n" + "}";
+		String vertexShader = "uniform mat4 u_MVPMatrix;\n uniform vec4 u_Color;\n uniform vec3 u_lightVector;\n uniform mat3 u_NormMatrix;\n attribute vec4 a_Position;\n" + "attribute vec3 a_Normal;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   vec3 modelViewNormal = normalize(u_NormMatrix * a_Normal);\n" + "   float diffuse = max(dot(modelViewNormal, u_lightVector), 0.4);\n" + "   v_Color = vec4(diffuse*u_Color.xyz, u_Color[3]);\n" + "   gl_PointSize = 3.0;\n" + "   gl_Position = u_MVPMatrix * a_Position;\n" + "}";
+		
 		String fragmentShader = "precision mediump float;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "   gl_FragColor = v_Color;\n" + "}";
 
 		GLSLProgram retval = new GLSLProgram(vertexShader, fragmentShader);
@@ -107,7 +109,7 @@ public class GLSLProgram {
 		retval.setAttributeName(ShaderVal.UNIFORM_COLOR, "u_Color");
 		retval.setAttributeName(ShaderVal.MVP_MATRIX, "u_MVPMatrix");
 		retval.setAttributeName(ShaderVal.LIGHTVEC, "u_lightVector");
-		retval.setAttributeName(ShaderVal.M_MATRIX, "u_MMatrix");
+		retval.setAttributeName(ShaderVal.NORM_MATRIX, "u_NormMatrix");
 		return retval;
 	}
 
@@ -123,7 +125,7 @@ public class GLSLProgram {
 	}
 
 	private static GLSLProgram MakeTexturedShaded() {
-		String vertexShader = "attribute vec2 a_texCoord;\n" + "attribute vec4 a_Position;\n" + "attribute vec3 a_Normal;\n" + "uniform vec4 u_Color;\n" + "uniform mat4 u_MVPMatrix;\n" + "uniform mat4 u_MMatrix;\n" + "uniform vec3 u_lightVector;\n" + "varying vec2 v_texCoord;\n" + "varying float v_diffuse;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "		v_texCoord = a_texCoord;\n" + "		v_Color = u_Color;\n" + "		vec3 modelViewNormal = vec3(u_MMatrix * vec4(a_Normal,0.0));\n" + "		v_diffuse = min(max(dot(modelViewNormal, u_lightVector), 0.45),1.0);\n" + "		gl_Position = u_MVPMatrix * a_Position;\n" + "}";
+		String vertexShader = "attribute vec2 a_texCoord;\n" + "attribute vec4 a_Position;\n" + "attribute vec3 a_Normal;\n" + "uniform vec4 u_Color;\n" + "uniform mat4 u_MVPMatrix;\n" + "uniform mat3 u_NormMatrix;\n" + "uniform vec3 u_lightVector;\n" + "varying vec2 v_texCoord;\n" + "varying float v_diffuse;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "		v_texCoord = a_texCoord;\n" + "		v_Color = u_Color;\n" + "		vec3 modelViewNormal = normalize(u_NormMatrix * a_Normal);\n" + "		v_diffuse = min(max(dot(modelViewNormal, u_lightVector), 0.45),1.0);\n" + "		gl_Position = u_MVPMatrix * a_Position;\n" + "}";
 		String fragmentShader = "precision mediump float;\n" + "uniform sampler2D u_texture;\n" + "varying vec2 v_texCoord;\n" + "varying float v_diffuse;\n" + "varying vec4 v_Color;\n" + "void main()\n" + "{\n" + "		vec4 color = texture2D(u_texture, v_texCoord);\n" + "		gl_FragColor = v_Color*vec4(v_diffuse*color.xyz, color[3]);\n" + "}";
 		GLSLProgram retval = new GLSLProgram(vertexShader, fragmentShader);
 		// Attributes
@@ -132,7 +134,7 @@ public class GLSLProgram {
 		retval.setAttributeName(ShaderVal.NORMAL, "a_Normal");
 		// Uniform
 		retval.setAttributeName(ShaderVal.MVP_MATRIX, "u_MVPMatrix");
-		retval.setAttributeName(ShaderVal.M_MATRIX, "u_MMatrix");
+		retval.setAttributeName(ShaderVal.NORM_MATRIX, "u_NormMatrix");
 		retval.setAttributeName(ShaderVal.LIGHTVEC, "u_lightVector");
 		retval.setAttributeName(ShaderVal.TEXTURE, "u_texture");
 		retval.setAttributeName(ShaderVal.UNIFORM_COLOR, "u_Color");

@@ -85,8 +85,9 @@ public class BufferedTrianglesShape extends BaseShape {
 		GLES20.glVertexAttribPointer(ShaderVal.NORMAL.loc, NORMAL_DATA_SIZE, GLES20.GL_FLOAT, false, STRIDE, NORMAL_OFFSET);
 		
 		calcMVP();
-		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.M_MATRIX), 1, false, cam.getModelMatrix(), 0);
+		calcNorm();
 		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
+		GLES20.glUniformMatrix3fv(getUniform(ShaderVal.NORM_MATRIX), 1, false, NORM, 0);
 		
 		GLES20.glUniform3f(getUniform(ShaderVal.LIGHTVEC), lightVector[0], lightVector[1], lightVector[2]);
 		
