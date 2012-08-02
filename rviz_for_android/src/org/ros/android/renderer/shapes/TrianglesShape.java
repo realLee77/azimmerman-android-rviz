@@ -66,7 +66,8 @@ public class TrianglesShape extends BaseShape {
 		GLES20.glUniform4f(getUniform(ShaderVal.UNIFORM_COLOR), getColor().getRed(), getColor().getGreen(), getColor().getBlue(), getColor().getAlpha());
 
 		calcMVP();
-		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.M_MATRIX), 1, false, cam.getModelMatrix(), 0);
+		calcNorm();
+		GLES20.glUniformMatrix3fv(getUniform(ShaderVal.NORM_MATRIX), 1, false, NORM, 0);
 		GLES20.glUniformMatrix4fv(getUniform(ShaderVal.MVP_MATRIX), 1, false, MVP, 0);
 		GLES20.glUniform3f(getUniform(ShaderVal.LIGHTVEC), lightVector[0], lightVector[1], lightVector[2]);
 

@@ -30,50 +30,45 @@ import org.ros.rosjava_geometry.Transform;
 import android.util.Log;
 
 public class InteractiveMarker {
-	
+
 	private List<InteractiveMarkerControl> controls = new LinkedList<InteractiveMarkerControl>();
 
 	private float scale;
-	
+
 	private FrameTransformTree ftt;
 	private GraphName frame;
 	private Transform transform;
 	private Camera cam;
-	
+
 	public InteractiveMarker(visualization_msgs.InteractiveMarker msg, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt) {
 		Log.d("InteractiveMarker", "Created interactive marker");
-		
+
 		transform = Transform.fromPoseMessage(msg.getPose());
 		frame = GraphName.of(msg.getHeader().getFrameId());
-		
+
 		// Create controls
 		for(visualization_msgs.InteractiveMarkerControl control : msg.getControls())
 			controls.add(new InteractiveMarkerControl(control, transform.getRotation(), cam, mfd, ftt));
-		
+
 		// Catch invalid scale
 		scale = msg.getScale();
 		if(scale <= 0)
 			scale = 1;
-		
+
 		this.cam = cam;
 		this.ftt = ftt;
-		
-		axis = new Axis(cam);
 	}
-	
-	private Axis axis;
-	
+
 	public void draw(GL10 glUnused) {
 		cam.pushM();
 		cam.scaleM(scale, scale, scale);
 		cam.applyTransform(ftt.newTransformIfPossible(cam.getFixedFrame(), frame));
 		cam.applyTransform(transform);
-		axis.draw(glUnused);
 		for(InteractiveMarkerControl control : controls)
-			control.draw(glUnused); 
+			control.draw(glUnused);
 		cam.popM();
 	}
-	
+
 	public void update(visualization_msgs.InteractiveMarkerUpdate msg) {
 		// TODO: Update each control based on the update message
 	}

@@ -141,7 +141,8 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 				cam.pushM();
 				// Transform to the URDF link's frame
-				cam.applyTransform(ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
+				// TODO:
+				cam.applyTransform(ftt.newTransformIfPossible(cam.getFixedFrame(), ul.getName()));
 
 				// Draw the shape
 				if(drawVis && vis != null) {

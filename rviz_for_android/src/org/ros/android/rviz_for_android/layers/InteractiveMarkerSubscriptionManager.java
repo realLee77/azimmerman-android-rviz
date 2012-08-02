@@ -110,11 +110,8 @@ public class InteractiveMarkerSubscriptionManager extends EditableSubscriberLaye
 
 	protected void receiveUpdateMsg(InteractiveMarkerUpdate msg) {
 		lastUpdateTime = System.currentTimeMillis();
-		if(msg.getType() == InteractiveMarkerUpdate.UPDATE) {
-			Log.d("IMSM", "Received update message");
+		if(msg.getType() == InteractiveMarkerUpdate.UPDATE)
 			expectedSequenceNumber++;
-		} else
-			Log.d("IMSM", "Received keep alive");
 
 		switch(stage) {
 		case WAIT_FOR_UPDATE:
@@ -145,7 +142,6 @@ public class InteractiveMarkerSubscriptionManager extends EditableSubscriberLaye
 
 	@Override
 	protected void onMessageReceived(InteractiveMarkerInit msg) {
-		Log.d("IMSM", "Received init message, sequence number " + msg.getSeqNum());
 		switch(stage) {
 		case WAIT_FOR_UPDATE:
 		case WAIT_FOR_INIT:

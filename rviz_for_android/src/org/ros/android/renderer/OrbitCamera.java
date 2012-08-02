@@ -26,6 +26,7 @@ import org.ros.rosjava_geometry.Vector3;
 
 import android.graphics.Point;
 import android.opengl.Matrix;
+import android.util.FloatMath;
 
 import com.google.common.base.Preconditions;
 
@@ -117,9 +118,9 @@ public class OrbitCamera implements Camera {
 	}
 
 	private void updateLocation() {
-		location.setX((float) lookTarget.getX() + (orbitRadius * Math.sin(angleTheta) * Math.cos(anglePhi)));
-		location.setY((float) lookTarget.getY() + (orbitRadius * Math.sin(angleTheta) * Math.sin(anglePhi)));
-		location.setZ((float) lookTarget.getZ() + (orbitRadius * Math.cos(angleTheta)));
+		location.setX(lookTarget.getX() + (orbitRadius * FloatMath.sin(angleTheta) * FloatMath.cos(anglePhi)));
+		location.setY(lookTarget.getY() + (orbitRadius * FloatMath.sin(angleTheta) * FloatMath.sin(anglePhi)));
+		location.setZ(lookTarget.getZ() + (orbitRadius * FloatMath.cos(angleTheta)));
 	}
 
 	private void velocityUpdate() {
@@ -354,5 +355,10 @@ public class OrbitCamera implements Camera {
 	public void informNewFixedFrame(String frame) {
 		if(availableFixedFrameListener != null)
 			availableFixedFrameListener.newFixedFrameAvailable(frame);
+	}
+
+	@Override
+	public void loadMatrixM(float[] matrix) {
+		modelM = matrix;
 	}
 }

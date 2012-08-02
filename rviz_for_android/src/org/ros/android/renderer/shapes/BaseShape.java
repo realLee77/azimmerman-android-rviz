@@ -12,6 +12,7 @@ import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.rosjava_geometry.Transform;
 
 import android.opengl.Matrix;
+import android.util.Log;
 
 import com.google.common.base.Preconditions;
 
@@ -29,6 +30,7 @@ public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface
 	protected Transform transform = DEFAULT_TRANSFORM;
 	protected GLSLProgram shader;
 	protected int[] uniformHandles;
+	protected float[] NORM = new float[9];
 	protected float[] MVP = new float[16];
 	protected float[] MV = new float[16];
 	public static float[] lightPosition = new float[]{3f, 4f, 5f};
@@ -99,6 +101,38 @@ public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface
 		Matrix.multiplyMM(MVP, 0, cam.getViewport().getProjectionMatrix(), 0, MV, 0);
 	}
 
+	private float[] normTmp = new float[16];
+	private float[] normTmpB = new float[16];
+	protected void calcNorm() {
+		normTmp[0] = MV[0];
+		normTmp[1] = MV[1];
+		normTmp[2] = MV[2];
+		normTmp[3] = 0f;
+		normTmp[4] = MV[4];
+		normTmp[5] = MV[5];
+		normTmp[6] = MV[6];
+		normTmp[7] = 0f;
+		normTmp[8] = MV[8];
+		normTmp[9] = MV[9];
+		normTmp[10] = MV[10];
+		normTmp[11] = 0f;
+		normTmp[12] = 0f;
+		normTmp[13] = 0f;
+		normTmp[14] = 0f;
+		normTmp[15] = 1f;
+		if(!Matrix.invertM(normTmpB, 0, normTmp, 0))
+			Log.e("Terrible news", "UNABLE TO INVERT MV MATRIX");
+		NORM[0] = normTmpB[0];
+		NORM[1] = normTmpB[4];
+		NORM[2] = normTmpB[8];
+		NORM[3] = normTmpB[1];
+		NORM[4] = normTmpB[5];
+		NORM[5] = normTmpB[9];
+		NORM[6] = normTmpB[2];
+		NORM[7] = normTmpB[6];
+		NORM[8] = normTmpB[10];
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ros.android.renderer.shapes.BaseShapeInterface#getTransform()
 	 */

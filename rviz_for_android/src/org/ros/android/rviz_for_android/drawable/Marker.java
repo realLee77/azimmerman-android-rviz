@@ -36,6 +36,7 @@ import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Transform;
 
 import android.opengl.GLES20;
+import android.opengl.Matrix;
 import android.util.Log;
 
 public class Marker {
@@ -54,12 +55,13 @@ public class Marker {
 	private MeshFileDownloader mfd;
 
 	// Drawing
-	private Camera cam;
+	protected Camera cam;
 	private BaseShapeInterface shape;
 	private Color color;
 	private float[] scale = UNIT_SCALE;
 	private GraphName frame;
 	private FrameTransformTree ftt;
+	private boolean isViewFacing = false;
 
 	// Marker properties
 	// Identification
@@ -104,11 +106,14 @@ public class Marker {
 		this.ftt = ftt;
 		
 		this.cam = cam;
+		this.mfd = null;
+		markerMessageType = 0;
 		markerDrawType = DrawType.SHAPE;
 		this.shape = shape;
 		this.color = color;
 		shape.setColor(color);
 		duration = 0;
+		endTime = 0;
 	}
 
 	private void initMarker(visualization_msgs.Marker msg) {
@@ -252,7 +257,8 @@ public class Marker {
 	}
 
 	private static final Color COLOR_WHITE = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-
+	private float[] modelview = new float[16];
+	
 	public void draw(GL10 glUnused) {
 		if(markerDrawType == DrawType.ERROR)
 			return;
@@ -263,6 +269,14 @@ public class Marker {
 			cam.applyTransform(ftt.newTransformIfPossible(cam.getFixedFrame(), frame));
 		
 		cam.scaleM(scale[0], scale[1], scale[2]);
+		
+		if(isViewFacing) {
+			Matrix.multiplyMM(modelview, 0, cam.getViewMatrix(), 0, cam.getModelMatrix(), 0);
+			// Let's try this...
+			cam.rotateM((float)-Math.toDegrees(Math.acos(modelview[2])), 0, modelview[10], -modelview[6]);
+			// Based on math from http://www.opengl.org/discussion_boards/showthread.php/152761-Q-how-to-draw-a-disk-(gluDisk)-always-facing-the-user
+		}
+		
 		if(markerDrawType == DrawType.MESH) {
 			if(markerMessageType != visualization_msgs.Marker.MESH_RESOURCE || !useMeshMaterials)
 				shape.setColor(color);
@@ -321,7 +335,7 @@ public class Marker {
 	}
 	
 	public boolean isError() {
-		return markerDrawType == DrawType.ERROR;
+		return (markerDrawType == DrawType.ERROR);
 	}
 
 	public String getNamespace() {
@@ -330,5 +344,9 @@ public class Marker {
 	
 	public int getId() {
 		return id;
+	}
+
+	public void setViewFacing(boolean isViewFacing) {
+		this.isViewFacing = isViewFacing;
 	}
 }
