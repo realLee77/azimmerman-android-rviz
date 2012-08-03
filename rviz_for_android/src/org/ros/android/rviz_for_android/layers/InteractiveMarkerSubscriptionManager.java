@@ -115,7 +115,6 @@ public class InteractiveMarkerSubscriptionManager extends EditableSubscriberLaye
 
 		switch(stage) {
 		case WAIT_FOR_UPDATE:
-			Log.d("IMSM", "Got sequence number " + msg.getSeqNum());
 			if(msg.getSeqNum() == expectedSequenceNumber) {
 				super.clearSubscriber();
 				setStage(Stage.RECEIVE_UPDATES);
@@ -127,7 +126,6 @@ public class InteractiveMarkerSubscriptionManager extends EditableSubscriberLaye
 				break;
 			}
 		case RECEIVE_UPDATES:
-			Log.d("IMSM", "Got sequence number " + msg.getSeqNum());
 			if(msg.getSeqNum() != expectedSequenceNumber) {
 				Log.e("IMSM", "Invalid sequence number!");
 				setStage(Stage.WAIT_FOR_INIT);
@@ -136,7 +134,8 @@ public class InteractiveMarkerSubscriptionManager extends EditableSubscriberLaye
 				break;
 			}
 
-			callback.receiveUpdate(msg);
+			if(msg.getType() == InteractiveMarkerUpdate.UPDATE)
+				callback.receiveUpdate(msg);
 		}
 	}
 

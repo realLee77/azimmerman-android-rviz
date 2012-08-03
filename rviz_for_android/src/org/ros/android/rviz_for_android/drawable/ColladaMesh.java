@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.layer.InteractiveObject;
 import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.BaseShapeInterface;
 import org.ros.android.renderer.shapes.Cleanable;
@@ -37,32 +38,34 @@ import android.util.Log;
 
 public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable {
 	protected static final ColladaLoader loader = new ColladaLoader();
-	
+
 	/**
-	 * @param filename The name of the DAE file to be loaded, parsed directly from the URDF, contains the "package://" or "html://" piece
-	 * @param mfd The mesh file downloader instance
+	 * @param filename
+	 *            The name of the DAE file to be loaded, parsed directly from the URDF, contains the "package://" or "html://" piece
+	 * @param mfd
+	 *            The mesh file downloader instance
 	 * @return a Collada mesh
 	 */
 	public static ColladaMesh newFromFile(String filename, MeshFileDownloader mfd, Camera cam) {
 		long now = System.nanoTime();
 		if(mfd == null)
 			throw new IllegalArgumentException("Null mesh file downloader! Must have a valid MFD to download meshes.");
-		
+
 		List<BaseShape> retval = null;
-		
+
 		// Download the .DAE file if it doesn't exist
 		String loadedFilename = mfd.getFile(filename);
-		
+
 		if(loadedFilename == null)
 			throw new RuntimeException("Unable to download the file!");
-		
+
 		// Get the image prefix
 		String imgPrefix = mfd.getPrefix(filename);
-		
-		synchronized(loader) {			
+
+		synchronized(loader) {
 			loader.setDownloader(mfd);
 			loader.setCamera(cam);
-			try {				
+			try {
 				loader.readDae(mfd.getContext().openFileInput(loadedFilename), imgPrefix);
 			} catch(IOException e) {
 				return null;
@@ -71,19 +74,21 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 			}
 			retval = loader.getGeometries();
 		}
-		Log.i("Collada", "Load time for " + filename + " = " + (System.nanoTime() - now)/1000000000.0);
+		Log.i("Collada", "Load time for " + filename + " = " + (System.nanoTime() - now) / 1000000000.0);
 		return new ColladaMesh(cam, retval);
 	}
-	
+
 	protected List<BaseShape> geometries;
 	protected Camera cam;
+
 	protected ColladaMesh(Camera cam, List<BaseShape> geometries) {
 		this.cam = cam;
-		this.geometries = geometries;	
+		this.geometries = geometries;
 	}
-	
-	private float[] scale = new float[] {1f,1f,1f};
+
+	private float[] scale = new float[] { 1f, 1f, 1f };
 	private Transform transform = Transform.identity();
+
 	@Override
 	public void draw(GL10 glUnused, Transform transform, float[] scale) {
 		cam.pushM();
@@ -94,29 +99,29 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 
 		for(BaseShape g : geometries)
 			g.draw(glUnused);
-		
+
 		cam.popM();
 	}
-	
+
 	@Override
 	public void draw(GL10 glUnused) {
-		cam.pushM();		
+		cam.pushM();
 		cam.scaleM(scale[0], scale[1], scale[2]);
 		cam.applyTransform(transform);
 		for(BaseShape g : geometries)
 			g.draw(glUnused);
-		
+
 		cam.popM();
 	}
 
 	@Override
 	public void selectionDraw(GL10 glUnused) {
-		cam.pushM();		
+		cam.pushM();
 		cam.scaleM(scale[0], scale[1], scale[2]);
 		cam.applyTransform(transform);
 		for(BaseShape g : geometries)
 			g.selectionDraw(glUnused);
-		
+
 		cam.popM();
 	}
 
@@ -141,9 +146,22 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 		return null;
 	}
 
+	@Override
 	public void registerSelectable() {
 		for(BaseShape g : geometries)
 			g.registerSelectable();
+	}
+
+	@Override
+	public void removeSelectable() {
+		for(BaseShape g : geometries)
+			g.removeSelectable();
+	}
+
+	@Override
+	public InteractiveObject getInteractiveObject() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
@@ -152,7 +170,7 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 	}
 
 	private Color color = new Color(0.25f, 0.6f, 0.15f, 1.0f);
-	
+
 	@Override
 	public Color getColor() {
 		return color;
@@ -174,4 +192,5 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 	public void setTransform(Transform pose) {
 		this.transform = pose;
 	}
+
 }
