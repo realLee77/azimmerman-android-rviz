@@ -6,6 +6,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.SelectionManager;
+import org.ros.android.renderer.layer.InteractiveObject;
 import org.ros.android.renderer.layer.Selectable;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
@@ -101,6 +102,7 @@ public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface
 		Matrix.multiplyMM(MVP, 0, cam.getViewport().getProjectionMatrix(), 0, MV, 0);
 	}
 
+	// This code is optimized for speed, not space
 	private float[] normTmp = new float[16];
 	private float[] normTmpB = new float[16];
 	protected void calcNorm() {
@@ -167,11 +169,13 @@ public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface
 	private Color tmpColor;
 	private GLSLProgram tmpShader;
 	private Color selectionColor = SelectionManager.backgroundColor;
-
+	
+	@Override
 	public void registerSelectable() {
 		selectionColor = cam.getSelectionManager().registerSelectable(this);
 	}
 	
+	@Override
 	public void removeSelectable() {
 		selectionColor = cam.getSelectionManager().removeSelectable(this); 
 	}
@@ -188,6 +192,17 @@ public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface
 		draw(glUnused);
 	}
 	
+	private InteractiveObject interactiveObject;
+	
+	@Override
+	public InteractiveObject getInteractiveObject() {
+		return interactiveObject;
+	}
+	
+	public void setInteractive(InteractiveObject interactiveObject) {
+		this.interactiveObject = interactiveObject;
+	}
+
 	protected void selectionDrawCleanup() {
 		shader = tmpShader;
 		color = tmpColor;

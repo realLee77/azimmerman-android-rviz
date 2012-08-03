@@ -14,31 +14,10 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.ros.android.renderer.shapes;
+package org.ros.android.renderer.layer;
 
-import javax.microedition.khronos.opengles.GL10;
+public interface InteractiveObject {
 
-import org.ros.android.rviz_for_android.drawable.GLSLProgram;
-import org.ros.rosjava_geometry.Transform;
-
-public interface BaseShapeInterface {
-
-	public void setProgram(GLSLProgram shader);
-
-	public void draw(GL10 glUnused);
-
-	public Color getColor();
-
-	public void setColor(Color color);
-
-	public Transform getTransform();
-
-	public void setTransform(Transform pose);
-
-	public void setSelected(boolean isSelected);
+	public void mouseEvent();
 	
-	public void registerSelectable();
-	
-	public void removeSelectable();
-
 }

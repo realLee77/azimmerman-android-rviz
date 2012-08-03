@@ -41,7 +41,7 @@ import com.google.common.collect.Lists;
  */
 public class VisualizationView extends GLSurfaceView implements NodeMain {
 
-	private static final int TF_MESSAGE_QUEUE = 30;
+	private static final int TF_MESSAGE_QUEUE = 5;
 
 	private RenderRequestListener renderRequestListener;
 	

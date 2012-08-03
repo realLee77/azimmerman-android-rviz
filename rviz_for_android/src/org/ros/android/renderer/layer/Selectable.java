@@ -25,4 +25,6 @@ public interface Selectable {
 	public void setSelected(boolean isSelected);
 	public Map<String, String> getInfo();
 	public void selectionDraw(GL10 glUnused);
+	public InteractiveObject getInteractiveObject();
+
 }

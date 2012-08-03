@@ -18,14 +18,18 @@ package org.ros.android.rviz_for_android.drawable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Utility;
+import org.ros.android.renderer.layer.InteractiveObject;
+import org.ros.android.renderer.layer.Selectable;
 import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.BaseShapeInterface;
 import org.ros.android.renderer.shapes.Color;
+import org.ros.android.rviz_for_android.drawable.InteractiveMarker.InteractiveMarkerFeedbackPublisher;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Quaternion;
@@ -34,22 +38,26 @@ import org.ros.rosjava_geometry.Vector3;
 
 import android.util.Log;
 
-public class InteractiveMarkerControl {
+public class InteractiveMarkerControl implements Selectable, InteractiveObject {
 
 	private String name;
 	private List<Marker> markers = new ArrayList<Marker>();
 	private final Camera cam;
 	private final FrameTransformTree ftt;
-	private Quaternion offset;
-
-	public InteractiveMarkerControl(visualization_msgs.InteractiveMarkerControl msg, Quaternion offset, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt) {
+	private final InteractiveMarkerFeedbackPublisher publisher;
+	
+	// Selection
+	private Color selectionColor;
+	
+	public InteractiveMarkerControl(visualization_msgs.InteractiveMarkerControl msg, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt, InteractiveMarkerFeedbackPublisher pub) {
 		this.cam = cam;
 		this.ftt = ftt;
+		this.publisher = pub;
 		this.name = msg.getName();
-		this.offset = offset;
+
 		Log.d("InteractiveMarker", "Created interactive marker control " + name);
 
-		isViewFacing = (msg.getOrientationMode() == visualization_msgs.InteractiveMarkerControl.VIEW_FACING);
+		isViewFacing = !msg.getIndependentMarkerOrientation() && (msg.getOrientationMode() == visualization_msgs.InteractiveMarkerControl.VIEW_FACING);
 
 		// TODO: Figure out interactive marker "independent orientation" setting
 		for(visualization_msgs.Marker marker : msg.getMarkers()) {
@@ -79,23 +87,7 @@ public class InteractiveMarkerControl {
 		orientation = Utility.normalize(orientation);
 
 		// Generate control transform
-		Transform transform = null;
-
-		// Determine what type of marker and its orientation based on orientation mode
-		switch(msg.getOrientationMode()) {
-		case visualization_msgs.InteractiveMarkerControl.FIXED:
-			Utility.correctQuaternion(offset);
-			transform = new Transform(Vector3.zero(), offset.invert().multiply(orientation));
-			break;
-		case visualization_msgs.InteractiveMarkerControl.VIEW_FACING:
-			//transform = new Transform(Vector3.zero(), Quaternion.identity());
-			//break;
-		case visualization_msgs.InteractiveMarkerControl.INHERIT:
-			transform = new Transform(Vector3.zero(), orientation);
-			break;
-		default:
-			Log.e("InteractiveMarker", "Unexpected orientation mode: " + msg.getOrientationMode());
-		}
+		Transform transform = new Transform(Vector3.zero(), orientation);
 
 		// Generate a control marker corresponding to the control type
 		switch(msg.getInteractionMode()) {
@@ -161,5 +153,46 @@ public class InteractiveMarkerControl {
 		float max_xyz = max_xy > max_yz ? max_xy : max_yz;
 
 		return new Color(mX / max_xyz, mY / max_xyz, mZ / max_xyz, 0.7f);
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	// ******************
+	// Selection handling
+	// ******************	
+	public void registerSelectable() {
+		selectionColor = cam.getSelectionManager().registerSelectable(this);
+	}
+	
+	@Override
+	public void mouseEvent() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	public void selectionDraw(GL10 glUnused) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	public void setSelected(boolean isSelected) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Map<String, String> getInfo() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public InteractiveObject getInteractiveObject() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
