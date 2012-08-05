@@ -193,4 +193,9 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 		this.transform = pose;
 	}
 
+	@Override
+	public void setInteractiveObject(InteractiveObject io) {
+		// TODO Auto-generated method stub
+	}
+
 }

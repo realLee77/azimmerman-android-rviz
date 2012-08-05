@@ -18,43 +18,67 @@ package org.ros.android.rviz_for_android.drawable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Utility;
 import org.ros.android.renderer.layer.InteractiveObject;
-import org.ros.android.renderer.layer.Selectable;
 import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.BaseShapeInterface;
+import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.renderer.shapes.Color;
-import org.ros.android.rviz_for_android.drawable.InteractiveMarker.InteractiveMarkerFeedbackPublisher;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
+import visualization_msgs.InteractiveMarkerFeedback;
+import android.opengl.Matrix;
 import android.util.Log;
 
-public class InteractiveMarkerControl implements Selectable, InteractiveObject {
+public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
+	public static enum InteractionMode { MENU(visualization_msgs.InteractiveMarkerControl.MENU, InteractiveMarkerFeedback.MENU_SELECT),
+		MOVE_AXIS(visualization_msgs.InteractiveMarkerControl.MOVE_AXIS, InteractiveMarkerFeedback.POSE_UPDATE),
+		ROTATE_AXIS(visualization_msgs.InteractiveMarkerControl.ROTATE_AXIS, InteractiveMarkerFeedback.POSE_UPDATE), 
+		MOVE_PLANE(visualization_msgs.InteractiveMarkerControl.MOVE_PLANE, InteractiveMarkerFeedback.POSE_UPDATE),
+		MOVE_ROTATE(visualization_msgs.InteractiveMarkerControl.MOVE_ROTATE, InteractiveMarkerFeedback.POSE_UPDATE),
+		NONE(visualization_msgs.InteractiveMarkerControl.NONE, InteractiveMarkerFeedback.KEEP_ALIVE);
+	
+		public byte val;
+		public byte feedbackType;
+		InteractionMode(byte val, byte feedbackType) {
+			this.val = val;
+			this.feedbackType = feedbackType;
+		}
+		
+		public static InteractionMode fromByte(byte val) {
+			for(InteractionMode im : InteractionMode.values())
+				if(im.val == val)
+					return im;
+			return null;
+		}
+	};
+	
 	private String name;
 	private List<Marker> markers = new ArrayList<Marker>();
 	private final Camera cam;
 	private final FrameTransformTree ftt;
-	private final InteractiveMarkerFeedbackPublisher publisher;
+	private InteractiveMarker parentControl;	
+	private InteractionMode mode;
 	
-	// Selection
-	private Color selectionColor;
-	
-	public InteractiveMarkerControl(visualization_msgs.InteractiveMarkerControl msg, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt, InteractiveMarkerFeedbackPublisher pub) {
+	private boolean capturePosition = false;
+
+	public InteractiveMarkerControl(visualization_msgs.InteractiveMarkerControl msg, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt, InteractiveMarker parentControl) {
 		this.cam = cam;
 		this.ftt = ftt;
-		this.publisher = pub;
+		this.parentControl = parentControl;
 		this.name = msg.getName();
 
+		mode = InteractionMode.fromByte(msg.getInteractionMode());
+		
 		Log.d("InteractiveMarker", "Created interactive marker control " + name);
 
 		isViewFacing = !msg.getIndependentMarkerOrientation() && (msg.getOrientationMode() == visualization_msgs.InteractiveMarkerControl.VIEW_FACING);
@@ -63,6 +87,8 @@ public class InteractiveMarkerControl implements Selectable, InteractiveObject {
 		for(visualization_msgs.Marker marker : msg.getMarkers()) {
 			Marker m = new Marker(marker, cam, mfd, ftt);
 			m.setViewFacing(isViewFacing);
+			if(msg.getInteractionMode() != visualization_msgs.InteractiveMarkerControl.NONE)
+				m.setInteractive(this);
 			markers.add(m);
 		}
 
@@ -120,15 +146,37 @@ public class InteractiveMarkerControl implements Selectable, InteractiveObject {
 
 	private Marker instantiateControlMarker(BaseShapeInterface shape, Color color, Camera cam, FrameTransformTree ftt) {
 		Marker m = new Marker(shape, color, cam, ftt);
+		m.setInteractive(this);
 		m.setViewFacing(isViewFacing);
 		return m;
 	}
 
 	public void draw(GL10 glUnused) {
+		if(capturePosition)
+			capturePosition();
 		for(Marker m : markers)
 			m.draw(glUnused);
 	}
-
+	
+	public void selectionDraw(GL10 glUnused) {
+		capturePosition();
+		for(Marker m : markers)
+			m.selectionDraw(glUnused);		
+	}
+	
+	private int[] position = new int[] {0,0};
+	private float[] MV = new float[16];
+	private float[] MVP = new float[16];
+	private void capturePosition() {
+		Matrix.multiplyMM(MV, 0, cam.getViewMatrix(), 0, cam.getModelMatrix(), 0);
+		Matrix.multiplyMM(MVP, 0, cam.getViewport().getProjectionMatrix(), 0, MV, 0);
+		float x = MVP[12];
+		float y = MVP[13];
+		float w = MVP[14];
+		position[0] = (int) Math.round((x*cam.getViewport().getWidth())/(2.0*w) + (cam.getViewport().getWidth()/2.0));
+		position[1] = cam.getViewport().getHeight() - (int) Math.round((y*cam.getViewport().getHeight())/(2.0*w) + (cam.getViewport().getHeight()/2.0));
+	}
+	
 	/**
 	 * Generates a color based on the orientation of the marker
 	 * 
@@ -159,40 +207,44 @@ public class InteractiveMarkerControl implements Selectable, InteractiveObject {
 		return name;
 	}
 
+	@Override
+	public void cleanup() {
+		for(Marker m : markers)
+			m.cleanup();
+	}
+	
 	// ******************
 	// Selection handling
-	// ******************	
-	public void registerSelectable() {
-		selectionColor = cam.getSelectionManager().registerSelectable(this);
-	}
-	
+	// ******************
 	@Override
-	public void mouseEvent() {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	@Override
-	public void selectionDraw(GL10 glUnused) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	@Override
-	public void setSelected(boolean isSelected) {
-		// TODO Auto-generated method stub
-		
+	public void mouseDown() {
+		Log.i("InteractiveMarker", "Mouse down!");
+		if(mode == InteractionMode.MENU) {
+			cam.getSelectionManager().clearSelection();
+			parentControl.showMenu(this);
+		} else {
+			capturePosition = true;
+		}
 	}
 
 	@Override
-	public Map<String, String> getInfo() {
-		// TODO Auto-generated method stub
-		return null;
+	public void mouseUp() {
+		Log.i("InteractiveMarker", "Mouse up!");
+		capturePosition = false;
 	}
 
 	@Override
-	public InteractiveObject getInteractiveObject() {
-		// TODO Auto-generated method stub
-		return null;
+	public void mouseEvent(float dX, float dY) {
+		Log.i("InteractiveMarker", "Scroll: " + dX + ", " + dY);
+	}
+
+	@Override
+	public int[] getPosition() {
+		return position;
+	}
+
+	@Override
+	public InteractionMode getInteractionMode() {
+		return mode;
 	}
 }

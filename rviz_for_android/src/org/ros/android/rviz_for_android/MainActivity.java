@@ -132,7 +132,10 @@ public class MainActivity extends RosActivity {
 	ParentableOrbitCameraControlLayer camControl;
 
 	// Mesh downloader
-	MeshFileDownloader mfd;
+	private MeshFileDownloader mfd;
+	
+	// Interactive marker controls
+	private InteractiveControlManager icm;
 
 	public MainActivity() {
 		super("Rviz", "Rviz");
@@ -256,6 +259,9 @@ public class MainActivity extends RosActivity {
 
 		// TODO: Fix FPS layer to work with OGLES2?
 		//visualizationView.addLayer(new FPSLayer(visualizationView.getCamera()));
+		
+		icm = new InteractiveControlManager((Button) findViewById(R.id.btFollower));
+		visualizationView.getCamera().getSelectionManager().setInteractiveControlManager(icm);
 	}
 
 	@Override
@@ -362,7 +368,7 @@ public class MainActivity extends RosActivity {
 		}
 		return liveLayers;
 	}
-
+	
 	private void createLayerDialogs() {
 		// Build a layer selection dialog for adding layers
 		addLayerDialogBuilder = new AlertDialog.Builder(context);

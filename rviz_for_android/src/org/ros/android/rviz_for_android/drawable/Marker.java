@@ -26,7 +26,9 @@ import java.util.Map;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.layer.InteractiveObject;
 import org.ros.android.renderer.shapes.BaseShapeInterface;
+import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.renderer.shapes.GenericColoredShape;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
@@ -39,7 +41,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 
-public class Marker {
+public class Marker implements Cleanable {
 	public static enum DrawType {
 		PRIMITIVE, // Triangle list, line list, line strip, and points
 		LIST, // Cube list and sphere list
@@ -86,7 +88,7 @@ public class Marker {
 		namespace = msg.getNs();
 		id = msg.getId();
 		this.ftt = ftt;
-		
+
 		this.cam = cam;
 		this.mfd = mfd;
 		markerMessageType = msg.getType();
@@ -99,12 +101,12 @@ public class Marker {
 
 		initMarker(msg);
 	}
-	
+
 	public Marker(BaseShapeInterface shape, Color color, Camera cam, FrameTransformTree ftt) {
 		namespace = "none";
 		id = -99;
 		this.ftt = ftt;
-		
+
 		this.cam = cam;
 		this.mfd = null;
 		markerMessageType = 0;
@@ -258,25 +260,25 @@ public class Marker {
 
 	private static final Color COLOR_WHITE = new Color(1.0f, 1.0f, 1.0f, 1.0f);
 	private float[] modelview = new float[16];
-	
+
 	public void draw(GL10 glUnused) {
 		if(markerDrawType == DrawType.ERROR)
 			return;
-		
+
 		cam.pushM();
-		
+
 		if(frame != null)
 			cam.applyTransform(ftt.newTransformIfPossible(cam.getFixedFrame(), frame));
-		
+
 		cam.scaleM(scale[0], scale[1], scale[2]);
-		
+
 		if(isViewFacing) {
 			Matrix.multiplyMM(modelview, 0, cam.getViewMatrix(), 0, cam.getModelMatrix(), 0);
 			// Let's try this...
-			cam.rotateM((float)-Math.toDegrees(Math.acos(modelview[2])), 0, modelview[10], -modelview[6]);
+			cam.rotateM((float) -Math.toDegrees(Math.acos(modelview[2])), 0, modelview[10], -modelview[6]);
 			// Based on math from http://www.opengl.org/discussion_boards/showthread.php/152761-Q-how-to-draw-a-disk-(gluDisk)-always-facing-the-user
 		}
-		
+
 		if(markerDrawType == DrawType.MESH) {
 			if(markerMessageType != visualization_msgs.Marker.MESH_RESOURCE || !useMeshMaterials)
 				shape.setColor(color);
@@ -297,6 +299,46 @@ public class Marker {
 			}
 		} else {
 			shape.draw(glUnused);
+		}
+		cam.popM();
+	}
+
+	public void selectionDraw(GL10 glUnused) {
+		if(markerDrawType == DrawType.ERROR)
+			return;
+
+		cam.pushM();
+
+		if(frame != null)
+			cam.applyTransform(ftt.newTransformIfPossible(cam.getFixedFrame(), frame));
+
+		cam.scaleM(scale[0], scale[1], scale[2]);
+
+		if(isViewFacing) {
+			Matrix.multiplyMM(modelview, 0, cam.getViewMatrix(), 0, cam.getModelMatrix(), 0);
+			// Let's try this...
+			cam.rotateM((float) -Math.toDegrees(Math.acos(modelview[2])), 0, modelview[10], -modelview[6]);
+			// Based on math from http://www.opengl.org/discussion_boards/showthread.php/152761-Q-how-to-draw-a-disk-(gluDisk)-always-facing-the-user
+		}
+
+		if(markerDrawType == DrawType.MESH) {
+			if(markerMessageType != visualization_msgs.Marker.MESH_RESOURCE || !useMeshMaterials)
+				shape.setColor(color);
+			else
+				shape.setColor(COLOR_WHITE);
+			shape.setTransform(shapeTransform);
+			shape.selectionDraw(glUnused);
+		} else if(markerDrawType == DrawType.LIST) {
+			cam.applyTransform(shapeTransform);
+			for(int i = 0; i < shapeArraySize; i++) {
+				cam.pushM();
+				Point p = shapeArrayPositions.get(i);
+				cam.translateM((float) p.getX(), (float) p.getY(), (float) p.getZ());
+				shape.selectionDraw(glUnused);
+				cam.popM();
+			}
+		} else {
+			shape.selectionDraw(glUnused);
 		}
 		cam.popM();
 	}
@@ -333,7 +375,7 @@ public class Marker {
 	public DrawType getMarkerDrawType() {
 		return markerDrawType;
 	}
-	
+
 	public boolean isError() {
 		return (markerDrawType == DrawType.ERROR);
 	}
@@ -341,7 +383,7 @@ public class Marker {
 	public String getNamespace() {
 		return namespace;
 	}
-	
+
 	public int getId() {
 		return id;
 	}
@@ -349,4 +391,23 @@ public class Marker {
 	public void setViewFacing(boolean isViewFacing) {
 		this.isViewFacing = isViewFacing;
 	}
+
+	/**
+	 * Register this marker as a selectable interactive marker with the provided InteractiveObject
+	 * 
+	 * @param io
+	 */
+	public void setInteractive(InteractiveObject io) {
+		if(shape != null) {
+			shape.registerSelectable();
+			shape.setInteractiveObject(io);
+		}
+	}
+
+	@Override
+	public void cleanup() {
+		if(shape != null)
+			shape.removeSelectable();
+	}
+
 }

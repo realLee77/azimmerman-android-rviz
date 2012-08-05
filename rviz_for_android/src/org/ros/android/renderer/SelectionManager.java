@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.ros.android.renderer.layer.Selectable;
 import org.ros.android.renderer.shapes.Color;
+import org.ros.android.rviz_for_android.InteractiveControlManager;
 
 import android.graphics.Point;
 
@@ -43,6 +44,7 @@ public class SelectionManager {
 	// Selection tracking
 	private boolean isSelectionDraw = false;
 	private Selectable selected = null;
+	private boolean interactiveMode = false;
 	
 	private Point selectionPoint = new Point(-1, -1); 
 	
@@ -81,6 +83,13 @@ public class SelectionManager {
 				deselect();
 				selected = newSelected;			
 				selected.setSelected(true);
+				interactiveMode = isSelectedInteractive();
+				if(interactiveMode) {
+					int[] position = selected.getInteractiveObject().getPosition();
+					icm.showInteractiveController(selected.getInteractiveObject().getInteractionMode());
+					icm.moveInteractiveController(position[0], position[1]);
+					selected.getInteractiveObject().mouseDown();
+				}
 			}
 			return true;
 		}
@@ -116,6 +125,11 @@ public class SelectionManager {
 	private void deselect() {
 		if(selected != null) {
 			selected.setSelected(false);
+			if(interactiveMode) {
+				selected.getInteractiveObject().mouseUp();
+				icm.hideInteractiveController();
+			}
+			interactiveMode = false;
 			selected = null;
 		}
 	}
@@ -139,6 +153,39 @@ public class SelectionManager {
 			throw new RuntimeException("Selection manager is out of colors to generate.");
 		
 		return new Color(rGen/255f, gGen/255f, bGen/255f, 1f);
+	}
+
+	private boolean isSelectedInteractive() {
+		return (selected != null) && (selected.getInteractiveObject() != null);
+	}
+	
+	public boolean interactiveMode() {
+		return interactiveMode;
+	}
+
+	public void interact(float dX, float dY) {
+		selected.getInteractiveObject().mouseEvent(dX, dY);
+	}
+	
+	public void clearSelection() {
+		deselect();
+	}
+	
+	
+	private InteractiveControlManager icm;
+	public void setInteractiveControlManager(InteractiveControlManager icm) {
+		this.icm = icm;
+	}
+	
+	public InteractiveControlManager getInteractiveControlManager() {
+		return icm;
+	}
+
+	public void signalCameraMoved() {
+		if(interactiveMode) {
+			int[] pos = selected.getInteractiveObject().getPosition();
+			icm.moveInteractiveController(pos[0], pos[1]);
+		}
 	}
 	
 }

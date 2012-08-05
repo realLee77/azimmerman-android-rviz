@@ -83,13 +83,16 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 					@Override
 					public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX, float distanceY) {
 						cam.moveOrbitPosition(distanceX * TOUCH_ORBIT_COEFFICIENT, distanceY * TOUCH_ORBIT_COEFFICIENT);
+						if(cam.getSelectionManager().interactiveMode())
+							cam.getSelectionManager().signalCameraMoved();
 						requestRender();
 						return true;
 					}
-
+					
 					@Override
 					public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-						cam.flingCamera(velocityX, velocityY);
+						if(!cam.getSelectionManager().interactiveMode())
+							cam.flingCamera(velocityX, velocityY);
 						return true;
 					}
 
@@ -118,6 +121,10 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 						prevScaleCenter.setY(detector.getFocusY());
 
 						camera.zoomCamera(detector.getScaleFactor());
+						
+						if(cam.getSelectionManager().interactiveMode())
+							cam.getSelectionManager().signalCameraMoved();
+						
 						requestRender();
 
 						return true;

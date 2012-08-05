@@ -18,10 +18,12 @@ package org.ros.android.renderer.shapes;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.layer.InteractiveObject;
+import org.ros.android.renderer.layer.Selectable;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.rosjava_geometry.Transform;
 
-public interface BaseShapeInterface {
+public interface BaseShapeInterface extends Selectable {
 
 	public void setProgram(GLSLProgram shader);
 
@@ -40,5 +42,7 @@ public interface BaseShapeInterface {
 	public void registerSelectable();
 	
 	public void removeSelectable();
+	
+	public void setInteractiveObject(InteractiveObject io);
 
 }
