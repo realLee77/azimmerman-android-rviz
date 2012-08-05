@@ -4,19 +4,10 @@
     android:layout_height="match_parent" >
 
     <org.ros.android.renderer.VisualizationView
-    android:id="@+id/visualization"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_alignParentLeft="true"
-    android:layout_alignParentTop="true" />
-
-    <Button
-        android:id="@+id/btFollower"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Button"
-        android:visibility="invisible"/>
-
+        android:id="@+id/visualization"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+    
     <LinearLayout
         android:id="@+id/layer_layout"
         android:layout_width="fill_parent"
@@ -46,8 +37,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="0.45"
-                    android:text="@string/add_layer"
-                    android:textSize="15sp" />
+                    android:textSize="15sp"
+                    android:text="Add Layer" />
 
                 <TextView
                     android:layout_width="0dp"
@@ -60,7 +51,7 @@
                     android:layout_width="0dp"
                     android:layout_height="fill_parent"
                     android:layout_weight="0.25"
-                    android:text="@string/remove_layer"
+                    android:text="Remove"
                     android:textSize="13sp" />
 
                 <Button
@@ -68,7 +59,7 @@
                     android:layout_width="0dp"
                     android:layout_height="fill_parent"
                     android:layout_weight="0.25"
-                    android:text="@string/rename_layer"
+                    android:text="Rename"
                     android:textSize="13sp" />
             </LinearLayout>
 
@@ -86,12 +77,12 @@
             android:layout_height="fill_parent"
             android:background="#33B5E5" />
 
-        <!-- <TextView -->
-        <!-- android:id="@+id/tv_spacer" -->
-        <!-- android:layout_width="0dp" -->
-        <!-- android:layout_height="fill_parent" -->
-        <!-- android:layout_weight="0.73" -->
-        <!-- android:text=" " /> -->
+        <TextView
+            android:id="@+id/tv_spacer"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="0.73"
+            android:text=" " />
 
     </LinearLayout>
 

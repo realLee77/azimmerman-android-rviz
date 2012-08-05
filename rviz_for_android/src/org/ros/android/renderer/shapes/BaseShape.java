@@ -199,7 +199,8 @@ public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface
 		return interactiveObject;
 	}
 	
-	public void setInteractive(InteractiveObject interactiveObject) {
+	@Override
+	public void setInteractiveObject(InteractiveObject interactiveObject) {
 		this.interactiveObject = interactiveObject;
 	}
 

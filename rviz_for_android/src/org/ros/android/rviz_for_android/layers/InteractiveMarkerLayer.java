@@ -18,12 +18,15 @@ package org.ros.android.rviz_for_android.layers;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
+import org.ros.android.renderer.layer.Selectable;
+import org.ros.android.renderer.layer.SelectableLayer;
 import org.ros.android.rviz_for_android.drawable.InteractiveMarker;
 import org.ros.android.rviz_for_android.drawable.InteractiveMarkerControl;
 import org.ros.android.rviz_for_android.layers.InteractiveMarkerSubscriptionManager.InteractiveMarkerCallback;
@@ -33,6 +36,7 @@ import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.message.Time;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.node.topic.Publisher;
@@ -46,7 +50,7 @@ import visualization_msgs.InteractiveMarkerUpdate;
 import android.os.Handler;
 import android.util.Log;
 
-public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithProperties {
+public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithProperties, SelectableLayer {
 
 	private static final String FEEDBACK_SUFFIX = "/feedback";
 
@@ -56,6 +60,8 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 	// Publish feedback
 	private Publisher<visualization_msgs.InteractiveMarkerFeedback> publisher;
 	private ConnectedNode connectedNode;
+	private int feedbackSeq = 0;
+	private String cliendId;
 
 	public interface MarkerFeedbackPublisher {
 		public void publishFeedback(InteractiveMarker interactiveMarker, InteractiveMarkerControl control, byte type);
@@ -69,7 +75,8 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 				
 				geometry_msgs.Pose markerPose = getPose(interactiveMarker.getTransform());
 				
-				msg.setClientId("????");
+				msg.setHeader(getHeader(interactiveMarker));
+				msg.setClientId(cliendId);
 				msg.setControlName(control.getName());
 				msg.setEventType(type);
 				msg.setMarkerName(interactiveMarker.getName());
@@ -77,10 +84,20 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 				msg.setMousePoint(markerPose.getPosition());
 				msg.setMousePointValid(true); // WHY NOT
 				msg.setPose(markerPose);
+				
+				publisher.publish(msg);
 			}
 		}
 	};
 	
+	private std_msgs.Header getHeader(InteractiveMarker marker) {
+		std_msgs.Header msg = connectedNode.getTopicMessageFactory().newFromType(std_msgs.Header._TYPE);
+		msg.setFrameId(marker.getFrame());
+		msg.setSeq(feedbackSeq++);
+		msg.setStamp(Time.fromMillis(System.currentTimeMillis()));
+		return msg;
+	}
+
 	private geometry_msgs.Point getPoint(Transform t) {
 		geometry_msgs.Point msg = connectedNode.getTopicMessageFactory().newFromType(geometry_msgs.Point._TYPE);
 		msg.setX(t.getTranslation().getX());
@@ -123,6 +140,7 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 
 	public InteractiveMarkerLayer(Camera cam, final MeshFileDownloader mfd) {
 		super(cam);
+
 		subscriber = new InteractiveMarkerSubscriptionManager("/basic_controls", cam, new InteractiveMarkerCallback() {
 			@Override
 			public void receiveUpdate(InteractiveMarkerUpdate msg) {
@@ -178,6 +196,7 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 
 		publisher = connectedNode.newPublisher(propTopic.getValue() + FEEDBACK_SUFFIX, visualization_msgs.InteractiveMarkerFeedback._TYPE);
 		this.connectedNode = connectedNode;
+		cliendId = connectedNode.getName().toString() + "/Interactive Markers";
 	}
 
 	@Override
@@ -185,6 +204,9 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 		super.onShutdown(view, node);
 		subscriber.onShutdown(view, node);
 		publisher.shutdown();
+		
+		for(InteractiveMarker im : markers.values())
+			im.cleanup();
 	}
 
 	@Override
@@ -195,6 +217,20 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 	@Override
 	public Property<?> getProperties() {
 		return prop;
+	}
+
+	@Override
+	public void selectionDraw(GL10 glUnused) {
+		synchronized(lockObject) {
+			for(InteractiveMarker marker : markers.values())
+				marker.selectionDraw(glUnused);
+		}
+	}
+
+	@Override
+	public Set<Selectable> getSelectables() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
