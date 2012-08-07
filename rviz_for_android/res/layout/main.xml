@@ -4,18 +4,20 @@
     android:layout_height="match_parent" >
 
     <org.ros.android.renderer.VisualizationView
-    android:id="@+id/visualization"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_alignParentLeft="true"
-    android:layout_alignParentTop="true" />
+        android:id="@+id/visualization"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true" />
 
-    <Button
-        android:id="@+id/btFollower"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Button"
-        android:visibility="invisible"/>
+    <org.ros.android.renderer.AngleControlView
+        android:id="@+id/acAngleControl"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:clickable="true"
+        android:visibility="invisible" />
 
     <LinearLayout
         android:id="@+id/layer_layout"

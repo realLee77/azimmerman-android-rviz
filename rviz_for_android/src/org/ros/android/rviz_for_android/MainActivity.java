@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
+import org.ros.android.renderer.AngleControlView;
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
@@ -260,7 +261,7 @@ public class MainActivity extends RosActivity {
 		// TODO: Fix FPS layer to work with OGLES2?
 		//visualizationView.addLayer(new FPSLayer(visualizationView.getCamera()));
 		
-		icm = new InteractiveControlManager((Button) findViewById(R.id.btFollower));
+		icm = new InteractiveControlManager((AngleControlView) findViewById(R.id.acAngleControl));
 		visualizationView.getCamera().getSelectionManager().setInteractiveControlManager(icm);
 	}
 

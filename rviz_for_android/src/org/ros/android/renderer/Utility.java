@@ -43,6 +43,10 @@ public final class Utility {
 		return q;
 	}
 	
+	public static Vector3 getQuaternionAxis(Quaternion q) {
+		return new Vector3(q.getX(), q.getY(), q.getZ());
+	}
+	
 	public static Color colorFromMessage(std_msgs.ColorRGBA c) {
 		return new Color(c.getR(), c.getG(), c.getB(), c.getA());
 	}

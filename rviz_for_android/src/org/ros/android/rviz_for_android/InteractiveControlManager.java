@@ -16,52 +16,72 @@
  */
 package org.ros.android.rviz_for_android;
 
-import org.ros.android.rviz_for_android.drawable.InteractiveMarkerControl.InteractionMode;
+import org.ros.android.renderer.AngleControlView;
+import org.ros.android.renderer.AngleControlView.OnAngleChangeListener;
+import org.ros.android.renderer.layer.InteractiveObject;
 
 import android.os.Handler;
 import android.os.Message;
+import android.view.View;
 import android.widget.Button;
 
 public class InteractiveControlManager {
-	
+
 	private static final int MSG_SHOW = 0;
 	private static final int MSG_HIDE = 1;
 	private static final int MSG_MOVE = 2;
-	
-	private static Button btFollower;
-	
+
+	private static View activeControl;
+	private static AngleControlView angleControl;
+
 	private static final Handler handler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			switch(msg.what) {
 			case MSG_MOVE:
-				btFollower.setX(msg.arg1);
-				btFollower.setY(msg.arg2);
+				activeControl.setX(msg.arg1 - (angleControl.getWidth() / 2));
+				activeControl.setY(msg.arg2 - (angleControl.getHeight() / 2));
 				break;
 			case MSG_SHOW:
-				btFollower.setVisibility(Button.VISIBLE);
+				activeControl.setVisibility(Button.VISIBLE);
 				break;
 			case MSG_HIDE:
-				btFollower.setVisibility(Button.INVISIBLE);
-				break;			
+				activeControl.setVisibility(Button.INVISIBLE);
+				break;
 			}
 		}
 	};
-	public InteractiveControlManager(Button btFollower) {
-		InteractiveControlManager.btFollower = btFollower;
-	}
 	
-	public void showInteractiveController(InteractionMode type) {
-		handler.sendEmptyMessage(MSG_SHOW);
+	private InteractiveObject activeObject;
+
+	public InteractiveControlManager(AngleControlView view) {
+		InteractiveControlManager.angleControl = view;
+		view.setOnAngleChangeListener(new OnAngleChangeListener() {
+			@Override
+			public void angleChange(float newAngle, float delta) {
+				activeObject.rotate(delta);
+			}
+		});
 	}
-	
+
+	public void showInteractiveController(InteractiveObject activeObject) {
+		this.activeObject = activeObject;
+		switch(activeObject.getInteractionMode()) {
+		case MENU:
+			break;
+		case ROTATE_AXIS:
+			activeControl = angleControl;
+			handler.sendEmptyMessage(MSG_SHOW);
+			break;
+		}
+	}
+
 	public void moveInteractiveController(int x, int y) {
 		handler.obtainMessage(MSG_MOVE, x, y).sendToTarget();
 	}
-	
+
 	public void hideInteractiveController() {
 		handler.sendEmptyMessage(MSG_HIDE);
 	}
-
 
 }
