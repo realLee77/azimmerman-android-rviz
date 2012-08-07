@@ -38,22 +38,23 @@ import visualization_msgs.InteractiveMarkerFeedback;
 import android.opengl.Matrix;
 import android.util.Log;
 
+/**
+ * @author azimmerman
+ * 
+ */
 public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
-	public static enum InteractionMode { MENU(visualization_msgs.InteractiveMarkerControl.MENU, InteractiveMarkerFeedback.MENU_SELECT),
-		MOVE_AXIS(visualization_msgs.InteractiveMarkerControl.MOVE_AXIS, InteractiveMarkerFeedback.POSE_UPDATE),
-		ROTATE_AXIS(visualization_msgs.InteractiveMarkerControl.ROTATE_AXIS, InteractiveMarkerFeedback.POSE_UPDATE), 
-		MOVE_PLANE(visualization_msgs.InteractiveMarkerControl.MOVE_PLANE, InteractiveMarkerFeedback.POSE_UPDATE),
-		MOVE_ROTATE(visualization_msgs.InteractiveMarkerControl.MOVE_ROTATE, InteractiveMarkerFeedback.POSE_UPDATE),
-		NONE(visualization_msgs.InteractiveMarkerControl.NONE, InteractiveMarkerFeedback.KEEP_ALIVE);
-	
+	public static enum InteractionMode {
+		MENU(visualization_msgs.InteractiveMarkerControl.MENU, InteractiveMarkerFeedback.MENU_SELECT), MOVE_AXIS(visualization_msgs.InteractiveMarkerControl.MOVE_AXIS, InteractiveMarkerFeedback.POSE_UPDATE), ROTATE_AXIS(visualization_msgs.InteractiveMarkerControl.ROTATE_AXIS, InteractiveMarkerFeedback.POSE_UPDATE), MOVE_PLANE(visualization_msgs.InteractiveMarkerControl.MOVE_PLANE, InteractiveMarkerFeedback.POSE_UPDATE), MOVE_ROTATE(visualization_msgs.InteractiveMarkerControl.MOVE_ROTATE, InteractiveMarkerFeedback.POSE_UPDATE), NONE(visualization_msgs.InteractiveMarkerControl.NONE, InteractiveMarkerFeedback.KEEP_ALIVE);
+
 		public byte val;
 		public byte feedbackType;
+
 		InteractionMode(byte val, byte feedbackType) {
 			this.val = val;
 			this.feedbackType = feedbackType;
 		}
-		
+
 		public static InteractionMode fromByte(byte val) {
 			for(InteractionMode im : InteractionMode.values())
 				if(im.val == val)
@@ -61,27 +62,54 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 			return null;
 		}
 	};
-	
-	private String name;
+
+	public static enum OrientationMode {
+		FIXED(visualization_msgs.InteractiveMarkerControl.FIXED), INHERIT(visualization_msgs.InteractiveMarkerControl.INHERIT), VIEW_FACING(visualization_msgs.InteractiveMarkerControl.VIEW_FACING);
+
+		public byte val;
+
+		OrientationMode(byte val) {
+			this.val = val;
+		}
+
+		public static OrientationMode fromByte(byte val) {
+			for(OrientationMode im : OrientationMode.values())
+				if(im.val == val)
+					return im;
+			return null;
+		}
+	}
+
 	private List<Marker> markers = new ArrayList<Marker>();
 	private final Camera cam;
-	private final FrameTransformTree ftt;
-	private InteractiveMarker parentControl;	
-	private InteractionMode mode;
-	
-	private boolean capturePosition = false;
+
+	private InteractiveMarker parentControl;
+	private InteractionMode interactionMode;
+	private OrientationMode orientationMode;
+
+	private Transform drawTransform = Transform.identity();
+	private Quaternion myOrientation;
+
+	private boolean captureScreenPosition = false;
 
 	public InteractiveMarkerControl(visualization_msgs.InteractiveMarkerControl msg, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt, InteractiveMarker parentControl) {
 		this.cam = cam;
-		this.ftt = ftt;
 		this.parentControl = parentControl;
 		this.name = msg.getName();
 
-		mode = InteractionMode.fromByte(msg.getInteractionMode());
-		
+		// Normalize control orientation
+		myOrientation = Quaternion.fromQuaternionMessage(msg.getOrientation());
+		Utility.correctQuaternion(myOrientation);
+		myOrientation = Utility.normalize(myOrientation);
+
+		myAxis = getRotatedQuaternionAxis(myOrientation);
+
+		interactionMode = InteractionMode.fromByte(msg.getInteractionMode());
+		orientationMode = OrientationMode.fromByte(msg.getOrientationMode());
+
 		Log.d("InteractiveMarker", "Created interactive marker control " + name);
 
-		isViewFacing = !msg.getIndependentMarkerOrientation() && (msg.getOrientationMode() == visualization_msgs.InteractiveMarkerControl.VIEW_FACING);
+		isViewFacing = !msg.getIndependentMarkerOrientation() && orientationMode == OrientationMode.VIEW_FACING;
 
 		// TODO: Figure out interactive marker "independent orientation" setting
 		for(visualization_msgs.Marker marker : msg.getMarkers()) {
@@ -106,14 +134,8 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 	private boolean isViewFacing = false;
 
 	private void autoCompleteMarker(visualization_msgs.InteractiveMarkerControl msg) {
-
-		// Normalize control orientation
-		Quaternion orientation = Quaternion.fromQuaternionMessage(msg.getOrientation());
-		Utility.correctQuaternion(orientation);
-		orientation = Utility.normalize(orientation);
-
 		// Generate control transform
-		Transform transform = new Transform(Vector3.zero(), orientation);
+		// Transform transform = new Transform(Vector3.zero(), myOrientation);
 
 		// Generate a control marker corresponding to the control type
 		switch(msg.getInteractionMode()) {
@@ -122,61 +144,72 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		case visualization_msgs.InteractiveMarkerControl.ROTATE_AXIS:
 			Log.i("InteractiveMarker", "Rotate axis (RING)");
 			Ring ring = Ring.newRing(cam, .5f, .65f, 20);
-			ring.setTransform(transform);
-			Marker marker = instantiateControlMarker(ring, generateColor(orientation), cam, ftt);
+			// ring.setTransform(transform);
+			Marker marker = instantiateControlMarker(ring, generateColor(myOrientation), cam);
 			markers.add(marker);
 			break;
 		case visualization_msgs.InteractiveMarkerControl.MOVE_AXIS:
 			Log.i("InteractiveMarker", "Move axis (ARROWS)");
 			BaseShape arrowOne = Arrow.newArrow(cam, .08f, .15f, .2f, .2f);
-			arrowOne.setTransform(transform.multiply(FIRST_ARROW_TRANSFORM));
+			// arrowOne.setTransform(transform.multiply(FIRST_ARROW_TRANSFORM));
+			arrowOne.setTransform(FIRST_ARROW_TRANSFORM);
 			BaseShape arrowTwo = Arrow.newArrow(cam, .08f, .15f, .2f, .2f);
-			arrowTwo.setTransform(transform.multiply(SECOND_ARROW_TRANSFORM));
+			// arrowTwo.setTransform(transform.multiply(SECOND_ARROW_TRANSFORM));
+			arrowTwo.setTransform(SECOND_ARROW_TRANSFORM);
 
-			markers.add(instantiateControlMarker(arrowOne, generateColor(orientation), cam, ftt));
-			markers.add(instantiateControlMarker(arrowTwo, generateColor(orientation), cam, ftt));
+			markers.add(instantiateControlMarker(arrowOne, generateColor(myOrientation), cam));
+			markers.add(instantiateControlMarker(arrowTwo, generateColor(myOrientation), cam));
 			break;
 		case visualization_msgs.InteractiveMarkerControl.MENU:
-			markers.add(instantiateControlMarker(new Cube(cam), generateColor(orientation), cam, ftt));
+			markers.add(instantiateControlMarker(new Cube(cam), generateColor(myOrientation), cam));
 			break;
 		default:
 			return;
 		}
 	}
 
-	private Marker instantiateControlMarker(BaseShapeInterface shape, Color color, Camera cam, FrameTransformTree ftt) {
-		Marker m = new Marker(shape, color, cam, ftt);
+	private Marker instantiateControlMarker(BaseShapeInterface shape, Color color, Camera cam) {
+		Marker m = new Marker(shape, color, cam, null);
 		m.setInteractive(this);
 		m.setViewFacing(isViewFacing);
 		return m;
 	}
 
 	public void draw(GL10 glUnused) {
-		if(capturePosition)
-			capturePosition();
+		cam.pushM();
+		cam.applyTransform(drawTransform);
+
+		if(captureScreenPosition)
+			captureScreenPosition();
 		for(Marker m : markers)
 			m.draw(glUnused);
+		cam.popM();
 	}
-	
+
 	public void selectionDraw(GL10 glUnused) {
-		capturePosition();
+		cam.pushM();
+		cam.applyTransform(drawTransform);
+
+		captureScreenPosition();
 		for(Marker m : markers)
-			m.selectionDraw(glUnused);		
+			m.selectionDraw(glUnused);
+		cam.popM();
 	}
-	
-	private int[] position = new int[] {0,0};
+
+	private int[] position = new int[] { 0, 0 };
 	private float[] MV = new float[16];
 	private float[] MVP = new float[16];
-	private void capturePosition() {
+
+	private void captureScreenPosition() {
 		Matrix.multiplyMM(MV, 0, cam.getViewMatrix(), 0, cam.getModelMatrix(), 0);
 		Matrix.multiplyMM(MVP, 0, cam.getViewport().getProjectionMatrix(), 0, MV, 0);
 		float x = MVP[12];
 		float y = MVP[13];
 		float w = MVP[14];
-		position[0] = (int) Math.round((x*cam.getViewport().getWidth())/(2.0*w) + (cam.getViewport().getWidth()/2.0));
-		position[1] = cam.getViewport().getHeight() - (int) Math.round((y*cam.getViewport().getHeight())/(2.0*w) + (cam.getViewport().getHeight()/2.0));
+		position[0] = (int) Math.round((x * cam.getViewport().getWidth()) / (2.0 * w) + (cam.getViewport().getWidth() / 2.0));
+		position[1] = cam.getViewport().getHeight() - (int) Math.round((y * cam.getViewport().getHeight()) / (2.0 * w) + (cam.getViewport().getHeight() / 2.0));
 	}
-	
+
 	/**
 	 * Generates a color based on the orientation of the marker
 	 * 
@@ -203,39 +236,32 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		return new Color(mX / max_xyz, mY / max_xyz, mZ / max_xyz, 0.7f);
 	}
 
-	public String getName() {
-		return name;
-	}
-
 	@Override
 	public void cleanup() {
 		for(Marker m : markers)
 			m.cleanup();
 	}
-	
+
 	// ******************
 	// Selection handling
 	// ******************
 	@Override
 	public void mouseDown() {
+		parentControl.setSelected(true);
 		Log.i("InteractiveMarker", "Mouse down!");
-		if(mode == InteractionMode.MENU) {
+		if(interactionMode == InteractionMode.MENU) {
 			cam.getSelectionManager().clearSelection();
 			parentControl.showMenu(this);
 		} else {
-			capturePosition = true;
+			captureScreenPosition = true;
 		}
 	}
 
 	@Override
 	public void mouseUp() {
+		parentControl.setSelected(false);
 		Log.i("InteractiveMarker", "Mouse up!");
-		capturePosition = false;
-	}
-
-	@Override
-	public void mouseEvent(float dX, float dY) {
-		Log.i("InteractiveMarker", "Scroll: " + dX + ", " + dY);
+		captureScreenPosition = false;
 	}
 
 	@Override
@@ -245,6 +271,45 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 	@Override
 	public InteractionMode getInteractionMode() {
-		return mode;
+		return interactionMode;
+	}
+
+	private Quaternion deltaQuaternion;
+	private Vector3 myAxis;
+
+	@Override
+	public void rotate(float dTheta) {
+		Log.i("InteractiveMarker", "Rotate by " + dTheta);
+		deltaQuaternion = Quaternion.fromAxisAngle(myAxis, Math.toRadians(dTheta));
+		parentControl.childRotate(deltaQuaternion);
+		parentControl.publish(this, interactionMode.val);
+	}
+
+	/**
+	 * Return a Vec3 representing the axis about which the disc rotates. This rotates by -90 degrees about the X axis.
+	 */
+	private Vector3 getRotatedQuaternionAxis(Quaternion q) {
+		return new Vector3(q.getX(), -q.getZ(), q.getY());
+	}
+
+	public void setParentTransform(Transform transform) {
+		drawTransform.setTranslation(transform.getTranslation());
+
+		if(orientationMode != OrientationMode.FIXED)
+			drawTransform.setRotation(transform.getRotation().multiply(myOrientation));
+		else
+			drawTransform.setRotation(myOrientation);
+
+	}
+
+	public void setParentRotate(Quaternion q) {
+		if(orientationMode != OrientationMode.FIXED)
+			myAxis = q.rotateVector(myAxis);
+	}
+
+	private String name;
+
+	public String getName() {
+		return name;
 	}
 }

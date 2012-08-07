@@ -53,11 +53,11 @@ public class Ring extends TriangleStripShape {
 			vertices[idx++] = FloatMath.cos(theta) * Rinner;
 			
 			// Normals
-			normals[nIdx++] = 0f;
 			normals[nIdx++] = 1f;
 			normals[nIdx++] = 0f;
 			normals[nIdx++] = 0f;
 			normals[nIdx++] = 1f;
+			normals[nIdx++] = 0f;
 			normals[nIdx++] = 0f;
 		}
 		
@@ -75,11 +75,11 @@ public class Ring extends TriangleStripShape {
 			vertices[idx++] = Rinner;
 			
 			// Normals
-			normals[nIdx++] = 0f;
 			normals[nIdx++] = 1f;
 			normals[nIdx++] = 0f;
 			normals[nIdx++] = 0f;
 			normals[nIdx++] = 1f;
+			normals[nIdx++] = 0f;
 			normals[nIdx++] = 0f;
 		}
 

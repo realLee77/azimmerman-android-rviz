@@ -76,6 +76,8 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 							cam.resetTargetFrame();
 							cam.resetLookTarget();
 							cam.resetZoom();
+							if(cam.getSelectionManager().interactiveMode())
+								cam.getSelectionManager().signalCameraMoved();
 						}
 						return true;
 					}

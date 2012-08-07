@@ -174,6 +174,7 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 			public void clear() {
 				synchronized(lockObject) {
 					markers.clear();
+					camera.getSelectionManager().clearSelection();
 				}
 			}
 		});

@@ -19,8 +19,8 @@ package org.ros.android.renderer.layer;
 import org.ros.android.rviz_for_android.drawable.InteractiveMarkerControl.InteractionMode;
 
 public interface InteractiveObject {
-		
-	public void mouseEvent(float dX, float dY);
+			
+	public void rotate(float dTheta);
 
 	public void mouseDown();
 

@@ -27,7 +27,7 @@ import org.ros.android.rviz_for_android.InteractiveControlManager;
 import android.graphics.Point;
 
 public class SelectionManager {
-	public static final Color selectedColor = new Color(.25f, .55f, .35f, 1f);
+	public static final Color selectedColor = new Color(1f, 0f, 1f, 1f);
 	public static final Color backgroundColor = new Color(0f, 0f, 0f, 1f);
 	
 	// Color management: create a table of colors available to draw from. When the table runs out, generate more.
@@ -86,7 +86,7 @@ public class SelectionManager {
 				interactiveMode = isSelectedInteractive();
 				if(interactiveMode) {
 					int[] position = selected.getInteractiveObject().getPosition();
-					icm.showInteractiveController(selected.getInteractiveObject().getInteractionMode());
+					icm.showInteractiveController(selected.getInteractiveObject());
 					icm.moveInteractiveController(position[0], position[1]);
 					selected.getInteractiveObject().mouseDown();
 				}
@@ -163,14 +163,9 @@ public class SelectionManager {
 		return interactiveMode;
 	}
 
-	public void interact(float dX, float dY) {
-		selected.getInteractiveObject().mouseEvent(dX, dY);
-	}
-	
 	public void clearSelection() {
 		deselect();
 	}
-	
 	
 	private InteractiveControlManager icm;
 	public void setInteractiveControlManager(InteractiveControlManager icm) {

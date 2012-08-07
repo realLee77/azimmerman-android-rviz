@@ -43,12 +43,10 @@ import android.os.AsyncTask;
 import android.util.FloatMath;
 import android.util.Log;
 import android.util.SparseArray;
-import android.widget.Toast;
 
 public class InteractiveMarker implements Cleanable {
 
-	private List<InteractiveMarkerControl> parentControls = new LinkedList<InteractiveMarkerControl>();
-	private List<InteractiveMarkerControl> fixedControls = new LinkedList<InteractiveMarkerControl>();
+	private List<InteractiveMarkerControl> controls = new LinkedList<InteractiveMarkerControl>();
 
 	private float scale;
 	private String name;
@@ -57,7 +55,7 @@ public class InteractiveMarker implements Cleanable {
 	private GraphName frame;
 	private String frameString;
 	private Transform transform;
-	private Quaternion rotationInverse;
+	// private Quaternion rotationInverse;
 
 	private Camera cam;
 	private final MeshFileDownloader mfd;
@@ -70,15 +68,15 @@ public class InteractiveMarker implements Cleanable {
 
 		name = msg.getName();
 		transform = Transform.fromPoseMessage(msg.getPose());
-		rotationInverse = Utility.correctQuaternion(transform.getRotation().invert());
 
 		frameString = msg.getHeader().getFrameId();
 		frame = GraphName.of(frameString);
 
 		// Create controls
 		for(visualization_msgs.InteractiveMarkerControl control : msg.getControls()) {
-			List<InteractiveMarkerControl> addList = (control.getOrientationMode() == visualization_msgs.InteractiveMarkerControl.FIXED) ? fixedControls : parentControls;
-			addList.add(new InteractiveMarkerControl(control, cam, mfd, ftt, this));
+			InteractiveMarkerControl imc = new InteractiveMarkerControl(control, cam, mfd, ftt, this);
+			imc.setParentTransform(transform);
+			controls.add(imc);
 		}
 
 		// Construct menu
@@ -97,17 +95,8 @@ public class InteractiveMarker implements Cleanable {
 		cam.pushM();
 		cam.scaleM(scale, scale, scale);
 		cam.applyTransform(ftt.newTransformIfPossible(frame, cam.getFixedFrame()));
-		cam.applyTransform(transform);
 
-		// Draw controls which rotate with the marker
-		for(InteractiveMarkerControl control : parentControls)
-			control.draw(glUnused);
-
-		// Undo marker rotation
-		rotateAxisAngle(glUnused, rotationInverse);
-
-		// Draw controls which don't rotate with the marker
-		for(InteractiveMarkerControl control : fixedControls)
+		for(InteractiveMarkerControl control : controls)
 			control.draw(glUnused);
 
 		cam.popM();
@@ -117,17 +106,8 @@ public class InteractiveMarker implements Cleanable {
 		cam.pushM();
 		cam.scaleM(scale, scale, scale);
 		cam.applyTransform(ftt.newTransformIfPossible(frame, cam.getFixedFrame()));
-		cam.applyTransform(transform);
 
-		// Draw controls which rotate with the marker
-		for(InteractiveMarkerControl control : parentControls)
-			control.selectionDraw(glUnused);
-
-		// Undo marker rotation
-		rotateAxisAngle(glUnused, rotationInverse);
-
-		// Draw controls which don't rotate with the marker
-		for(InteractiveMarkerControl control : fixedControls)
+		for(InteractiveMarkerControl control : controls)
 			control.selectionDraw(glUnused);
 
 		cam.popM();
@@ -136,7 +116,7 @@ public class InteractiveMarker implements Cleanable {
 	public void publish(InteractiveMarkerControl control, byte type) {
 		publisher.publishFeedback(this, control, type);
 	}
-	
+
 	private void rotateAxisAngle(GL10 glUnused, Quaternion q) {
 		// Use axis angle or matrix transformation??
 		float angle = (float) Math.toDegrees(2 * Math.acos(q.getW()));
@@ -160,14 +140,33 @@ public class InteractiveMarker implements Cleanable {
 		v.setY(p.getPose().getPosition().getY());
 		v.setZ(p.getPose().getPosition().getZ());
 
-		rotationInverse = transform.getRotation().invert();
-
-		// transform = Transform.fromPoseMessage(p.getPose());
+//		 transform = Transform.fromPoseMessage(p.getPose());
 		if(!frameString.equals(p.getHeader().getFrameId())) {
 			frameString = p.getHeader().getFrameId();
 			frame = GraphName.of(frameString);
 		}
 
+		updateControls();
+		
+		// If this is selected, move the control to match the new position
+		if(isSelected)
+			cam.getSelectionManager().signalCameraMoved();
+	}
+
+	public void childRotate(Quaternion q) {
+		for(InteractiveMarkerControl imc : controls)
+			imc.setParentRotate(q);
+		
+		transform.setRotation(q.multiply(transform.getRotation()));
+		updateControls();
+	}
+	
+	/**
+	 * Update all child controls with the latest parent transform
+	 */
+	private void updateControls() {
+		for(InteractiveMarkerControl imc : controls)
+			imc.setParentTransform(transform);
 	}
 
 	private class MenuItem {
@@ -203,10 +202,6 @@ public class InteractiveMarker implements Cleanable {
 		}
 	}
 
-	public String getName() {
-		return name;
-	}
-
 	private int menuSelection = 0;
 	private InteractiveMarkerControl requestingControl;
 
@@ -214,7 +209,7 @@ public class InteractiveMarker implements Cleanable {
 		this.requestingControl = requestingControl;
 		showMenu(0);
 	}
-	
+
 	// TODO: This feels like a hack, but it's the only way to get the dialog to launch on the UI thread
 	private class ShowMenu extends AsyncTask<List<MenuItem>, List<MenuItem>, Void> {
 		@Override
@@ -222,6 +217,7 @@ public class InteractiveMarker implements Cleanable {
 			showMenuDialog(values[0]);
 			super.onProgressUpdate(values);
 		}
+
 		@Override
 		protected Void doInBackground(List<MenuItem>... params) {
 			this.publishProgress(params[0]);
@@ -234,11 +230,9 @@ public class InteractiveMarker implements Cleanable {
 		if(children != null && !children.isEmpty()) {
 			ShowMenu task = new ShowMenu();
 			task.execute(children);
-			//showMenuDialog(children);
 		} else {
 			menuSelection = parent;
 			publish(requestingControl, InteractionMode.MENU.feedbackType);
-			Toast.makeText(mfd.getContext(), "You selected " + parent, Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -273,14 +267,21 @@ public class InteractiveMarker implements Cleanable {
 
 	@Override
 	public void cleanup() {
-		for(InteractiveMarkerControl imc : parentControls)
-			imc.cleanup();
-
-		for(InteractiveMarkerControl imc : fixedControls)
+		for(InteractiveMarkerControl imc : controls)
 			imc.cleanup();
 	}
 
 	public String getFrame() {
 		return frame.toString();
+	}
+
+	private boolean isSelected = false;
+
+	public void setSelected(boolean b) {
+		isSelected = b;
+	}
+
+	public String getName() {
+		return name;
 	}
 }
