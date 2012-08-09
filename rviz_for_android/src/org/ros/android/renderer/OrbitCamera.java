@@ -77,10 +77,11 @@ public class OrbitCamera implements Camera {
 	private GraphName fixedFrame;
 
 	private FrameTransformTree frameTransformTree;
-
+	private AvailableFrameTracker frameTracker;
+	
 	private SelectionManager sm = new SelectionManager();
 
-	public OrbitCamera(FrameTransformTree frameTransformTree) {
+	public OrbitCamera(FrameTransformTree frameTransformTree, AvailableFrameTracker tracker) {
 		// Initialize the fixed frame
 		this.frameTransformTree = frameTransformTree;
 		fixedFrame = DEFAULT_FIXED_FRAME;
@@ -94,6 +95,8 @@ public class OrbitCamera implements Camera {
 		// Initialize the model matrix and stack
 		loadIdentityM();
 		Matrix.setIdentityM(stackM[0], 0);
+		
+		this.frameTracker = tracker;
 	}
 
 	public void apply() {
@@ -360,5 +363,10 @@ public class OrbitCamera implements Camera {
 	@Override
 	public void loadMatrixM(float[] matrix) {
 		modelM = matrix;
+	}
+
+	@Override
+	public AvailableFrameTracker getFrameTracker() {
+		return frameTracker;
 	}
 }

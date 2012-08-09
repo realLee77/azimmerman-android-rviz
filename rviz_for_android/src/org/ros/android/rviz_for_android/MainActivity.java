@@ -24,11 +24,11 @@ import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
 import org.ros.android.renderer.AngleControlView;
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.TranslationControlView;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.Layer;
 import org.ros.android.rviz_for_android.layers.AxisLayer;
-import org.ros.android.rviz_for_android.layers.CubeLayer;
 import org.ros.android.rviz_for_android.layers.GridLayer;
 import org.ros.android.rviz_for_android.layers.InteractiveMarkerLayer;
 import org.ros.android.rviz_for_android.layers.MapLayer;
@@ -44,7 +44,6 @@ import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
-import org.ros.rosjava_geometry.FrameTransformTree;
 
 import visualization_msgs.Marker;
 import android.app.ActionBar;
@@ -86,8 +85,8 @@ public class MainActivity extends RosActivity {
 		PointCloud2("Point Cloud2"),
 		TFLayer("TF"),
 		Marker("Marker"),
-		InteractiveMarker("Interactive Marker"),
-		CubeLayer("CUBE LAYER");
+		InteractiveMarker("Interactive Marker");
+		
 		private String printName;
 		private int count = 0;
 		AvailableLayerType(String printName) {
@@ -192,9 +191,7 @@ public class MainActivity extends RosActivity {
 	}
 
 	private void showTFSelectDialog() {
-		FrameTransformTree ftt = visualizationView.getFrameTransformTree();
-
-		Set<String> frameset = ftt.getFrameTracker().getAvailableFrames();
+		Set<String> frameset = visualizationView.getCamera().getFrameTracker().getAvailableFrames();
 		final String[] tfFrames = (String[]) frameset.toArray(new String[frameset.size()]);
 
 		if(tfFrames.length > 0) {
@@ -225,14 +222,15 @@ public class MainActivity extends RosActivity {
 		createLayerDialogs();
 		configureGUI();
 
-		camControl = new ParentableOrbitCameraControlLayer(this, null); // Null camera is acceptable here, it'll be initialized with the real camera on start
-		camControl.setName("Camera");
-		layers.add(camControl);
-
 		ll = ((LinearLayout) findViewById(R.id.layer_layout));
 		ll.setVisibility(LinearLayout.GONE);
 
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
+		
+		camControl = new ParentableOrbitCameraControlLayer(this, visualizationView.getCamera());
+		camControl.setName("Camera");
+		layers.add(camControl);
+		
 		for(Layer l : layers)
 			visualizationView.addLayer(l);
 		
@@ -253,7 +251,7 @@ public class MainActivity extends RosActivity {
 				}
 			}
 		});
-
+		
 		// TODO: MAKE THESE LOAD FROM A CONFIG FILE?
 		addNewLayer(AvailableLayerType.Axis);
 		addNewLayer(AvailableLayerType.Grid);
@@ -261,7 +259,7 @@ public class MainActivity extends RosActivity {
 		// TODO: Fix FPS layer to work with OGLES2?
 		//visualizationView.addLayer(new FPSLayer(visualizationView.getCamera()));
 		
-		icm = new InteractiveControlManager((AngleControlView) findViewById(R.id.acAngleControl));
+		icm = new InteractiveControlManager((AngleControlView) findViewById(R.id.acAngleControl), (TranslationControlView) findViewById(R.id.tcTranslationControl));
 		visualizationView.getCamera().getSelectionManager().setInteractiveControlManager(icm);
 	}
 
@@ -331,10 +329,6 @@ public class MainActivity extends RosActivity {
 			break;
 		case InteractiveMarker:
 			newLayer = new InteractiveMarkerLayer(cam, mfd);
-			break;
-		// TODO: Remove the cube layer!
-		case CubeLayer:
-			newLayer = new CubeLayer(cam);
 			break;
 		}
 

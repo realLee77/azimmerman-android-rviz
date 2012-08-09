@@ -93,6 +93,8 @@ public interface Camera {
 	
 	public abstract void removeFixedFrameListener(FixedFrameListener l);
 	
+	public AvailableFrameTracker getFrameTracker();
+	
 	public interface FixedFrameListener {
 		public void fixedFrameChanged(GraphName newFrame);
 	}

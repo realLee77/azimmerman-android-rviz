@@ -51,6 +51,19 @@ public final class Utility {
 		return new Color(c.getR(), c.getG(), c.getB(), c.getA());
 	}
 	
+	private static final Vector3 xaxis = Vector3.xAxis();
+	private static final Vector3 yaxis = Vector3.yAxis();
+	private static final Vector3 zaxis = Vector3.zAxis();
+	
+	public static Vector3 quatX(Quaternion q) {
+		return q.rotateVector(Vector3.xAxis());
+	}
+	public static Vector3 quatY(Quaternion q) {
+		return q.rotateVector(Vector3.yAxis());
+	}
+	public static Vector3 quatZ(Quaternion q) {
+		return q.rotateVector(Vector3.zAxis());
+	}
 	
 	/**
 	 * @param q

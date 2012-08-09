@@ -18,6 +18,8 @@ package org.ros.android.rviz_for_android;
 
 import org.ros.android.renderer.AngleControlView;
 import org.ros.android.renderer.AngleControlView.OnAngleChangeListener;
+import org.ros.android.renderer.TranslationControlView;
+import org.ros.android.renderer.TranslationControlView.OnMoveListener;
 import org.ros.android.renderer.layer.InteractiveObject;
 
 import android.os.Handler;
@@ -33,14 +35,15 @@ public class InteractiveControlManager {
 
 	private static View activeControl;
 	private static AngleControlView angleControl;
+	private static TranslationControlView translateControl;
 
 	private static final Handler handler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			switch(msg.what) {
 			case MSG_MOVE:
-				activeControl.setX(msg.arg1 - (angleControl.getWidth() / 2));
-				activeControl.setY(msg.arg2 - (angleControl.getHeight() / 2));
+				activeControl.setX(msg.arg1 - (activeControl.getWidth() / 2));
+				activeControl.setY(msg.arg2 - (activeControl.getHeight() / 2));
 				break;
 			case MSG_SHOW:
 				activeControl.setVisibility(Button.VISIBLE);
@@ -54,12 +57,21 @@ public class InteractiveControlManager {
 	
 	private InteractiveObject activeObject;
 
-	public InteractiveControlManager(AngleControlView view) {
-		InteractiveControlManager.angleControl = view;
-		view.setOnAngleChangeListener(new OnAngleChangeListener() {
+	public InteractiveControlManager(AngleControlView acView, TranslationControlView tcView) {
+		InteractiveControlManager.angleControl = acView;
+		InteractiveControlManager.translateControl = tcView;
+		
+		acView.setOnAngleChangeListener(new OnAngleChangeListener() {
 			@Override
 			public void angleChange(float newAngle, float delta) {
 				activeObject.rotate(delta);
+			}
+		});
+		
+		tcView.setOnMoveListener(new OnMoveListener() {
+			@Override
+			public void onMove(float dX, float dY) {
+				activeObject.translate(dX, dY);
 			}
 		});
 	}
@@ -73,6 +85,9 @@ public class InteractiveControlManager {
 			activeControl = angleControl;
 			handler.sendEmptyMessage(MSG_SHOW);
 			break;
+		case MOVE_AXIS:
+			activeControl = translateControl;
+			handler.sendEmptyMessage(MSG_SHOW);
 		}
 	}
 

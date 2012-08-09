@@ -72,7 +72,7 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 				gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
 					@Override
 					public boolean onDoubleTap(MotionEvent e) {
-						if(enableScrolling) {
+						if(enableScrolling && !cam.getSelectionManager().interactiveMode()) {
 							cam.resetTargetFrame();
 							cam.resetLookTarget();
 							cam.resetZoom();
