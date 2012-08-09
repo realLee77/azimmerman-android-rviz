@@ -23,9 +23,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.ros.android.renderer.AvailableFrameTracker;
+import org.ros.android.renderer.Camera;
 import org.ros.android.rviz_for_android.R;
 import org.ros.namespace.GraphName;
-import org.ros.rosjava_geometry.AvailableFrameTracker;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.os.Handler;
@@ -64,9 +65,11 @@ public class GraphNameProperty extends Property<GraphName> {
 	private int selection = 0;
 	private FrameTransformTree ftt;
 	private Spinner spin;
+	private final Camera cam;
 
-	public GraphNameProperty(String name, GraphName value, PropertyUpdateListener<GraphName> updateListener, FrameTransformTree ftt) {
+	public GraphNameProperty(String name, GraphName value, Camera cam, PropertyUpdateListener<GraphName> updateListener, FrameTransformTree ftt) {
 		super(name, value, updateListener);
+		this.cam = cam;
 		this.setTransformTree(ftt);
 
 		this.addUpdateListener(new PropertyUpdateListener<GraphName>() {
@@ -78,13 +81,19 @@ public class GraphNameProperty extends Property<GraphName> {
 		});
 		setDefaultList(defaultFrameList, 0);
 		spinnerFrameList = defaultList;
+		
+		cam.getFrameTracker().addListener(new AvailableFrameTracker.FrameAddedListener() {
+			public void informFrameAdded(Set<String> newFrames) {
+				handler.sendEmptyMessage(0);
+			}
+		});
 	}
 
 	private void generateSpinnerContents() {
 		if(ftt != null) {
 			framesToList.clear();
 			framesToList.addAll(0, defaultList);
-			Set<String> framesFromFtt = ftt.getFrameTracker().getAvailableFrames();
+			Set<String> framesFromFtt = cam.getFrameTracker().getAvailableFrames();
 			synchronized(framesFromFtt) {
 				for(String s : framesFromFtt) {
 					if(!framesToList.contains(s))
@@ -175,13 +184,6 @@ public class GraphNameProperty extends Property<GraphName> {
 
 	public void setTransformTree(FrameTransformTree ftt) {
 		this.ftt = ftt;
-		if(ftt != null) {
-			ftt.getFrameTracker().addListener(new AvailableFrameTracker.FrameAddedListener() {
-				public void informFrameAdded(Set<String> newFrames) {
-					handler.sendEmptyMessage(0);
-				}
-			});
-		}
 	}
 
 	@Override

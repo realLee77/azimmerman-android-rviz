@@ -51,7 +51,8 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 	private VisViewRenderer renderer;
 	private List<Layer> layers;
 	private ConnectedNode connectedNode;
-
+	private final AvailableFrameTracker frameTracker = new AvailableFrameTracker();
+	
 	public VisualizationView(Context context) {
 		super(context);
 		init();
@@ -70,7 +71,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 			}
 		};
 		frameTransformTree = new org.ros.rosjava_geometry.FrameTransformTree(NameResolver.newRoot());
-		camera = new OrbitCamera(frameTransformTree);
+		camera = new OrbitCamera(frameTransformTree, frameTracker);
 		renderer = new VisViewRenderer(frameTransformTree, camera);
 		layers = Lists.newArrayList();
 		setEGLConfigChooser(8, 8, 8, 8, 8, 8);
@@ -142,6 +143,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 			public void onNewMessage(tf.tfMessage message) {
 				for(geometry_msgs.TransformStamped transform : message.getTransforms()) {
 					frameTransformTree.updateTransform(transform);
+					frameTracker.receivedMessage(transform);
 				}
 			}
 		}, TF_MESSAGE_QUEUE);

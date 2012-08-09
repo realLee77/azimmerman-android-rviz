@@ -75,7 +75,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 
 		prop = new BoolProperty("enabled", true, null);
 		prop.addSubProperty(new ReadOnlyProperty("Status", "OK", null));
-		propParent = new GraphNameProperty("Parent", null, new PropertyUpdateListener<GraphName>() {
+		propParent = new GraphNameProperty("Parent", null, cam, new PropertyUpdateListener<GraphName>() {
 			@Override
 			public void onPropertyChanged(GraphName newval) {
 				statusController.setTargetFrame(newval);

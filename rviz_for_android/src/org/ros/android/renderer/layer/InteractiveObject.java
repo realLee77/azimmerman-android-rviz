@@ -21,6 +21,8 @@ import org.ros.android.rviz_for_android.drawable.InteractiveMarkerControl.Intera
 public interface InteractiveObject {
 			
 	public void rotate(float dTheta);
+	
+	public void translate(float dX, float dY);
 
 	public void mouseDown();
 

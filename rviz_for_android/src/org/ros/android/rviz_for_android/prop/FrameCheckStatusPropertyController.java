@@ -19,11 +19,11 @@ package org.ros.android.rviz_for_android.prop;
 import java.util.Set;
 
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.AvailableFrameTracker.FrameAddedListener;
 import org.ros.android.renderer.Camera.FixedFrameListener;
 import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
 import org.ros.namespace.GraphName;
-import org.ros.rosjava_geometry.AvailableFrameTracker.FrameAddedListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.util.Log;
@@ -62,7 +62,7 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 			}
 		};
 		
-		ftt.getFrameTracker().addListener(fttListener);
+		cam.getFrameTracker().addListener(fttListener);
 	}
 	
 	public void setTargetFrame(GraphName newFrame) {
@@ -104,7 +104,7 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 	@Override
 	public void cleanup() {
 		cam.removeFixedFrameListener(camListener);
-		ftt.getFrameTracker().removeListener(fttListener);		
+		cam.getFrameTracker().removeListener(fttListener);		
 	}
 
 }

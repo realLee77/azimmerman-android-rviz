@@ -21,8 +21,10 @@ import java.util.Set;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.ros.android.renderer.AvailableFrameTracker;
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.VisualizationView;
+import org.ros.android.renderer.AvailableFrameTracker.FrameAddedListener;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.rviz_for_android.drawable.Axis;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
@@ -32,8 +34,6 @@ import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
-import org.ros.rosjava_geometry.AvailableFrameTracker;
-import org.ros.rosjava_geometry.AvailableFrameTracker.FrameAddedListener;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.os.Handler;
@@ -86,14 +86,14 @@ public class TfFrameLayer extends DefaultLayer implements LayerWithProperties {
 				}
 			}
 		};
-		frameTransformTree.getFrameTracker().addListener(listener);
-		for(String s : frameTransformTree.getFrameTracker().getAvailableFrames())
+		camera.getFrameTracker().addListener(listener);
+		for(String s : camera.getFrameTracker().getAvailableFrames())
 			frames.add(GraphName.of(s));
 	}
 
 	@Override
 	public void onShutdown(VisualizationView view, Node node) {
-		ftt.getFrameTracker().removeListener(listener);
+		camera.getFrameTracker().removeListener(listener);
 		super.onShutdown(view, node);
 	}
 

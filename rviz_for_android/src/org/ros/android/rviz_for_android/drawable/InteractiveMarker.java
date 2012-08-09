@@ -40,7 +40,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.os.AsyncTask;
-import android.util.FloatMath;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -55,7 +54,6 @@ public class InteractiveMarker implements Cleanable {
 	private GraphName frame;
 	private String frameString;
 	private Transform transform;
-	// private Quaternion rotationInverse;
 
 	private Camera cam;
 	private final MeshFileDownloader mfd;
@@ -68,6 +66,7 @@ public class InteractiveMarker implements Cleanable {
 
 		name = msg.getName();
 		transform = Transform.fromPoseMessage(msg.getPose());
+		transform.setRotation(Utility.correctQuaternion(transform.getRotation()));
 
 		frameString = msg.getHeader().getFrameId();
 		frame = GraphName.of(frameString);
@@ -75,7 +74,7 @@ public class InteractiveMarker implements Cleanable {
 		// Create controls
 		for(visualization_msgs.InteractiveMarkerControl control : msg.getControls()) {
 			InteractiveMarkerControl imc = new InteractiveMarkerControl(control, cam, mfd, ftt, this);
-			imc.setParentTransform(transform);
+			// imc.setParentTransform(transform);
 			controls.add(imc);
 		}
 
@@ -117,50 +116,44 @@ public class InteractiveMarker implements Cleanable {
 		publisher.publishFeedback(this, control, type);
 	}
 
-	private void rotateAxisAngle(GL10 glUnused, Quaternion q) {
-		// Use axis angle or matrix transformation??
-		float angle = (float) Math.toDegrees(2 * Math.acos(q.getW()));
-		float l = FloatMath.sqrt(1 - (float) (q.getW() * q.getW()));
-		float x = (float) (q.getX() / l);
-		float y = (float) (q.getY() / l);
-		float z = (float) (q.getZ() / l);
-		cam.rotateM(angle, x, y, z);
-	}
-
 	public void update(InteractiveMarkerPose p) {
 		// Trying to do this without causing a GC
-		Quaternion q = Utility.correctQuaternion(transform.getRotation());
-		q.setX(p.getPose().getOrientation().getX());
-		q.setY(p.getPose().getOrientation().getY());
-		q.setZ(p.getPose().getOrientation().getZ());
-		q.setW(p.getPose().getOrientation().getW());
+		Quaternion q = transform.getRotation();
 
-		Vector3 v = transform.getTranslation();
-		v.setX(p.getPose().getPosition().getX());
-		v.setY(p.getPose().getPosition().getY());
-		v.setZ(p.getPose().getPosition().getZ());
+//		 q.setX(p.getPose().getOrientation().getX());
+//		 q.setY(p.getPose().getOrientation().getY());
+//		 q.setZ(p.getPose().getOrientation().getZ());
+//		 q.setW(p.getPose().getOrientation().getW());
+//		
+//		 Vector3 v = transform.getTranslation();
+//		 v.setX(p.getPose().getPosition().getX());
+//		 v.setY(p.getPose().getPosition().getY());
+//		 v.setZ(p.getPose().getPosition().getZ());
 
-//		 transform = Transform.fromPoseMessage(p.getPose());
+		transform = Transform.fromPoseMessage(p.getPose());
+		
 		if(!frameString.equals(p.getHeader().getFrameId())) {
 			frameString = p.getHeader().getFrameId();
 			frame = GraphName.of(frameString);
 		}
 
 		updateControls();
-		
-		// If this is selected, move the control to match the new position
+
+		// If this marker is selected, move the control to match the new position
 		if(isSelected)
 			cam.getSelectionManager().signalCameraMoved();
 	}
 
 	public void childRotate(Quaternion q) {
-		for(InteractiveMarkerControl imc : controls)
-			imc.setParentRotate(q);
-		
 		transform.setRotation(q.multiply(transform.getRotation()));
 		updateControls();
 	}
 	
+	public void childTranslate(Vector3 v) {
+		transform.setTranslation(v.add(transform.getTranslation()));
+		updateControls();
+	}
+
 	/**
 	 * Update all child controls with the latest parent transform
 	 */

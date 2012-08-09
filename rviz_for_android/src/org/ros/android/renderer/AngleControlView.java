@@ -53,6 +53,7 @@ public class AngleControlView extends View implements android.view.GestureDetect
 		paint.setStyle(Paint.Style.STROKE);
 
 		gestureDetector = new GestureDetector(getContext(), this);
+		gestureDetector.setIsLongpressEnabled(false);
 	}
 
 	private static final int KNOB_RADIUS = 150;
@@ -178,8 +179,10 @@ public class AngleControlView extends View implements android.view.GestureDetect
 
 		if(radius < (KNOB_RADIUS - 1.5 * KNOB_LINEWIDTH))
 			return -999;
+		
+		float degrees = (float) -(Math.toDegrees(Math.atan2(centerY - y, centerX - x)) - 180);
 
-		return (float) -(Math.toDegrees(Math.atan2(centerY - y, centerX - x)) - 180);
+		return degrees;
 	}
 
 	@Override
@@ -196,8 +199,13 @@ public class AngleControlView extends View implements android.view.GestureDetect
 		if(dragStartDeg >= 0) {
 			float currentAngle = toDegrees(e2.getX(), e2.getY());
 
-			float delta = Utility.cap(dragStartDeg - currentAngle, -20f, 20f);
+			float delta = dragStartDeg - currentAngle;
 
+			if(delta > 360)
+				delta -= 360;
+			else if(delta < -360)
+				delta += 360;
+			
 			angle += delta;
 			angle %= 360.0;
 			dragStartDeg = currentAngle;
