@@ -17,12 +17,15 @@
 package org.ros.android.renderer.layer;
 
 import org.ros.android.rviz_for_android.drawable.InteractiveMarkerControl.InteractionMode;
+import org.ros.android.rviz_for_android.geometry.Vector2;
 
 public interface InteractiveObject {
 			
 	public void rotate(float dTheta);
 	
-	public void translate(float dX, float dY);
+	public void translate(float X, float Y);
+	
+	public Vector2 getScreenMotionVector();
 
 	public void mouseDown();
 

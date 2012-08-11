@@ -64,6 +64,9 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		viewport.apply(glUnused);
 		camera.setViewport(viewport);
 		
+		// TODO: Make this generic!!!
+		camera.setScreenDisplayOffset(0, 48);
+		
 		// Create the FBO for selection
 		genFBO(glUnused);
 

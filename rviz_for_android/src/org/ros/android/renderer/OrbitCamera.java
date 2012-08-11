@@ -248,12 +248,6 @@ public class OrbitCamera implements Camera {
 	public void setZoom(float zoom) {
 	}
 
-	// Copy the contents of an array without instantiating a new object
-	private void copyArray(float[] source, float[] dest) {
-		for(int i = 0; i < 16; i++)
-			dest[i] = source[i];
-	}
-
 	@Override
 	public float[] getViewMatrix() {
 		return mView;
@@ -265,12 +259,12 @@ public class OrbitCamera implements Camera {
 
 	@Override
 	public void pushM() {
-		copyArray(modelM, stackM[++stackPointer]);
+		Utility.copyArray(modelM, stackM[++stackPointer]);
 	}
 
 	@Override
 	public void popM() {
-		copyArray(stackM[stackPointer--], modelM);
+		Utility.copyArray(stackM[stackPointer--], modelM);
 		if(stackPointer < 0)
 			throw new RuntimeException("Can not remove the last element in the model matrix stack!");
 	}
@@ -368,5 +362,17 @@ public class OrbitCamera implements Camera {
 	@Override
 	public AvailableFrameTracker getFrameTracker() {
 		return frameTracker;
+	}
+
+	int[] offset = {0,0};
+	@Override
+	public void setScreenDisplayOffset(int dx, int dy) {
+		offset[0] = dx;
+		offset[1] = dy;
+	}
+
+	@Override
+	public int[] getScreenDisplayOffset() {
+		return offset;
 	}
 }
