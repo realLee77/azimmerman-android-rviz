@@ -28,6 +28,15 @@
         android:clickable="true"
         android:visibility="invisible" />
 
+    <org.ros.android.renderer.Translation2DControlView
+        android:id="@+id/tcTranslationControl2D"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:clickable="true"
+        android:visibility="invisible" />
+    
     <LinearLayout
         android:id="@+id/layer_layout"
         android:layout_width="fill_parent"

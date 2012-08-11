@@ -24,6 +24,7 @@ import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
 import org.ros.android.renderer.AngleControlView;
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.Translation2DControlView;
 import org.ros.android.renderer.TranslationControlView;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
@@ -259,8 +260,14 @@ public class MainActivity extends RosActivity {
 		// TODO: Fix FPS layer to work with OGLES2?
 		//visualizationView.addLayer(new FPSLayer(visualizationView.getCamera()));
 		
-		icm = new InteractiveControlManager((AngleControlView) findViewById(R.id.acAngleControl), (TranslationControlView) findViewById(R.id.tcTranslationControl));
+		icm = new InteractiveControlManager((AngleControlView) findViewById(R.id.acAngleControl), (TranslationControlView) findViewById(R.id.tcTranslationControl), (Translation2DControlView) findViewById(R.id.tcTranslationControl2D));
 		visualizationView.getCamera().getSelectionManager().setInteractiveControlManager(icm);
+		
+//		DisplayMetrics metrics = new DisplayMetrics();
+//		getWindowManager().getDefaultDisplay().getMetrics(metrics);
+//		visualizationView.getCamera().setScreenDisplayOffset(0, visualizationView.getCamera().getViewport().getHeight() - metrics.heightPixels);
+//		Log.e("Move", metrics.heightPixels  + "  "  + visualizationView.getCamera().getViewport().getHeight());
+//		Log.e("Move", "Offset: " + Arrays.toString(visualizationView.getCamera().getScreenDisplayOffset()));
 	}
 
 	@Override

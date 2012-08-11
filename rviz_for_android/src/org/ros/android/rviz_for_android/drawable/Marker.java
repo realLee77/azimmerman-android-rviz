@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.SelectionManager;
 import org.ros.android.renderer.layer.InteractiveObject;
 import org.ros.android.renderer.shapes.BaseShapeInterface;
 import org.ros.android.renderer.shapes.Cleanable;
@@ -408,6 +409,21 @@ public class Marker implements Cleanable {
 	public void cleanup() {
 		if(shape != null)
 			shape.removeSelectable();
+	}
+
+	/**
+	 * Colors the marker as though it were selected
+	 * @param selected enable/disable coloring. If false, restores the original color of the marker
+	 */
+	public void setColorAsSelected(boolean selected) {
+		if(shape.isSelected())
+			return;
+		
+		if(selected) {
+			shape.setColor(SelectionManager.selectedColor);
+		} else {
+			shape.setColor(color);
+		}
 	}
 
 }

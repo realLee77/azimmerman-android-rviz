@@ -152,12 +152,14 @@ public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface
 		this.transform = pose;
 	}
 	
+	private boolean isSelected = false;
 	private Color selectedTemp = null;
 	/* (non-Javadoc)
 	 * @see org.ros.android.renderer.shapes.BaseShapeInterface#setSelected(boolean)
 	 */
 	@Override
 	public void setSelected(boolean isSelected) {
+		this.isSelected = isSelected;
 		if(isSelected) {
 			selectedTemp = getColor();
 			setColor(SelectionManager.selectedColor);
@@ -214,5 +216,10 @@ public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface
 	public Map<String, String> getInfo() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public boolean isSelected() {
+		return isSelected;
 	}
 }

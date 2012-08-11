@@ -28,7 +28,8 @@ import org.ros.android.renderer.shapes.BaseShape;
 import org.ros.android.renderer.shapes.BaseShapeInterface;
 import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.renderer.shapes.Color;
-import org.ros.android.renderer.shapes.GenericColoredShape;
+import org.ros.android.rviz_for_android.geometry.Ray;
+import org.ros.android.rviz_for_android.geometry.Vector2;
 import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Quaternion;
@@ -36,7 +37,6 @@ import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import visualization_msgs.InteractiveMarkerFeedback;
-import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 
@@ -95,8 +95,6 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 	private Vector3 myAxis = Vector3.xAxis();
 	private Vector3 myXaxis = Vector3.xAxis();
 
-	private GenericColoredShape axis;
-
 	private boolean captureScreenPosition = false;
 
 	public InteractiveMarkerControl(visualization_msgs.InteractiveMarkerControl msg, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt, InteractiveMarker parentControl) {
@@ -128,9 +126,6 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 			autoCompleteMarker(msg);
 
 		setParentTransform(parentControl.getTransform());
-
-		// TODO:
-		axis = new GenericColoredShape(cam, GLES20.GL_LINES, new float[] { 0f, 0f, 0f, 0f, 0f, 0f });
 	}
 
 	private static final Vector3 FIRST_ARROW_TRANSLATE = new Vector3(0.5, 0d, 0d);
@@ -181,7 +176,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 	public void draw(GL10 glUnused) {
 		cam.pushM();
 		cam.applyTransform(drawTransform);
-		axis.draw(glUnused);
+
 		if(captureScreenPosition)
 			captureScreenPosition();
 		for(Marker m : markers)
@@ -199,11 +194,12 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		cam.popM();
 	}
 
-	private int[] position = new int[] { 0, 0 };
+	private float[] M = new float[16];
 	private float[] MV = new float[16];
 	private float[] MVP = new float[16];
 
 	private void captureScreenPosition() {
+		Utility.copyArray(cam.getModelMatrix(), M);
 		Matrix.multiplyMM(MV, 0, cam.getViewMatrix(), 0, cam.getModelMatrix(), 0);
 		Matrix.multiplyMM(MVP, 0, cam.getViewport().getProjectionMatrix(), 0, MV, 0);
 	}
@@ -253,9 +249,9 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 			parentControl.showMenu(this);
 		} else {
 			captureScreenPosition = true;
+			setMarkerSelection(true);
 		}
 
-		// if(interactionMode == InteractionMode.ROTATE_AXIS) {
 		switch(orientationMode) {
 		case FIXED:
 			myAxis = myXaxis;
@@ -267,9 +263,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 			myAxis = getCameraVector(drawTransform.getTranslation()).invert();
 			break;
 		}
-		// }
-		
-//		axis = new GenericColoredShape(cam, GLES20.GL_LINES, new float[] { 0f, 0f, 0f, 1f, 0f, 0f});
+
 	}
 
 	@Override
@@ -278,19 +272,22 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		parentControl.setSelected(false);
 		Log.i("InteractiveMarker", "Mouse up!");
 		captureScreenPosition = false;
+
+		setMarkerSelection(false);
 	}
 
 	private static final Vector3 ORIGIN = Vector3.zero();
 	private static final Vector3 XAXIS = Vector3.xAxis();
 	private float[] resultVec = new float[4];
 	private float[] positionVec = new float[4];
-	private float x3d,y3d,w3d;
+	private float x3d, y3d, w3d;
+
 	private int[] getScreenPosition(Vector3 position) {
 		positionVec[0] = (float) position.getX();
 		positionVec[1] = (float) position.getY();
 		positionVec[2] = (float) position.getZ();
 		positionVec[3] = 1f;
-		
+
 		Matrix.multiplyMV(resultVec, 0, MVP, 0, positionVec, 0);
 		x3d = resultVec[0];
 		y3d = resultVec[1];
@@ -303,10 +300,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 	@Override
 	public int[] getPosition() {
-//		if(interactionMode == InteractionMode.ROTATE_AXIS)
-			return getScreenPosition(ORIGIN);
-//		else
-//			return getScreenPosition(XAXIS);
+		return getScreenPosition(ORIGIN);
 	}
 
 	@Override
@@ -341,6 +335,11 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 			drawTransform.setRotation(myOrientation);
 	}
 
+	private void setMarkerSelection(boolean selected) {
+		for(Marker m : markers)
+			m.setColorAsSelected(selected);
+	}
+
 	private String name;
 
 	public String getName() {
@@ -352,35 +351,115 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 	}
 
 	@Override
-	public void translate(float dX, float dY) {
+	public void translate(float X, float Y) {
 		if(interactionMode == InteractionMode.MOVE_AXIS) {
-			int[] center = getScreenPosition(ORIGIN);
-			int[] vecCenter = getScreenPosition(Vector3.xAxis());
-			int[] vector = new int[] {center[0] - vecCenter[0], center[1] - vecCenter[1]};
-			double length = Math.sqrt(vector[0]*vector[0] + vector[1]*vector[1]);
-			double[] screenVectorN = new double[] {vector[0]/length, vector[1]/length};
-			
-			length = Math.sqrt(dX*dX + dY*dY);
-			if(length == 0 || length == Double.NaN)
+			// Step 1: Project axis of motion to a ray on the screen
+			int[] startpt = getScreenPosition(ORIGIN);
+			int[] endpt = getScreenPosition(XAXIS);
+			Vector2 screenRayDir = new Vector2(endpt[0] - startpt[0], endpt[1] - startpt[1]);
+			Vector2 screenRayStart = new Vector2(startpt[0], startpt[1]);
+
+			// If the axis isn't long enough, abort
+			if(screenRayDir.length() <= 2) {
+				Log.e("Move", "screen ray too short, aborting move axis");
 				return;
-				
-			double[] dragVectorN = new double[] {dX/length, dY/length};
-			
-			// Normalize the vectors
-//			length = Math.sqrt(center[0]*center[0] + center[1]*center[1]);
-//			double[] centerN = new double[] {center[0]/length, center[1]/length};
-//			length =Math.sqrt(vecCenter[0]*vecCenter[0] + vecCenter[1]*vecCenter[1]);
-//			double[] vecCenterN = new double[] {vecCenter[0]/length, vecCenter[1]/length};
-			
-			double dp = (screenVectorN[0]*dragVectorN[0] + screenVectorN[1]*dragVectorN[1]);			
-			
-			Log.i("InteractiveMarker", "DP = " + dp + "   scale = " + w3d);
-			dp = dp/w3d;
-			Vector3 amt = new Vector3(myAxis.getX()*dp, myAxis.getY()*dp, myAxis.getZ()*dp);
-			parentControl.childTranslate(amt);
+			}
+
+			// Step 2: Find nearest point on the screen ray to the mouse touch point
+			Vector2 mousePt = new Vector2(X, Y);
+
+			float num = (mousePt.subtract(screenRayStart)).dot(screenRayDir);
+			float den = screenRayDir.dot(screenRayDir);
+			Vector2 mouseActionPoint = screenRayStart.add(screenRayDir.scalarMultiply(num / den));
+
+			// Step 3: Project the mouse action point into a 3D ray
+			// Ray mouseRay = getMouseRay(X,Y);
+			Ray mouseRay = getMouseRay(mouseActionPoint.getX(), mouseActionPoint.getY());
+
+			if(Utility.containsNaN(mouseRay.getDirection()) || Utility.containsNaN(mouseRay.getStart())) {
+				Log.e("Move", "NaN");
+				return;
+			}
+
+			Vector3 axisRayStart = new Vector3(M[12], M[13], M[14]);
+			Vector3 axisRayEnd = new Vector3(M[0] + M[12], M[1] + M[13], M[2] + M[14]);
+			Ray axisRay = Ray.constructRay(axisRayStart, axisRayEnd); // new Ray(axisRayStart, axisRayEnd.subtract(axisRayStart));
+
+			Vector3 result = axisRay.getClosestPoint(mouseRay);
+			if(result == null)
+				Log.e("Move", "Rays are parallel!");
+
+			parentControl.childTranslate(result);
 			parentControl.publish(this, visualization_msgs.InteractiveMarkerFeedback.POSE_UPDATE);
-			// Screen vector = projection of my axis onto the screen
-			// Dot product of delta vector and screen vector = percent of axis to add to position
+		} else if(interactionMode == InteractionMode.MOVE_PLANE) {
+			// if(isViewFacing) {
+			// Step 1: Construct the plane of motion
+
+			// Find the camera view ray (ray from center of the camera forward)
+			int centerX = cam.getViewport().getWidth() / 2;
+			int centerY = cam.getViewport().getHeight() / 2;
+			// float[] project_start = new float[3];
+			// float[] project_end = new float[3];
+			// int[] viewport = { 0, 0, cam.getViewport().getWidth(), cam.getViewport().getHeight() };
+			// Utility.unProject(centerX, centerY, 0f, cam.getViewMatrix(), 0, cam.getViewport().getProjectionMatrix(), 0, viewport, 0, project_start, 0);
+			// Utility.unProject(centerX, centerY, 1f, cam.getViewMatrix(), 0, cam.getViewport().getProjectionMatrix(), 0, viewport, 0, project_end, 0);
+			//
+			// Vector3 cameraRayDirection = new Vector3(project_end[0] - project_start[0], project_end[1] - project_start[1], project_end[2] - project_start[2]).normalized();
+
+			// Log.i("Move", "Camera ray: " + centerX + ", " + centerY + " -> " + cameraRay);
+
+			Ray cameraRay = getMouseRay(centerX, centerY);
+
+			// Log.i("Move", "Camera ray: " + cameraRayDirection);
+
+			Ray motionPlane = new Ray(parentControl.getTransform().getTranslation(), cameraRay.getDirection());
+
+			// Step 2: Construct the mouse ray
+			Ray mouseRay = getMouseRay(X, Y);
+
+			// Step 3: Determine the intersection of the mouse ray and motion plane
+			// I don't like the math rviz does, instead using math from
+			// http://www.cs.princeton.edu/courses/archive/fall00/cs426/lectures/raycast/sld017.htm
+
+			double t = motionPlane.getDirection().dotProduct(motionPlane.getStart().subtract(mouseRay.getStart())) / motionPlane.getDirection().dotProduct(mouseRay.getDirection());
+
+			Vector3 pointInPlane = mouseRay.getPoint(t);
+			Log.e("Move", "Motion point in plane: " + pointInPlane);
+
+			parentControl.childTranslate(pointInPlane);
+			parentControl.publish(this, visualization_msgs.InteractiveMarkerFeedback.POSE_UPDATE);
+			// }
 		}
 	}
+
+	@Override
+	public Vector2 getScreenMotionVector() {
+		int[] startpt = getScreenPosition(ORIGIN);
+		int[] endpt = getScreenPosition(XAXIS);
+
+		Vector2 screenRayDir = new Vector2(endpt[0] - startpt[0], endpt[1] - startpt[1]);
+		return screenRayDir;
+	}
+
+	private int[] viewport = new int[4];
+	private float[] project_start = new float[3];
+	private float[] project_end = new float[3];
+
+	private Ray getMouseRay(float x, float y) {
+		// Step 3: Project the mouse action point into a 3D ray
+		viewport[0] = 0;
+		viewport[1] = 0;
+		viewport[2] = cam.getViewport().getWidth();
+		viewport[3] = cam.getViewport().getHeight();
+
+		// Flip the Y coordinate of the mouse action point to put it in OpenGL pixel space
+		Utility.unProject(x + cam.getScreenDisplayOffset()[0], viewport[3] - y + cam.getScreenDisplayOffset()[1], 0f, cam.getViewMatrix(), 0, cam.getViewport().getProjectionMatrix(), 0, viewport, 0, project_start, 0);
+		Utility.unProject(x + cam.getScreenDisplayOffset()[0], viewport[3] - y + cam.getScreenDisplayOffset()[1], 1f, cam.getViewMatrix(), 0, cam.getViewport().getProjectionMatrix(), 0, viewport, 0, project_end, 0);
+
+		Vector3 mouseray_start = new Vector3(project_start[0], project_start[1], project_start[2]);
+		Vector3 mouseray_dir = new Vector3(project_end[0] - project_start[0], project_end[1] - project_start[1], project_end[2] - project_start[2]);
+
+		return new Ray(mouseray_start, mouseray_dir.normalized());
+	}
+
 }

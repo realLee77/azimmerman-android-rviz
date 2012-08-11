@@ -1,5 +1,8 @@
 package org.ros.android.renderer;
 
+import org.ros.android.renderer.TranslationControlView.OnMouseUpListener;
+import org.ros.android.renderer.TranslationControlView.OnMoveListener;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -11,47 +14,40 @@ import android.view.GestureDetector.OnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 
-public class TranslationControlView extends View implements OnGestureListener {
+public class Translation2DControlView extends View implements OnGestureListener {
 
 	private Paint paint;
 
 	private GestureDetector gestureDetector;
 
-	public interface OnMoveListener {
-		public void onMove(float X, float Y);
-	}
-	public interface OnMouseUpListener {
-		public void mouseUp(MotionEvent e);
-	}
-
-	private static final OnMoveListener DEFAULT_ONMOVE_LISTENER = new OnMoveListener() {
+	private static final OnMoveListener DEFAULT_LISTENER = new OnMoveListener() {
 		@Override
-		public void onMove(float dX, float dY) {
+		public void onMove(float X, float Y) {
 		}
 	};
-	
+
 	private static final OnMouseUpListener DEFAULT_ONUP_LISTENER = new OnMouseUpListener() {
 		@Override
 		public void mouseUp(MotionEvent e) {
 			// TODO Auto-generated method stub
-			
+
 		}
 	};
-	
-	private OnMouseUpListener mouseUpListener = DEFAULT_ONUP_LISTENER;
-	private OnMoveListener moveListener = DEFAULT_ONMOVE_LISTENER;
 
-	public TranslationControlView(Context context, AttributeSet attrs, int defStyle) {
+	private OnMouseUpListener mouseUpListener = DEFAULT_ONUP_LISTENER;
+	private OnMoveListener moveListener = DEFAULT_LISTENER;
+
+	public Translation2DControlView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		init();
 	}
 
-	public TranslationControlView(Context context, AttributeSet attrs) {
+	public Translation2DControlView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		init();
 	}
 
-	public TranslationControlView(Context context) {
+	public Translation2DControlView(Context context) {
 		super(context);
 		init();
 	}
@@ -66,7 +62,7 @@ public class TranslationControlView extends View implements OnGestureListener {
 	private void init() {
 		paint = createDefaultPaint();
 		paint.setAntiAlias(true);
-		paint.setStrokeWidth(2);
+		paint.setStrokeWidth(1);
 		paint.setStyle(Paint.Style.FILL);
 		paint.setColor(Color.GRAY);
 		gestureDetector = new GestureDetector(getContext(), this);
@@ -81,46 +77,42 @@ public class TranslationControlView extends View implements OnGestureListener {
 		mouseUpListener = listener;
 	}
 
-	private static final int BUTTON_WIDTH = 55;
-	private static final int BUTTON_HEIGHT = 85;
-	private static final int DIMENSION = Math.max(BUTTON_HEIGHT, BUTTON_WIDTH);
-	
-	private static final float CENTER_X = DIMENSION/2f;
-	private static final float CENTER_Y = DIMENSION/2f;
+	private static final int DIMENSION = 85;
 
-	private static final float ARROW_MIDDLE_EDGEGAP = 0.38f;
-	private static final float ARROW_HEAD_HEIGHT = 0.4f;
-	private static final float[] vertices = {0f, ARROW_HEAD_HEIGHT*BUTTON_HEIGHT,
-											0.5f*BUTTON_WIDTH, 0f,									 
-											BUTTON_WIDTH, ARROW_HEAD_HEIGHT*BUTTON_HEIGHT,
-											 (1-ARROW_MIDDLE_EDGEGAP)*BUTTON_WIDTH,ARROW_HEAD_HEIGHT*BUTTON_HEIGHT,
-											 (1-ARROW_MIDDLE_EDGEGAP)*BUTTON_WIDTH,(1-ARROW_HEAD_HEIGHT)*BUTTON_HEIGHT,
-											 BUTTON_WIDTH,(1-ARROW_HEAD_HEIGHT)*BUTTON_HEIGHT,
-											 0.5f*BUTTON_WIDTH, BUTTON_HEIGHT,
-											 0f, (1-ARROW_HEAD_HEIGHT)*BUTTON_HEIGHT,
-											 ARROW_MIDDLE_EDGEGAP*BUTTON_WIDTH, (1-ARROW_HEAD_HEIGHT)*BUTTON_HEIGHT,
-											 ARROW_MIDDLE_EDGEGAP*BUTTON_WIDTH, ARROW_HEAD_HEIGHT*BUTTON_HEIGHT,};
+	private static final float CENTER_X = DIMENSION / 2f;
+	private static final float CENTER_Y = DIMENSION / 2f;
+
+	private static final float ARROW_MIDDLE_EDGEGAP = 0.4f;
+	private static final float ARROW_HEAD_HEIGHT = 0.25f;
+	private static final float ARROW_HEAD_WIDTH = 0.3f;
+	private static final float[] vertices = { ARROW_HEAD_WIDTH * DIMENSION, ARROW_HEAD_HEIGHT * DIMENSION, 0.5f * DIMENSION, 0f, (1 - ARROW_HEAD_WIDTH) * DIMENSION, ARROW_HEAD_HEIGHT * DIMENSION, (1 - ARROW_MIDDLE_EDGEGAP) * DIMENSION, ARROW_HEAD_HEIGHT * DIMENSION, (1 - ARROW_MIDDLE_EDGEGAP) * DIMENSION, (1 - ARROW_HEAD_HEIGHT) * DIMENSION, (1 - ARROW_HEAD_WIDTH) * DIMENSION, (1 - ARROW_HEAD_HEIGHT) * DIMENSION, 0.5f * DIMENSION, DIMENSION, ARROW_HEAD_WIDTH * DIMENSION, (1 - ARROW_HEAD_HEIGHT) * DIMENSION, ARROW_MIDDLE_EDGEGAP * DIMENSION, (1 - ARROW_HEAD_HEIGHT) * DIMENSION, ARROW_MIDDLE_EDGEGAP * DIMENSION, ARROW_HEAD_HEIGHT * DIMENSION, };
+
 	private static final Path path = new Path();
 	static {
 		path.moveTo(vertices[0], vertices[1]);
-		
-		for(int i = 2; i < vertices.length; i+=2)
-			path.lineTo(vertices[i], vertices[i+1]);
-		
+
+		for(int i = 2; i < vertices.length; i += 2)
+			path.lineTo(vertices[i], vertices[i + 1]);
+
 		path.lineTo(vertices[0], vertices[1]);
-		path.offset((DIMENSION-BUTTON_WIDTH)/2f, (DIMENSION-BUTTON_HEIGHT)/2f);
-	}
-	
-	
-	@Override
-	protected void onMeasure(int widthSpec, int heightSpec) {
-		setMeasuredDimension(DIMENSION, DIMENSION);
 	}
 
-	private float angle = 0;
+	@Override
+	protected void onMeasure(int widthSpec, int heightSpec) {
+		setMeasuredDimension(DIMENSION + 1, DIMENSION + 1);
+	}
+
 	@Override
 	protected void onDraw(Canvas canvas) {
-		canvas.rotate(angle,CENTER_X,CENTER_Y);
+		paint.setStyle(Paint.Style.FILL);
+		paint.setColor(Color.GRAY);
+		canvas.drawPath(path, paint);
+		paint.setStyle(Paint.Style.STROKE);
+		paint.setColor(Color.BLACK);
+		canvas.drawPath(path, paint);
+
+		canvas.rotate(90, CENTER_X, CENTER_Y);
+
 		paint.setStyle(Paint.Style.FILL);
 		paint.setColor(Color.GRAY);
 		canvas.drawPath(path, paint);
@@ -129,11 +121,6 @@ public class TranslationControlView extends View implements OnGestureListener {
 		canvas.drawPath(path, paint);
 	}
 
-	public void setDrawAngle(double angle) {
-		this.angle = (float) Math.toDegrees(angle);
-		this.invalidate();
-	}
-	
 	@Override
 	public boolean onDown(MotionEvent e) {
 		return false;
@@ -162,7 +149,7 @@ public class TranslationControlView extends View implements OnGestureListener {
 	public boolean onTouchEvent(MotionEvent event) {
 		if(event.getAction() == MotionEvent.ACTION_UP)
 			mouseUpListener.mouseUp(event);
-		
+
 		if(gestureDetector.onTouchEvent(event)) {
 			return true;
 		} else {

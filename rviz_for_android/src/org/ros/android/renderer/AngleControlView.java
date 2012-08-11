@@ -66,7 +66,7 @@ public class AngleControlView extends View implements android.view.GestureDetect
 	private static final int ARROW_DY = 15;
 	private static final int KNOB_WIDTH = (2 * KNOB_RADIUS) + KNOB_LINEWIDTH + 12;
 
-	private static final double TICK_SEPARATION = Math.toRadians(10); // Degrees
+	private static final double TICK_SEPARATION = Math.toRadians(20); // Degrees
 
 	private static final int COLOR_BACKGROUND = Color.GRAY;
 	private static final int COLOR_ARROW = Color.BLACK;
@@ -124,13 +124,13 @@ public class AngleControlView extends View implements android.view.GestureDetect
 
 	@Override
 	protected void onDraw(Canvas canvas) {
+		// Draw 3D perspective looking piece
 		paint.setStrokeWidth(5);
 		paint.setColor(Color.DKGRAY);
 		canvas.drawCircle(centerX+3, centerY+2, INNER_RADIUS, paint);
 		canvas.drawCircle(centerX+3, centerY+2, OUTER_RADIUS, paint);
 		
-		canvas.rotate(angle, centerX, centerY);
-
+		// Draw ring and border
 		paint.setStrokeWidth(KNOB_LINEWIDTH);
 		paint.setColor(COLOR_BACKGROUND);
 		canvas.drawCircle(centerX, centerY, KNOB_RADIUS, paint);
@@ -139,7 +139,11 @@ public class AngleControlView extends View implements android.view.GestureDetect
 		paint.setColor(Color.BLACK);
 		canvas.drawCircle(centerX, centerY, KNOB_RADIUS + (KNOB_LINEWIDTH / 2), paint);
 		canvas.drawCircle(centerX, centerY, KNOB_RADIUS - (KNOB_LINEWIDTH / 2), paint);
+		
+		// Rotate to current angle
+		canvas.rotate(angle, centerX, centerY);
 
+		// Draw tick marks
 		paint.setColor(COLOR_TICKS);
 		for(float i = 0; i < 2 * Math.PI; i += TICK_SEPARATION) {
 			float cos = FloatMath.cos(i);
@@ -147,14 +151,14 @@ public class AngleControlView extends View implements android.view.GestureDetect
 			canvas.drawLine(centerX + INNER_RADIUS * cos, centerY + INNER_RADIUS * sin, centerX + OUTER_RADIUS * cos, centerY + OUTER_RADIUS * sin, paint);
 		}
 
-		paint.setStrokeWidth(3);
-		paint.setColor(COLOR_ARROW);
-		canvas.drawArc(arcRect, -17, 35, false, paint);
-		canvas.save(Canvas.MATRIX_SAVE_FLAG);
-		canvas.rotate(-17,centerX,centerY);
-		canvas.drawLine(centerX + KNOB_RADIUS, centerY, centerX + KNOB_RADIUS + ARROW_DX, centerY + ARROW_DY, paint);
-		canvas.drawLine(centerX + KNOB_RADIUS, centerY, centerX + KNOB_RADIUS - ARROW_DX, centerY + ARROW_DY, paint);
-		canvas.restore();
+//		paint.setStrokeWidth(3);
+//		paint.setColor(COLOR_ARROW);
+//		canvas.drawArc(arcRect, -17, 35, false, paint);
+//		canvas.save(Canvas.MATRIX_SAVE_FLAG);
+//		canvas.rotate(-17,centerX,centerY);
+//		canvas.drawLine(centerX + KNOB_RADIUS, centerY, centerX + KNOB_RADIUS + ARROW_DX, centerY + ARROW_DY, paint);
+//		canvas.drawLine(centerX + KNOB_RADIUS, centerY, centerX + KNOB_RADIUS - ARROW_DX, centerY + ARROW_DY, paint);
+//		canvas.restore();
 	}
 
 	@Override
@@ -162,7 +166,7 @@ public class AngleControlView extends View implements android.view.GestureDetect
 		if(gestureDetector.onTouchEvent(event)) {
 			return true;
 		} else {
-			return super.onTouchEvent(event);
+			return false;
 		}
 	}
 
@@ -175,9 +179,9 @@ public class AngleControlView extends View implements android.view.GestureDetect
 	}
 
 	private float toDegrees(float x, float y) {
-		float radius = (float) Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-
-		if(radius < (KNOB_RADIUS - 1.5 * KNOB_LINEWIDTH))
+		double radius = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+		
+		if(radius < (KNOB_RADIUS - (1.5*KNOB_LINEWIDTH)))
 			return -999;
 		
 		float degrees = (float) -(Math.toDegrees(Math.atan2(centerY - y, centerX - x)) - 180);
@@ -194,18 +198,23 @@ public class AngleControlView extends View implements android.view.GestureDetect
 	public void onLongPress(MotionEvent e) {
 	}
 
+	private static final int MAX_ANGLE_DELTA = 25;
+	
 	@Override
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 		if(dragStartDeg >= 0) {
 			float currentAngle = toDegrees(e2.getX(), e2.getY());
 
+			if(currentAngle == -999)
+				return false;
+			
 			float delta = dragStartDeg - currentAngle;
 
-			if(delta > 360)
-				delta -= 360;
-			else if(delta < -360)
-				delta += 360;
-			
+			delta %= 360.0;
+
+//			if(Math.abs(delta) > MAX_ANGLE_DELTA)
+//				delta = 0;
+
 			angle += delta;
 			angle %= 360.0;
 			dragStartDeg = currentAngle;

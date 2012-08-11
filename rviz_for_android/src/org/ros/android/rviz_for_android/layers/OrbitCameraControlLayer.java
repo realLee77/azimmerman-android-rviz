@@ -76,8 +76,7 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 							cam.resetTargetFrame();
 							cam.resetLookTarget();
 							cam.resetZoom();
-							if(cam.getSelectionManager().interactiveMode())
-								cam.getSelectionManager().signalCameraMoved();
+							cam.getSelectionManager().signalCameraMoved();
 						}
 						return true;
 					}
@@ -85,24 +84,30 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 					@Override
 					public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX, float distanceY) {
 						cam.moveOrbitPosition(distanceX * TOUCH_ORBIT_COEFFICIENT, distanceY * TOUCH_ORBIT_COEFFICIENT);
-						if(cam.getSelectionManager().interactiveMode())
-							cam.getSelectionManager().signalCameraMoved();
+						cam.getSelectionManager().signalCameraMoved();
 						requestRender();
-						return true;
-					}
-					
-					@Override
-					public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-						if(!cam.getSelectionManager().interactiveMode())
-							cam.flingCamera(velocityX, velocityY);
 						return true;
 					}
 
 					@Override
-					public boolean onSingleTapConfirmed(MotionEvent e) {
-						cam.getSelectionManager().beginSelectionDraw((int)e.getX(), (int)e.getY());
-						return super.onSingleTapConfirmed(e);
+					public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+						if(!cam.getSelectionManager().interactiveMode())
+							cam.flingCamera(velocityX, velocityY);
+						cam.getSelectionManager().signalCameraMoved();
+						return true;
 					}
+
+					@Override
+					public boolean onSingleTapUp(MotionEvent e) {
+						cam.getSelectionManager().beginSelectionDraw((int) e.getX(), (int) e.getY());
+						return super.onSingleTapUp(e);
+					}
+
+					// @Override
+					// public boolean onSingleTapConfirmed(MotionEvent e) {
+					// cam.getSelectionManager().beginSelectionDraw((int)e.getX(), (int)e.getY());
+					// return super.onSingleTapConfirmed(e);
+					// }
 				});
 
 				scaleGestureDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -123,10 +128,9 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 						prevScaleCenter.setY(detector.getFocusY());
 
 						camera.zoomCamera(detector.getScaleFactor());
-						
-						if(cam.getSelectionManager().interactiveMode())
-							cam.getSelectionManager().signalCameraMoved();
-						
+
+						cam.getSelectionManager().signalCameraMoved();
+
 						requestRender();
 
 						return true;

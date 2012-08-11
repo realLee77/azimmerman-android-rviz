@@ -150,7 +150,7 @@ public class InteractiveMarker implements Cleanable {
 	}
 	
 	public void childTranslate(Vector3 v) {
-		transform.setTranslation(v.add(transform.getTranslation()));
+		transform.setTranslation(v);//v.add(transform.getTranslation()));
 		updateControls();
 	}
 

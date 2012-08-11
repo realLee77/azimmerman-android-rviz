@@ -198,4 +198,10 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 		// TODO Auto-generated method stub
 	}
 
+	@Override
+	public boolean isSelected() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

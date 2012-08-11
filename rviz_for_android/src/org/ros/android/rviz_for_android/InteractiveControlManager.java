@@ -18,12 +18,17 @@ package org.ros.android.rviz_for_android;
 
 import org.ros.android.renderer.AngleControlView;
 import org.ros.android.renderer.AngleControlView.OnAngleChangeListener;
+import org.ros.android.renderer.Translation2DControlView;
 import org.ros.android.renderer.TranslationControlView;
+import org.ros.android.renderer.TranslationControlView.OnMouseUpListener;
 import org.ros.android.renderer.TranslationControlView.OnMoveListener;
 import org.ros.android.renderer.layer.InteractiveObject;
+import org.ros.android.rviz_for_android.drawable.InteractiveMarkerControl.InteractionMode;
+import org.ros.android.rviz_for_android.geometry.Vector2;
 
 import android.os.Handler;
 import android.os.Message;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
@@ -32,14 +37,20 @@ public class InteractiveControlManager {
 	private static final int MSG_SHOW = 0;
 	private static final int MSG_HIDE = 1;
 	private static final int MSG_MOVE = 2;
+	private static final int MSG_HIDE_ALL = 3;
 
+	private static InteractionMode interactionMode = InteractionMode.NONE;
 	private static View activeControl;
 	private static AngleControlView angleControl;
 	private static TranslationControlView translateControl;
+	private static Translation2DControlView translateControl2D;
 
 	private static final Handler handler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
+			if(activeControl == null)
+				return;
+			
 			switch(msg.what) {
 			case MSG_MOVE:
 				activeControl.setX(msg.arg1 - (activeControl.getWidth() / 2));
@@ -51,34 +62,75 @@ public class InteractiveControlManager {
 			case MSG_HIDE:
 				activeControl.setVisibility(Button.INVISIBLE);
 				break;
+			case MSG_HIDE_ALL:
+				angleControl.setVisibility(Button.INVISIBLE);
+				translateControl.setVisibility(Button.INVISIBLE);
+				break;
 			}
+
+			if(interactionMode == InteractionMode.MOVE_AXIS && msg.obj != null)
+				setTranslationAngle((Vector2) msg.obj);
 		}
 	};
-	
+
+	private static void setTranslationAngle(Vector2 screenvec) {
+		if(screenvec.length() > 10)
+			translateControl.setDrawAngle(Math.PI / 2 + Math.atan2(screenvec.getY(), screenvec.getX()));
+	}
+
 	private InteractiveObject activeObject;
 
-	public InteractiveControlManager(AngleControlView acView, TranslationControlView tcView) {
-		InteractiveControlManager.angleControl = acView;
-		InteractiveControlManager.translateControl = tcView;
-		
+	public InteractiveControlManager(AngleControlView acView, TranslationControlView tcView, Translation2DControlView tcView2D) {
+		angleControl = acView;
+		translateControl = tcView;
+		translateControl2D = tcView2D;
+
 		acView.setOnAngleChangeListener(new OnAngleChangeListener() {
 			@Override
 			public void angleChange(float newAngle, float delta) {
 				activeObject.rotate(delta);
 			}
 		});
-		
+
 		tcView.setOnMoveListener(new OnMoveListener() {
 			@Override
-			public void onMove(float dX, float dY) {
-				activeObject.translate(dX, dY);
+			public void onMove(float X, float Y) {
+				translateControl.setVisibility(TranslationControlView.INVISIBLE);
+				activeObject.translate(X, Y);
+			}
+		});
+
+		tcView.setOnMouseUpListener(new OnMouseUpListener() {
+			@Override
+			public void mouseUp(MotionEvent e) {
+				translateControl.setVisibility(TranslationControlView.VISIBLE);
+			}
+		});
+		
+		tcView2D.setOnMoveListener(new OnMoveListener() {
+			@Override
+			public void onMove(float X, float Y) {
+				translateControl2D.setVisibility(Translation2DControlView.INVISIBLE);
+				activeObject.translate(X, Y);
+			}
+		});
+		
+		tcView2D.setOnMouseUpListener(new OnMouseUpListener() {
+			@Override
+			public void mouseUp(MotionEvent e) {
+				translateControl2D.setVisibility(Translation2DControlView.VISIBLE);
 			}
 		});
 	}
 
 	public void showInteractiveController(InteractiveObject activeObject) {
+		// Hide all other controls
+		handler.sendEmptyMessage(MSG_HIDE_ALL);
+
+		// Determine which control to use for the current selected object
 		this.activeObject = activeObject;
-		switch(activeObject.getInteractionMode()) {
+		interactionMode = activeObject.getInteractionMode();
+		switch(interactionMode) {
 		case MENU:
 			break;
 		case ROTATE_AXIS:
@@ -87,12 +139,23 @@ public class InteractiveControlManager {
 			break;
 		case MOVE_AXIS:
 			activeControl = translateControl;
+			handler.obtainMessage(MSG_SHOW, activeObject.getScreenMotionVector()).sendToTarget();
+			break;
+		case MOVE_PLANE:
+			activeControl = translateControl2D;
 			handler.sendEmptyMessage(MSG_SHOW);
 		}
 	}
 
 	public void moveInteractiveController(int x, int y) {
-		handler.obtainMessage(MSG_MOVE, x, y).sendToTarget();
+		switch(interactionMode) {
+		case MOVE_AXIS:
+			handler.obtainMessage(MSG_MOVE, x, y, activeObject.getScreenMotionVector()).sendToTarget();
+			break;
+		default:
+			handler.obtainMessage(MSG_MOVE, x, y).sendToTarget();
+		}
+
 	}
 
 	public void hideInteractiveController() {

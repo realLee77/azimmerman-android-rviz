@@ -9,9 +9,69 @@ import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Vector3;
 
 import android.content.Context;
+import android.opengl.Matrix;
 
 public final class Utility {
 	private Utility() {
+	}
+
+	public static boolean unProject(float winx, float winy, float winz, float[] viewMatrix, int moffset, float[] projMatrix, int poffset, int[] viewport, int voffset, float[] output, int ooffset) {
+		// Based on http://afqa123.com/2012/04/03/fixing-gluunproject-in-android-froyo/
+		float[] mvMatrix = new float[16];
+		float[] finalMatrix = new float[16];
+		float[] in = new float[4];
+		float[] out = new float[4];
+
+		Matrix.multiplyMM(mvMatrix, 0, projMatrix, poffset, viewMatrix, moffset);
+		if(!Matrix.invertM(finalMatrix, 0, mvMatrix, 0))
+			return false;
+
+		in[0] = winx;
+		in[1] = winy;
+		in[2] = winz;
+		in[3] = 1.0f;
+
+		// Map x and y from window coordinates
+		in[0] = (in[0] - viewport[voffset]) / viewport[voffset + 2];
+		in[1] = (in[1] - viewport[voffset + 1]) / viewport[voffset + 3];
+
+		// Map to range -1 to 1
+		in[0] = in[0] * 2 - 1;
+		in[1] = in[1] * 2 - 1;
+		in[2] = in[2] * 2 - 1;
+
+		Matrix.multiplyMV(out, 0, finalMatrix, 0, in, 0);
+		if(out[3] == 0.0f)
+			return false;
+
+		out[0] /= out[3];
+		out[1] /= out[3];
+		out[2] /= out[3];
+		output[ooffset] = out[0];
+		output[ooffset + 1] = out[1];
+		output[ooffset + 2] = out[2];
+
+		return true;
+	}
+	
+	private static float[] point = new float[4];
+	public static void toWorldCoordinates(float[] modelMatrix, int mOffset, float[] pointLocal, float[] pointGlobal) {
+		point[0] = pointLocal[0];
+		point[1] = pointLocal[1];
+		point[2] = pointLocal[2];
+		point[3] = 1f;
+		
+		Matrix.multiplyMV(pointGlobal, 0, modelMatrix, 0, point, 0);
+	}
+	
+	// Copy the contents of an array without instantiating a new object
+	public static void copyArray(float[] source, float[] dest) {
+		for(int i = 0; i < 16; i++)
+			dest[i] = source[i];
+	}
+	
+	public static boolean containsNaN(Vector3 vector) {
+		return Double.isNaN(vector.getX()) || Double.isNaN(vector.getY()) || Double.isNaN(vector.getZ());
 	}
 
 	/**
@@ -27,59 +87,61 @@ public final class Utility {
 			return a2;
 		}
 	}
-	
+
 	public static Quaternion normalize(Quaternion q) {
 		double length = Math.sqrt(Math.pow(q.getX(), 2) + Math.pow(q.getY(), 2) + Math.pow(q.getZ(), 2) + Math.pow(q.getW(), 2));
-		q.setX(q.getX()/length);
-		q.setY(q.getY()/length);
-		q.setZ(q.getZ()/length);
-		q.setW(q.getW()/length);
+		q.setX(q.getX() / length);
+		q.setY(q.getY() / length);
+		q.setZ(q.getZ() / length);
+		q.setW(q.getW() / length);
 		return q;
 	}
-	
+
 	public static Quaternion correctQuaternion(Quaternion q) {
 		if(q.getX() == 0 && q.getY() == 0 && q.getZ() == 0 && q.getW() == 0)
 			q.setW(1d);
 		return q;
 	}
-	
+
 	public static Vector3 getQuaternionAxis(Quaternion q) {
 		return new Vector3(q.getX(), q.getY(), q.getZ());
 	}
-	
+
 	public static Color colorFromMessage(std_msgs.ColorRGBA c) {
 		return new Color(c.getR(), c.getG(), c.getB(), c.getA());
 	}
-	
+
 	private static final Vector3 xaxis = Vector3.xAxis();
 	private static final Vector3 yaxis = Vector3.yAxis();
 	private static final Vector3 zaxis = Vector3.zAxis();
-	
+
 	public static Vector3 quatX(Quaternion q) {
 		return q.rotateVector(Vector3.xAxis());
 	}
+
 	public static Vector3 quatY(Quaternion q) {
 		return q.rotateVector(Vector3.yAxis());
 	}
+
 	public static Vector3 quatZ(Quaternion q) {
 		return q.rotateVector(Vector3.zAxis());
 	}
-	
+
 	/**
 	 * @param q
 	 * @return Angle in radians
 	 */
 	public static float getAngle(Quaternion q) {
-		return (float) (2*Math.acos(q.getW()));
+		return (float) (2 * Math.acos(q.getW()));
 	}
-	
+
 	public static Vector3 getAxis(Quaternion q) {
-		double l = Math.sqrt(1 - (q.getW()*q.getW()));
+		double l = Math.sqrt(1 - (q.getW() * q.getW()));
 		if(l > 1e-9) {
 			double x = q.getX() / l;
 			double y = q.getY() / l;
 			double z = q.getZ() / l;
-			return new Vector3(x,y,z);
+			return new Vector3(x, y, z);
 		} else {
 			return Vector3.zero();
 		}

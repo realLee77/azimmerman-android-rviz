@@ -71,6 +71,10 @@ public interface Camera {
 	
 	public abstract float[] getModelMatrix();
 	
+	public abstract void setScreenDisplayOffset(int dx, int dy);
+	
+	public abstract int[] getScreenDisplayOffset();
+	
 	public abstract void pushM();
 	
 	public abstract void popM();
