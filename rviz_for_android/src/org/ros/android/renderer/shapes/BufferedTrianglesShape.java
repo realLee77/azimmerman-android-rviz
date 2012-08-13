@@ -8,9 +8,7 @@ import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Vertices;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
-import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
-import org.ros.rosjava_geometry.Vector3;
 
 import android.opengl.GLES20;
 
@@ -31,7 +29,7 @@ public class BufferedTrianglesShape extends BaseShape {
 		
 		count = vertices.length / 3;
 		super.setColor(color);
-		super.setTransform(new Transform(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1)));
+		super.setTransform(Transform.identity());
 		super.setProgram(GLSLProgram.FlatShaded());
 	}
 	

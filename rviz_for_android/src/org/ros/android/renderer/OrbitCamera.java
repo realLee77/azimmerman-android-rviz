@@ -26,7 +26,6 @@ import org.ros.rosjava_geometry.Vector3;
 
 import android.graphics.Point;
 import android.opengl.Matrix;
-import android.util.FloatMath;
 
 import com.google.common.base.Preconditions;
 
@@ -46,6 +45,8 @@ public class OrbitCamera implements Camera {
 	 */
 	private static final GraphName DEFAULT_TARGET_FRAME = null;
 
+	
+	private static final double PI_OVER_TWO = Math.PI/2;
 	private float orbitRadius = 5.0f;
 	private static final float MAX_FLING_VELOCITY = 25;
 	private static final float MIN_FLING_VELOCITY = 0.05f;
@@ -54,6 +55,7 @@ public class OrbitCamera implements Camera {
 	private float angleTheta = (float) (Math.PI / 4);
 	private float anglePhi = (float) (Math.PI / 4);
 	private Vector3 location;
+	
 	private Vector3 lookTarget;
 
 	private float[] mView = new float[16];
@@ -104,10 +106,7 @@ public class OrbitCamera implements Camera {
 
 		synchronized(fixedFrame) {
 			if(targetFrame != null) {
-				lookTarget = frameTransformTree.newTransformIfPossible(targetFrame, fixedFrame).getTranslation();
-				lookTarget.setX(lookTarget.getX() / 2);
-				lookTarget.setY(lookTarget.getY() / 2);
-				lookTarget.setZ(lookTarget.getZ() / 2);
+				lookTarget = Utility.newTransformIfPossible(frameTransformTree, targetFrame, fixedFrame).getTranslation();
 				updateLocation();
 			}
 		}
@@ -121,9 +120,7 @@ public class OrbitCamera implements Camera {
 	}
 
 	private void updateLocation() {
-		location.setX(lookTarget.getX() + (orbitRadius * FloatMath.sin(angleTheta) * FloatMath.cos(anglePhi)));
-		location.setY(lookTarget.getY() + (orbitRadius * FloatMath.sin(angleTheta) * FloatMath.sin(anglePhi)));
-		location.setZ(lookTarget.getZ() + (orbitRadius * FloatMath.cos(angleTheta)));
+		location = lookTarget.add(new Vector3(orbitRadius * Math.sin(angleTheta) * Math.cos(anglePhi), orbitRadius * Math.sin(angleTheta) * Math.sin(anglePhi), orbitRadius * Math.cos(angleTheta)));
 	}
 
 	private void velocityUpdate() {
@@ -161,7 +158,7 @@ public class OrbitCamera implements Camera {
 		float xDistCap = Utility.cap(xDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED) * translationScaleFactor;
 		float yDistCap = Utility.cap(yDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED) * translationScaleFactor;
 
-		lookTarget = lookTarget.subtract(new Vector3(Math.cos(anglePhi - Math.PI / 2) * xDistCap - Math.sin(anglePhi + Math.PI / 2) * yDistCap, Math.sin(anglePhi - Math.PI / 2) * xDistCap + Math.cos(anglePhi + Math.PI / 2) * yDistCap, 0));
+		lookTarget = lookTarget.subtract(new Vector3(Math.cos(anglePhi - PI_OVER_TWO) * xDistCap - Math.sin(anglePhi + PI_OVER_TWO) * yDistCap, Math.sin(anglePhi - PI_OVER_TWO) * xDistCap + Math.cos(anglePhi + PI_OVER_TWO) * yDistCap, 0));
 		updateLocation();
 	}
 
@@ -291,6 +288,8 @@ public class OrbitCamera implements Camera {
 
 	@Override
 	public void applyTransform(Transform transform) {
+		if(transform == null)
+			return;
 		Matrix.multiplyMM(modelM, 0, copyOf(modelM), 0, toFloatArr(transform.toMatrix()), 0);
 	}
 	

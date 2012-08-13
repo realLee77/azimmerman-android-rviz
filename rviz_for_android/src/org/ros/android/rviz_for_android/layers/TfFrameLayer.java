@@ -22,9 +22,10 @@ import java.util.Set;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.AvailableFrameTracker;
-import org.ros.android.renderer.Camera;
-import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.AvailableFrameTracker.FrameAddedListener;
+import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.Utility;
+import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.rviz_for_android.drawable.Axis;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
@@ -66,7 +67,7 @@ public class TfFrameLayer extends DefaultLayer implements LayerWithProperties {
 		synchronized(syncFrames) {
 			for(GraphName g : frames) {
 				camera.pushM();
-				camera.applyTransform(ftt.newTransformIfPossible(g, camera.getFixedFrame()));
+				camera.applyTransform(Utility.newTransformIfPossible(ftt, g, camera.getFixedFrame()));
 				camera.scaleM(scale, scale, scale);
 				axis.draw(glUnused);
 				camera.popM();

@@ -73,9 +73,9 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 			if(publisher != null) {
 				InteractiveMarkerFeedback msg = publisher.newMessage();
 				
-				geometry_msgs.Pose markerPose = getPose(interactiveMarker.getTransform());
+				geometry_msgs.Pose markerPose = getPoseMessage(interactiveMarker.getTransform());
 				
-				msg.setHeader(getHeader(interactiveMarker));
+				msg.setHeader(getHeaderMessage(interactiveMarker));
 				msg.setClientId(cliendId);
 				msg.setControlName(control.getName());
 				msg.setEventType(type);
@@ -90,35 +90,17 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 		}
 	};
 	
-	private std_msgs.Header getHeader(InteractiveMarker marker) {
+	private std_msgs.Header getHeaderMessage(InteractiveMarker marker) {
 		std_msgs.Header msg = connectedNode.getTopicMessageFactory().newFromType(std_msgs.Header._TYPE);
 		msg.setFrameId(marker.getFrame());
 		msg.setSeq(feedbackSeq++);
 		msg.setStamp(Time.fromMillis(System.currentTimeMillis()));
 		return msg;
 	}
-
-	private geometry_msgs.Point getPoint(Transform t) {
-		geometry_msgs.Point msg = connectedNode.getTopicMessageFactory().newFromType(geometry_msgs.Point._TYPE);
-		msg.setX(t.getTranslation().getX());
-		msg.setY(t.getTranslation().getY());
-		msg.setZ(t.getTranslation().getZ());
-		return msg;
-	}
 	
-	private geometry_msgs.Quaternion getQuaternion(Transform t) {
-		geometry_msgs.Quaternion msg = connectedNode.getTopicMessageFactory().newFromType(geometry_msgs.Quaternion._TYPE);
-		msg.setW(t.getRotation().getW());
-		msg.setX(t.getRotation().getX());
-		msg.setY(t.getRotation().getY());
-		msg.setZ(t.getRotation().getZ());
-		return msg;
-	}
-	
-	private geometry_msgs.Pose getPose(Transform t) {
+	private geometry_msgs.Pose getPoseMessage(Transform t) {
 		geometry_msgs.Pose msg = connectedNode.getTopicMessageFactory().newFromType(geometry_msgs.Pose._TYPE);
-		msg.setPosition(getPoint(t));
-		msg.setOrientation(getQuaternion(t));
+		t.toPoseMessage(msg);
 		return msg;
 	}
 

@@ -27,6 +27,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.SelectionManager;
+import org.ros.android.renderer.Utility;
 import org.ros.android.renderer.layer.InteractiveObject;
 import org.ros.android.renderer.shapes.BaseShapeInterface;
 import org.ros.android.renderer.shapes.Cleanable;
@@ -77,7 +78,7 @@ public class Marker implements Cleanable {
 	protected int markerMessageType;
 	protected DrawType markerDrawType = DrawType.SHAPE;
 	private boolean useMeshMaterials = false;
-	private Transform shapeTransform;
+	private Transform shapeTransform = Transform.identity();
 
 	// Shape array
 	private int shapeArraySize;
@@ -211,6 +212,7 @@ public class Marker implements Cleanable {
 				shape = new GenericColoredShape(cam, GLES20.GL_POINTS, vertices, initArrayColors());
 			else
 				shape = new GenericColoredShape(cam, GLES20.GL_POINTS, vertices);
+			
 			break;
 		default:
 			Log.e("MarkerLayer", "Unknown marker type: " + msg.getType());
@@ -219,7 +221,7 @@ public class Marker implements Cleanable {
 
 		if(markerDrawType != DrawType.ERROR) {
 			Log.d("MarkerLayer", "Marker " + namespace + " : " + id + "  of type " + markerDrawType.toString() + " : " + shape.toString());
-			shapeTransform = Transform.fromPoseMessage(msg.getPose());
+			shapeTransform = Utility.correctTransform(Transform.fromPoseMessage(msg.getPose()));
 			shape.setTransform(shapeTransform);
 			shape.setColor(color);
 		}
@@ -269,7 +271,7 @@ public class Marker implements Cleanable {
 		cam.pushM();
 
 		if(frame != null)
-			cam.applyTransform(ftt.newTransformIfPossible(cam.getFixedFrame(), frame));
+			cam.applyTransform(Utility.newTransformIfPossible(ftt, cam.getFixedFrame(), frame));
 
 		cam.scaleM(scale[0], scale[1], scale[2]);
 
@@ -311,15 +313,14 @@ public class Marker implements Cleanable {
 		cam.pushM();
 
 		if(frame != null)
-			cam.applyTransform(ftt.newTransformIfPossible(cam.getFixedFrame(), frame));
+			cam.applyTransform(Utility.newTransformIfPossible(ftt, cam.getFixedFrame(), frame));
 
 		cam.scaleM(scale[0], scale[1], scale[2]);
 
 		if(isViewFacing) {
-			Matrix.multiplyMM(modelview, 0, cam.getViewMatrix(), 0, cam.getModelMatrix(), 0);
-			// Let's try this...
-			cam.rotateM((float) -Math.toDegrees(Math.acos(modelview[2])), 0, modelview[10], -modelview[6]);
 			// Based on math from http://www.opengl.org/discussion_boards/showthread.php/152761-Q-how-to-draw-a-disk-(gluDisk)-always-facing-the-user
+			Matrix.multiplyMM(modelview, 0, cam.getViewMatrix(), 0, cam.getModelMatrix(), 0);
+			cam.rotateM((float) -Math.toDegrees(Math.acos(modelview[2])), 0, modelview[10], -modelview[6]);
 		}
 
 		if(markerDrawType == DrawType.MESH) {
