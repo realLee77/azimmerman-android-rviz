@@ -199,7 +199,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 	private float[] MVP = new float[16];
 
 	private void captureScreenPosition() {
-		Utility.copyArray(cam.getModelMatrix(), M);
+		System.arraycopy(cam.getModelMatrix(), 0, M, 0, 16);
 		Matrix.multiplyMM(MV, 0, cam.getViewMatrix(), 0, cam.getModelMatrix(), 0);
 		Matrix.multiplyMM(MVP, 0, cam.getViewport().getProjectionMatrix(), 0, MV, 0);
 	}
@@ -250,6 +250,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		} else {
 			captureScreenPosition = true;
 			setMarkerSelection(true);
+			parentControl.controlInAction(true);
 		}
 
 		switch(orientationMode) {
@@ -274,6 +275,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		captureScreenPosition = false;
 
 		setMarkerSelection(false);
+		parentControl.controlInAction(false);
 	}
 
 	private static final Vector3 ORIGIN = Vector3.zero();
@@ -361,7 +363,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 			// If the axis isn't long enough, abort
 			if(screenRayDir.length() <= 2) {
-				Log.e("Move", "screen ray too short, aborting move axis");
+				Log.e("InteractiveMarker", "screen ray too short, aborting move axis");
 				return;
 			}
 
@@ -377,42 +379,37 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 			Ray mouseRay = getMouseRay(mouseActionPoint.getX(), mouseActionPoint.getY());
 
 			if(Utility.containsNaN(mouseRay.getDirection()) || Utility.containsNaN(mouseRay.getStart())) {
-				Log.e("Move", "NaN");
+				Log.e("InteractiveMarker", "NaN");
 				return;
 			}
 
 			Vector3 axisRayStart = new Vector3(M[12], M[13], M[14]);
 			Vector3 axisRayEnd = new Vector3(M[0] + M[12], M[1] + M[13], M[2] + M[14]);
-			Ray axisRay = Ray.constructRay(axisRayStart, axisRayEnd); // new Ray(axisRayStart, axisRayEnd.subtract(axisRayStart));
+			Ray axisRay = Ray.constructRay(axisRayStart, axisRayEnd);
 
 			Vector3 result = axisRay.getClosestPoint(mouseRay);
-			if(result == null)
-				Log.e("Move", "Rays are parallel!");
+			if(result == null) {
+				Log.e("InteractiveMarker", "Rays are parallel!");
+				return;
+			}
 
 			parentControl.childTranslate(result);
 			parentControl.publish(this, visualization_msgs.InteractiveMarkerFeedback.POSE_UPDATE);
-		} else if(interactionMode == InteractionMode.MOVE_PLANE) {
-			// if(isViewFacing) {
+		} else if(interactionMode == InteractionMode.MOVE_PLANE || interactionMode == InteractionMode.MOVE_ROTATE) {
+
 			// Step 1: Construct the plane of motion
+			Ray motionPlane;
+			if(isViewFacing) {
 
-			// Find the camera view ray (ray from center of the camera forward)
-			int centerX = cam.getViewport().getWidth() / 2;
-			int centerY = cam.getViewport().getHeight() / 2;
-			// float[] project_start = new float[3];
-			// float[] project_end = new float[3];
-			// int[] viewport = { 0, 0, cam.getViewport().getWidth(), cam.getViewport().getHeight() };
-			// Utility.unProject(centerX, centerY, 0f, cam.getViewMatrix(), 0, cam.getViewport().getProjectionMatrix(), 0, viewport, 0, project_start, 0);
-			// Utility.unProject(centerX, centerY, 1f, cam.getViewMatrix(), 0, cam.getViewport().getProjectionMatrix(), 0, viewport, 0, project_end, 0);
-			//
-			// Vector3 cameraRayDirection = new Vector3(project_end[0] - project_start[0], project_end[1] - project_start[1], project_end[2] - project_start[2]).normalized();
-
-			// Log.i("Move", "Camera ray: " + centerX + ", " + centerY + " -> " + cameraRay);
-
-			Ray cameraRay = getMouseRay(centerX, centerY);
-
-			// Log.i("Move", "Camera ray: " + cameraRayDirection);
-
-			Ray motionPlane = new Ray(parentControl.getTransform().getTranslation(), cameraRay.getDirection());
+				// Find the camera view ray (ray from center of the camera forward)
+				int centerX = cam.getViewport().getWidth() / 2;
+				int centerY = cam.getViewport().getHeight() / 2;
+				Ray cameraRay = getMouseRay(centerX, centerY);
+				motionPlane = new Ray(parentControl.getTransform().getTranslation(), cameraRay.getDirection());
+			} else {
+				// The default action plane is the YZ plane (+X normal direction) rotated by the control orientation
+				motionPlane = new Ray(parentControl.getTransform().getTranslation(), myOrientation.rotateVector(Vector3.xAxis()));
+			}
 
 			// Step 2: Construct the mouse ray
 			Ray mouseRay = getMouseRay(X, Y);
@@ -424,11 +421,9 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 			double t = motionPlane.getDirection().dotProduct(motionPlane.getStart().subtract(mouseRay.getStart())) / motionPlane.getDirection().dotProduct(mouseRay.getDirection());
 
 			Vector3 pointInPlane = mouseRay.getPoint(t);
-			Log.e("Move", "Motion point in plane: " + pointInPlane);
 
 			parentControl.childTranslate(pointInPlane);
 			parentControl.publish(this, visualization_msgs.InteractiveMarkerFeedback.POSE_UPDATE);
-			// }
 		}
 	}
 

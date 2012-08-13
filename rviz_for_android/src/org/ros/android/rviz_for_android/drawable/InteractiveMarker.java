@@ -59,6 +59,9 @@ public class InteractiveMarker implements Cleanable {
 	private final MeshFileDownloader mfd;
 	private final MarkerFeedbackPublisher publisher;
 
+	private volatile boolean isInAction = false; // Becomes true when a user is manipulating the marker via a child control
+	private InteractiveMarkerPose latestPose = null; // Save the last received pose message if the marker is being manipulated and apply it when the user is done manipulating
+
 	public InteractiveMarker(visualization_msgs.InteractiveMarker msg, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt, MarkerFeedbackPublisher pub) {
 		this.mfd = mfd;
 		this.publisher = pub;
@@ -117,21 +120,13 @@ public class InteractiveMarker implements Cleanable {
 	}
 
 	public void update(InteractiveMarkerPose p) {
-		// Trying to do this without causing a GC
-		Quaternion q = transform.getRotation();
-
-//		 q.setX(p.getPose().getOrientation().getX());
-//		 q.setY(p.getPose().getOrientation().getY());
-//		 q.setZ(p.getPose().getOrientation().getZ());
-//		 q.setW(p.getPose().getOrientation().getW());
-//		
-//		 Vector3 v = transform.getTranslation();
-//		 v.setX(p.getPose().getPosition().getX());
-//		 v.setY(p.getPose().getPosition().getY());
-//		 v.setZ(p.getPose().getPosition().getZ());
+		if(isInAction) {
+			latestPose = p;
+			return;
+		}
 
 		transform = Transform.fromPoseMessage(p.getPose());
-		
+
 		if(!frameString.equals(p.getHeader().getFrameId())) {
 			frameString = p.getHeader().getFrameId();
 			frame = GraphName.of(frameString);
@@ -147,11 +142,22 @@ public class InteractiveMarker implements Cleanable {
 	public void childRotate(Quaternion q) {
 		transform.setRotation(q.multiply(transform.getRotation()));
 		updateControls();
+		cam.getSelectionManager().signalCameraMoved();
 	}
-	
+
 	public void childTranslate(Vector3 v) {
-		transform.setTranslation(v);//v.add(transform.getTranslation()));
+		transform.setTranslation(v);
 		updateControls();
+		cam.getSelectionManager().signalCameraMoved();
+	}
+
+	public void controlInAction(boolean inAction) {
+		isInAction = inAction;
+		if(inAction)
+			latestPose = null;
+		else if(latestPose != null) {
+			update(latestPose);
+		}
 	}
 
 	/**

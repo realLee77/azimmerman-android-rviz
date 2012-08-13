@@ -63,13 +63,7 @@ public final class Utility {
 		
 		Matrix.multiplyMV(pointGlobal, 0, modelMatrix, 0, point, 0);
 	}
-	
-	// Copy the contents of an array without instantiating a new object
-	public static void copyArray(float[] source, float[] dest) {
-		for(int i = 0; i < 16; i++)
-			dest[i] = source[i];
-	}
-	
+
 	public static boolean containsNaN(Vector3 vector) {
 		return Double.isNaN(vector.getX()) || Double.isNaN(vector.getY()) || Double.isNaN(vector.getZ());
 	}
