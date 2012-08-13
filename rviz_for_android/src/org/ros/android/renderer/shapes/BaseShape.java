@@ -140,7 +140,6 @@ public abstract class BaseShape implements Shape, Selectable, BaseShapeInterface
 	 */
 	@Override
 	public Transform getTransform() {
-		Preconditions.checkNotNull(transform);
 		return transform;
 	}
 

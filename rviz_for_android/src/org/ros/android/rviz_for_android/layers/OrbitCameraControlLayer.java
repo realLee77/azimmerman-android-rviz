@@ -20,9 +20,9 @@ import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.OrbitCamera;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
+import org.ros.android.rviz_for_android.geometry.Vector2;
 import org.ros.node.ConnectedNode;
 import org.ros.rosjava_geometry.FrameTransformTree;
-import org.ros.rosjava_geometry.Vector3;
 
 import android.content.Context;
 import android.os.Handler;
@@ -42,7 +42,7 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 	private GestureDetector gestureDetector;
 	private ScaleGestureDetector scaleGestureDetector;
 
-	private Vector3 prevScaleCenter = Vector3.zero();
+	private Vector2 prevScaleCenter = Vector2.zero();
 
 	public OrbitCameraControlLayer(Context context, Camera cam) {
 		super(cam);
@@ -102,30 +102,22 @@ public class OrbitCameraControlLayer extends DefaultLayer {
 						cam.getSelectionManager().beginSelectionDraw((int) e.getX(), (int) e.getY());
 						return super.onSingleTapUp(e);
 					}
-
-					// @Override
-					// public boolean onSingleTapConfirmed(MotionEvent e) {
-					// cam.getSelectionManager().beginSelectionDraw((int)e.getX(), (int)e.getY());
-					// return super.onSingleTapConfirmed(e);
-					// }
 				});
 
 				scaleGestureDetector = new ScaleGestureDetector(context, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
 					@Override
 					public boolean onScaleBegin(ScaleGestureDetector detector) {
-						prevScaleCenter.setX(detector.getFocusX());
-						prevScaleCenter.setY(detector.getFocusY());
+						prevScaleCenter = new Vector2(detector.getFocusX(), detector.getFocusY());
 						return true;
 					}
 
 					@Override
 					public boolean onScale(ScaleGestureDetector detector) {
-						Vector3 diff = prevScaleCenter.subtract(new Vector3(detector.getFocusX(), detector.getFocusY(), 0));
+						Vector2 diff = prevScaleCenter.subtract(new Vector2(detector.getFocusX(), detector.getFocusY()));
 						if(enableScrolling)
 							cam.moveCameraScreenCoordinates((float) diff.getX() / 50, (float) diff.getY() / 50);
 
-						prevScaleCenter.setX(detector.getFocusX());
-						prevScaleCenter.setY(detector.getFocusY());
+						prevScaleCenter = new Vector2(detector.getFocusX(), detector.getFocusY());
 
 						camera.zoomCamera(detector.getScaleFactor());
 

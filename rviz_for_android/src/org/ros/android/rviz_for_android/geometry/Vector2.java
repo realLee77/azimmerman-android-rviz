@@ -3,9 +3,15 @@ package org.ros.android.rviz_for_android.geometry;
 import android.util.FloatMath;
 
 public class Vector2 {
-	private float x;
-	private float y;
+	private final float x;
+	private final float y;
 
+	private static final Vector2 ZERO = new Vector2(0,0);
+	
+	public static Vector2 zero() {
+		return ZERO;
+	}
+	
 	public Vector2(float x, float y) {
 		this.x = x;
 		this.y = y;

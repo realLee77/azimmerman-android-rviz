@@ -104,7 +104,7 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 					if(layer instanceof TfLayer) {
 						GraphName layerFrame = ((TfLayer) layer).getFrame();
 						if(layerFrame != null) {
-							Transform t = frameTransformTree.newTransformIfPossible(layerFrame, camera.getFixedFrame());
+							Transform t = Utility.newTransformIfPossible(frameTransformTree, layerFrame, camera.getFixedFrame());
 							camera.applyTransform(t);
 						}
 					}
@@ -242,7 +242,7 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 					if(layer instanceof TfLayer) {
 						GraphName layerFrame = ((TfLayer) layer).getFrame();
 						if(layerFrame != null) {
-							Transform t = frameTransformTree.newTransformIfPossible(layerFrame, camera.getFixedFrame());
+							Transform t = Utility.newTransformIfPossible(frameTransformTree, layerFrame, camera.getFixedFrame());
 							camera.applyTransform(t);
 						}
 					}

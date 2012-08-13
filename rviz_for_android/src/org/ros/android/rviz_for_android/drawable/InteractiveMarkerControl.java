@@ -109,7 +109,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 		// Normalize control orientation
 		myOrientation = Quaternion.fromQuaternionMessage(msg.getOrientation());
-		Utility.correctQuaternion(myOrientation);
+		myOrientation = Utility.correctQuaternion(myOrientation);
 		myOrientation = Utility.normalize(myOrientation);
 		myXaxis = Utility.quatX(myOrientation);
 
@@ -211,23 +211,23 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 	 * @return Color based on marker orientation
 	 */
 	private Color generateColor(Quaternion orientation) {
-		float x, y, z, w;
-		x = (float) orientation.getX();
-		y = (float) orientation.getY();
-		z = (float) orientation.getZ();
-		w = (float) orientation.getW();
+		double x, y, z, w;
+		x = orientation.getX();
+		y = orientation.getY();
+		z = orientation.getZ();
+		w = orientation.getW();
 
-		float mX, mY, mZ;
+		double mX, mY, mZ;
 
 		mX = Math.abs(1 - 2 * y * y - 2 * z * z);
 		mY = Math.abs(2 * x * y + 2 * z * w);
 		mZ = Math.abs(2 * x * z - 2 * y * w);
 
-		float max_xy = mX > mY ? mX : mY;
-		float max_yz = mY > mZ ? mY : mZ;
-		float max_xyz = max_xy > max_yz ? max_xy : max_yz;
+		double max_xy = mX > mY ? mX : mY;
+		double max_yz = mY > mZ ? mY : mZ;
+		double max_xyz = max_xy > max_yz ? max_xy : max_yz;
 
-		return new Color(mX / max_xyz, mY / max_xyz, mZ / max_xyz, 0.7f);
+		return new Color(Utility.cap((float)(mX / max_xyz),0f,1f), Utility.cap((float)(mY / max_xyz),0f,1f), Utility.cap((float)(mZ / max_xyz),0f,1f), 0.7f);
 	}
 
 	@Override
@@ -258,7 +258,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 			myAxis = myXaxis;
 			break;
 		case INHERIT:
-			myAxis = parentControl.getTransform().getRotation().rotateVector(myXaxis);
+			myAxis = parentControl.getTransform().getRotationAndScale().rotateAndScaleVector(myXaxis);
 			break;
 		case VIEW_FACING:
 			myAxis = getCameraVector(drawTransform.getTranslation()).invert();
@@ -332,7 +332,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		drawTransform.setTranslation(transform.getTranslation());
 
 		if(orientationMode != OrientationMode.FIXED)
-			drawTransform.setRotation(transform.getRotation().multiply(myOrientation));
+			drawTransform.setRotation(transform.getRotationAndScale().multiply(myOrientation));
 		else
 			drawTransform.setRotation(myOrientation);
 	}
@@ -408,7 +408,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 				motionPlane = new Ray(parentControl.getTransform().getTranslation(), cameraRay.getDirection());
 			} else {
 				// The default action plane is the YZ plane (+X normal direction) rotated by the control orientation
-				motionPlane = new Ray(parentControl.getTransform().getTranslation(), myOrientation.rotateVector(Vector3.xAxis()));
+				motionPlane = new Ray(parentControl.getTransform().getTranslation(), myOrientation.rotateAndScaleVector(Vector3.xAxis()));
 			}
 
 			// Step 2: Construct the mouse ray
@@ -454,7 +454,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		Vector3 mouseray_start = new Vector3(project_start[0], project_start[1], project_start[2]);
 		Vector3 mouseray_dir = new Vector3(project_end[0] - project_start[0], project_end[1] - project_start[1], project_end[2] - project_start[2]);
 
-		return new Ray(mouseray_start, mouseray_dir.normalized());
+		return new Ray(mouseray_start, mouseray_dir.normalize());
 	}
 
 }

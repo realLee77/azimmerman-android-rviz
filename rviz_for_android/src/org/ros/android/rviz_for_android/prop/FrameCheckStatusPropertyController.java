@@ -18,8 +18,8 @@ package org.ros.android.rviz_for_android.prop;
 
 import java.util.Set;
 
-import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.AvailableFrameTracker.FrameAddedListener;
+import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Camera.FixedFrameListener;
 import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
@@ -89,7 +89,7 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 	protected void checkFrameExists() {
 		if(useFrameCheck) {
 			Log.i("SPC", "Checking transform existence: " + cam.getFixedFrame() + " -> " + targetFrame);
-			if(targetFrame == null || ftt.canTransform(cam.getFixedFrame(), targetFrame)) {
+			if(targetFrame == null || (ftt.transform(cam.getFixedFrame(), targetFrame) != null)) {
 				Log.i("SPC", "Transform exists");
 				transformExists = true;
 				super.setOk();

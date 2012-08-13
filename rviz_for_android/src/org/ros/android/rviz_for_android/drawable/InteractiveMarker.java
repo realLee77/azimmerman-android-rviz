@@ -69,7 +69,7 @@ public class InteractiveMarker implements Cleanable {
 
 		name = msg.getName();
 		transform = Transform.fromPoseMessage(msg.getPose());
-		transform.setRotation(Utility.correctQuaternion(transform.getRotation()));
+		transform.setRotation(Utility.correctQuaternion(transform.getRotationAndScale()));
 
 		frameString = msg.getHeader().getFrameId();
 		frame = GraphName.of(frameString);
@@ -96,7 +96,7 @@ public class InteractiveMarker implements Cleanable {
 	public void draw(GL10 glUnused) {
 		cam.pushM();
 		cam.scaleM(scale, scale, scale);
-		cam.applyTransform(ftt.newTransformIfPossible(frame, cam.getFixedFrame()));
+		cam.applyTransform(Utility.newTransformIfPossible(ftt, frame, cam.getFixedFrame()));
 
 		for(InteractiveMarkerControl control : controls)
 			control.draw(glUnused);
@@ -107,7 +107,7 @@ public class InteractiveMarker implements Cleanable {
 	public void selectionDraw(GL10 glUnused) {
 		cam.pushM();
 		cam.scaleM(scale, scale, scale);
-		cam.applyTransform(ftt.newTransformIfPossible(frame, cam.getFixedFrame()));
+		cam.applyTransform(Utility.newTransformIfPossible(ftt, frame, cam.getFixedFrame()));
 
 		for(InteractiveMarkerControl control : controls)
 			control.selectionDraw(glUnused);
@@ -140,7 +140,7 @@ public class InteractiveMarker implements Cleanable {
 	}
 
 	public void childRotate(Quaternion q) {
-		transform.setRotation(q.multiply(transform.getRotation()));
+		transform.setRotation(q.multiply(transform.getRotationAndScale()));
 		updateControls();
 		cam.getSelectionManager().signalCameraMoved();
 	}

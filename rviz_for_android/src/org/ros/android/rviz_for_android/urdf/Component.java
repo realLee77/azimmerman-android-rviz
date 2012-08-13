@@ -156,7 +156,8 @@ public class Component {
 		private float length = -1;
 		private float[] size = new float[] { 1f, 1f, 1f };
 		private String mesh;
-		private Transform origin = Transform.identity();
+		private Quaternion originOrientation = Quaternion.identity();
+		private Vector3 originTranslation = Vector3.zero();
 		private String material_name;
 		private Color material_color;
 
@@ -210,7 +211,7 @@ public class Component {
 
 		public void setOffset(float[] offset) {
 			if(offset.length == 3) {
-				this.origin.setTranslation(new Vector3(offset[0], offset[1], offset[2]));
+				this.originTranslation = new Vector3(offset[0], offset[1], offset[2]);
 			} else {
 				throw new IllegalArgumentException("Can't set offset!");
 			}
@@ -219,7 +220,7 @@ public class Component {
 		public void setRotation(float[] rotation) {
 			if(rotation.length == 3) {
 				for(int i = 0; i < 3; i++)
-					this.origin.setRotation(rpyToQuaternion(rotation[0], rotation[1], rotation[2]));
+					this.originOrientation = rpyToQuaternion(rotation[0], rotation[1], rotation[2]);
 			} else {
 				throw new IllegalArgumentException("Can't set rotation!");
 			}
@@ -289,7 +290,7 @@ public class Component {
 			retval.length = length;
 			retval.size = size;
 			retval.mesh = mesh;
-			retval.origin = origin;
+			retval.origin = new Transform(originTranslation, originOrientation);
 			retval.material_name = material_name;
 			retval.material_color = material_color;
 			return retval;

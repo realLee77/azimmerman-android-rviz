@@ -24,6 +24,7 @@ import java.util.Set;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
+import org.ros.android.renderer.Utility;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.Selectable;
@@ -141,8 +142,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 				cam.pushM();
 				// Transform to the URDF link's frame
-				// TODO:
-				cam.applyTransform(ftt.newTransformIfPossible(cam.getFixedFrame(), ul.getName()));
+				cam.applyTransform(Utility.newTransformIfPossible(ftt, cam.getFixedFrame(), ul.getName()));
 
 				// Draw the shape
 				if(drawVis && vis != null) {
@@ -367,7 +367,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 				cam.pushM();
 				// Transform to the URDF link's frame
-				cam.applyTransform(ftt.newTransformIfPossible(ul.getName(), cam.getFixedFrame()));
+				cam.applyTransform(Utility.newTransformIfPossible(ftt, ul.getName(), cam.getFixedFrame()));
 
 				// Draw the shape
 				if(drawVis && vis != null) {

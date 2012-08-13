@@ -5,7 +5,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.ros.android.renderer.shapes.Color;
+import org.ros.namespace.GraphName;
+import org.ros.rosjava_geometry.FrameTransform;
+import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Quaternion;
+import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import android.content.Context;
@@ -82,19 +86,21 @@ public final class Utility {
 		}
 	}
 
-	public static Quaternion normalize(Quaternion q) {
-		double length = Math.sqrt(Math.pow(q.getX(), 2) + Math.pow(q.getY(), 2) + Math.pow(q.getZ(), 2) + Math.pow(q.getW(), 2));
-		q.setX(q.getX() / length);
-		q.setY(q.getY() / length);
-		q.setZ(q.getZ() / length);
-		q.setW(q.getW() / length);
-		return q;
+	public static Quaternion normalize(Quaternion q) {	
+		double length = Math.sqrt(Math.pow(q.getX(), 2) + Math.pow(q.getY(), 2) + Math.pow(q.getZ(), 2) + Math.pow(q.getW(), 2));		
+		Quaternion retval = new Quaternion(q.getX()/length, q.getY()/length, q.getZ()/length, q.getW()/length);
+		return retval;
 	}
 
 	public static Quaternion correctQuaternion(Quaternion q) {
+		Quaternion retval = q;
 		if(q.getX() == 0 && q.getY() == 0 && q.getZ() == 0 && q.getW() == 0)
-			q.setW(1d);
-		return q;
+			retval = Quaternion.identity();
+		return retval;
+	}
+
+	public static Transform correctTransform(Transform t) {
+		return new Transform(t.getTranslation(), normalize(correctQuaternion(t.getRotationAndScale())));
 	}
 
 	public static Vector3 getQuaternionAxis(Quaternion q) {
@@ -105,22 +111,25 @@ public final class Utility {
 		return new Color(c.getR(), c.getG(), c.getB(), c.getA());
 	}
 
-	private static final Vector3 xaxis = Vector3.xAxis();
-	private static final Vector3 yaxis = Vector3.yAxis();
-	private static final Vector3 zaxis = Vector3.zAxis();
-
 	public static Vector3 quatX(Quaternion q) {
-		return q.rotateVector(Vector3.xAxis());
+		return q.rotateAndScaleVector(Vector3.xAxis());
 	}
 
 	public static Vector3 quatY(Quaternion q) {
-		return q.rotateVector(Vector3.yAxis());
+		return q.rotateAndScaleVector(Vector3.yAxis());
 	}
 
 	public static Vector3 quatZ(Quaternion q) {
-		return q.rotateVector(Vector3.zAxis());
+		return q.rotateAndScaleVector(Vector3.zAxis());
 	}
 
+	public static Transform newTransformIfPossible(FrameTransformTree ftt, GraphName source, GraphName target) {
+		FrameTransform t = ftt.transform(source, target);
+		if(t == null)
+			return Transform.identity();
+		return t.getTransform();
+	}
+	
 	/**
 	 * @param q
 	 * @return Angle in radians
@@ -153,6 +162,10 @@ public final class Utility {
 		for(float f : arr)
 			min = Math.min(f, min);
 		return min;
+	}
+	
+	public static Vector3 crossProduct(Vector3 lhs, Vector3 rhs) {
+		return new Vector3(lhs.getY()*rhs.getZ() - lhs.getZ()*rhs.getY(), lhs.getZ()*rhs.getX() - lhs.getX()*rhs.getZ(), lhs.getX()*rhs.getY() - lhs.getY()*rhs.getX());
 	}
 
 	// Common value manipulation and comparison functions

@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import org.apache.commons.io.IOUtils;
+import org.ros.android.renderer.Utility;
 import org.ros.rosjava_geometry.Vector3;
 
 import android.util.Log;
@@ -65,13 +66,12 @@ public class StlLoader {
 
 		for(int i = 0; i < nTriangles; i++) {
 			// Load the normal, check that it's properly formed
-			normalVec.setVector(getFloat(), getFloat(), getFloat());
+			normalVec =  new Vector3(getFloat(), getFloat(), getFloat());
 
-			if(normalVec.length() < 0.9 || normalVec.length() > 1.1) {
+			if(!Utility.inRange(normalVec.getMagnitude(), 0.9, 1.1)) {
 				Log.e("STL", "Normal isn't unit length!");
-				Log.i("STL", "Normal: " + normalVec.toString() + " " + normalVec.length());
-				normalVec = normalVec.normalized();
-				Log.i("STL", "NORMALIZED: " + normalVec.toString() + " " + normalVec.length());
+				normalVec = normalVec.normalize();
+				Log.i("STL", "NORMALIZED: " + normalVec.toString());
 			}
 
 			// Store the normalized normal
@@ -84,9 +84,9 @@ public class StlLoader {
 			// Load and store the triangle vertices
 			// Swap the order if necessary
 			for(int b = 0; b < 3; b++) {
-				vertexVec[b].setVector(getFloat(), getFloat(), getFloat());
+				vertexVec[b] = new Vector3(getFloat(), getFloat(), getFloat());
 			}
-			if(vertexVec[1].subtract(vertexVec[0]).crossProduct(vertexVec[2].subtract(vertexVec[0])).dotProduct(normalVec) < 0) {
+			if(Utility.crossProduct(vertexVec[1].subtract(vertexVec[0]),vertexVec[2].subtract(vertexVec[0])).dotProduct(normalVec) < 0) {
 				vertexVec[3] = vertexVec[2];
 				vertexVec[2] = vertexVec[1];
 				vertexVec[1] = vertexVec[3];

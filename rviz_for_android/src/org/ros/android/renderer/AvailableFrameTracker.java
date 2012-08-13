@@ -12,7 +12,7 @@ public class AvailableFrameTracker {
 
 	private SortedSet<String> availableFrames = new TreeSet<String>();
 	private Set<FrameAddedListener> listeners = new HashSet<FrameAddedListener>();
-	
+
 	public void receivedMessage(geometry_msgs.TransformStamped transformStamped) {
 		receivedFrame(transformStamped.getChildFrameId());
 		receivedFrame(transformStamped.getHeader().getFrameId());
