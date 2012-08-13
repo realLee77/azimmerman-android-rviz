@@ -64,7 +64,7 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		viewport.apply(glUnused);
 		camera.setViewport(viewport);
 		
-		// TODO: Make this generic!!!
+		// TODO: This is hard coded because the height of the ActionBar isn't currently programatically determinable 
 		camera.setScreenDisplayOffset(0, 48);
 		
 		// Create the FBO for selection

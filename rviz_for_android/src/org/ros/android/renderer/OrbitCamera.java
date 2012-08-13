@@ -259,12 +259,12 @@ public class OrbitCamera implements Camera {
 
 	@Override
 	public void pushM() {
-		Utility.copyArray(modelM, stackM[++stackPointer]);
+		System.arraycopy(modelM, 0, stackM[++stackPointer], 0, 16);
 	}
 
 	@Override
 	public void popM() {
-		Utility.copyArray(stackM[stackPointer--], modelM);
+		System.arraycopy(stackM[stackPointer--], 0, modelM, 0, 16);
 		if(stackPointer < 0)
 			throw new RuntimeException("Can not remove the last element in the model matrix stack!");
 	}
@@ -296,9 +296,7 @@ public class OrbitCamera implements Camera {
 	
 	private float[] copyOf = new float[16];
 	private float[] copyOf(float[] matrix) {				
-		for( int i = 0; i < copyOf.length; i++)
-			copyOf[i] = matrix[i];
-		
+		System.arraycopy(matrix, 0, copyOf, 0, 16);
 		return copyOf;
 	}
 	

@@ -141,6 +141,7 @@ public class InteractiveControlManager {
 			activeControl = translateControl;
 			handler.obtainMessage(MSG_SHOW, activeObject.getScreenMotionVector()).sendToTarget();
 			break;
+		case MOVE_ROTATE:
 		case MOVE_PLANE:
 			activeControl = translateControl2D;
 			handler.sendEmptyMessage(MSG_SHOW);
