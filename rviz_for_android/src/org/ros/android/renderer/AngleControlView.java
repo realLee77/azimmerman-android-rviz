@@ -1,13 +1,13 @@
 package org.ros.android.renderer;
 
+import org.ros.android.renderer.TranslationControlView.OnMouseUpListener;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.FloatMath;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -62,64 +62,48 @@ public class AngleControlView extends View implements android.view.GestureDetect
 	private static final int INNER_RADIUS = KNOB_RADIUS - (KNOB_LINEWIDTH / 2) + 3;
 	private static final int OUTER_RADIUS = KNOB_RADIUS + (KNOB_LINEWIDTH / 2) - 3;
 
-	private static final int ARROW_DX = 10;
-	private static final int ARROW_DY = 15;
 	private static final int KNOB_WIDTH = (2 * KNOB_RADIUS) + KNOB_LINEWIDTH + 12;
 
 	private static final double TICK_SEPARATION = Math.toRadians(20); // Degrees
 
 	private static final int COLOR_BACKGROUND = Color.GRAY;
-	private static final int COLOR_ARROW = Color.BLACK;
 	private static final int COLOR_TICKS = Color.DKGRAY;
 
 	private int centerX;
 	private int centerY;
 	private float angle = 0f;
-	private RectF arcRect = new RectF();	
 
-	private static final OnAngleChangeListener DEFAULT_LISTENER = new OnAngleChangeListener() {
+	private static final OnAngleChangeListener DEFAULT_ANGLE_LISTENER = new OnAngleChangeListener() {
 		@Override
 		public void angleChange(float newAngle, float delta) {
 		}
 	};
 	
-	private OnAngleChangeListener angleListener = DEFAULT_LISTENER;
+	private static final OnMouseUpListener DEFAULT_ONUP_LISTENER = new OnMouseUpListener() {
+		@Override
+		public void mouseUp(MotionEvent e) {
+		}
+	};
+	
+	private OnAngleChangeListener angleListener = DEFAULT_ANGLE_LISTENER;
+	private OnMouseUpListener mouseUpListener = DEFAULT_ONUP_LISTENER;
 	
 	public void setOnAngleChangeListener(OnAngleChangeListener angleListener) {
 		this.angleListener = angleListener;
 	}
 	
+	public void setOnMouseUpListener(OnMouseUpListener listener) {
+		mouseUpListener = listener;
+	}
+	
 	@Override
 	protected void onMeasure(int widthSpec, int heightSpec) {
-
-		int measuredWidth = MeasureSpec.getSize(widthSpec);
-
-		int measuredHeight = MeasureSpec.getSize(heightSpec);
-
-		/*measuredWidth and measured height are your view boundaries. You need to change these values based on your requirement E.g.
-
-		if you want to draw a circle which fills the entire view, you need to select the Min(measuredWidth,measureHeight) as the radius.
-
-		Now the boundary of your view is the radius itself i.e. height = width = radius. */
-
-		/* After obtaining the height, width of your view and performing some changes you need to set the processed value as your view dimension by using the method setMeasuredDimension */
-
-		int d = Math.min(measuredWidth, measuredHeight);
 		setMeasuredDimension(KNOB_WIDTH, KNOB_WIDTH);
-
-		/* If you consider drawing circle as an example, you need to select the minimum of height and width and set that value as your screen dimensions
-
-		int d=Math.min(measuredWidth, measuredHeight);
-
-		setMeasuredDimension(d,d); */
 
 		int height = getMeasuredHeight();
 		int width = getMeasuredWidth();
 		centerX = width / 2;
-		centerY = width / 2;
-		arcRect.set(centerX - KNOB_RADIUS, centerY - KNOB_RADIUS, centerX + KNOB_RADIUS, centerY + KNOB_RADIUS);
-
-		Log.i("SIzing", "done");
+		centerY = height / 2;
 	}
 
 	@Override
@@ -150,19 +134,13 @@ public class AngleControlView extends View implements android.view.GestureDetect
 			float sin = FloatMath.sin(i);
 			canvas.drawLine(centerX + INNER_RADIUS * cos, centerY + INNER_RADIUS * sin, centerX + OUTER_RADIUS * cos, centerY + OUTER_RADIUS * sin, paint);
 		}
-
-//		paint.setStrokeWidth(3);
-//		paint.setColor(COLOR_ARROW);
-//		canvas.drawArc(arcRect, -17, 35, false, paint);
-//		canvas.save(Canvas.MATRIX_SAVE_FLAG);
-//		canvas.rotate(-17,centerX,centerY);
-//		canvas.drawLine(centerX + KNOB_RADIUS, centerY, centerX + KNOB_RADIUS + ARROW_DX, centerY + ARROW_DY, paint);
-//		canvas.drawLine(centerX + KNOB_RADIUS, centerY, centerX + KNOB_RADIUS - ARROW_DX, centerY + ARROW_DY, paint);
-//		canvas.restore();
 	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+		if(event.getAction() == MotionEvent.ACTION_UP)
+			mouseUpListener.mouseUp(event);
+		
 		if(gestureDetector.onTouchEvent(event)) {
 			return true;
 		} else {

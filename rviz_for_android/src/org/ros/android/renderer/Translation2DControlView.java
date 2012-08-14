@@ -29,8 +29,6 @@ public class Translation2DControlView extends View implements OnGestureListener 
 	private static final OnMouseUpListener DEFAULT_ONUP_LISTENER = new OnMouseUpListener() {
 		@Override
 		public void mouseUp(MotionEvent e) {
-			// TODO Auto-generated method stub
-
 		}
 	};
 
