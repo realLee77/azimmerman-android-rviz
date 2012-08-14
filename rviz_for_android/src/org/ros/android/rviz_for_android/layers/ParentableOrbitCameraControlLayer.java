@@ -44,7 +44,7 @@ public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer i
 	
 	public ParentableOrbitCameraControlLayer(Context context, Camera cam) {
 		super(context, cam);
-		fixedFrameSelector = new GraphNameProperty("Fixed", null, cam, null, null);
+		fixedFrameSelector = new GraphNameProperty("Fixed", null, cam, null);
 		prop.addSubProperty(fixedFrameSelector);
 	}
 
@@ -64,7 +64,6 @@ public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer i
 		
 		fixedFrameSelector.setDefaultItem(camera.getFixedFrame().toString(), false);
 		fixedFrameSelector.setValue(camera.getFixedFrame());
-		fixedFrameSelector.setTransformTree(frameTransformTree);
 		fixedFrameSelector.addUpdateListener(new PropertyUpdateListener<GraphName>() {
 			public void onPropertyChanged(GraphName newval) {
 				if(newval == null)

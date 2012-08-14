@@ -80,7 +80,7 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			public void onPropertyChanged(GraphName newval) {
 				statusController.setTargetFrame(newval);
 			}
-		}, null);
+		});
 		prop.addSubProperty(propParent);
 
 		prop.addSubProperty(new IntProperty("Cells", cells, new PropertyUpdateListener<Integer>() {
@@ -118,7 +118,6 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
-		prop.<GraphNameProperty> getProperty("Parent").setTransformTree(frameTransformTree);
 		statusController = new FrameCheckStatusPropertyController(prop.<ReadOnlyProperty>getProperty("Status"), camera, frameTransformTree);
 	}
 
