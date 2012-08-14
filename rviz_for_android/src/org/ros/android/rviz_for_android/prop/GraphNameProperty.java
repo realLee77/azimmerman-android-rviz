@@ -27,7 +27,6 @@ import org.ros.android.renderer.AvailableFrameTracker;
 import org.ros.android.renderer.Camera;
 import org.ros.android.rviz_for_android.R;
 import org.ros.namespace.GraphName;
-import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.os.Handler;
 import android.os.Message;
@@ -63,14 +62,12 @@ public class GraphNameProperty extends Property<GraphName> {
 	private ArrayAdapter<String> aa;
 
 	private int selection = 0;
-	private FrameTransformTree ftt;
 	private Spinner spin;
 	private final Camera cam;
 
-	public GraphNameProperty(String name, GraphName value, Camera cam, PropertyUpdateListener<GraphName> updateListener, FrameTransformTree ftt) {
+	public GraphNameProperty(String name, GraphName value, Camera cam, PropertyUpdateListener<GraphName> updateListener) {
 		super(name, value, updateListener);
 		this.cam = cam;
-		this.setTransformTree(ftt);
 
 		this.addUpdateListener(new PropertyUpdateListener<GraphName>() {
 			public void onPropertyChanged(GraphName newval) {
@@ -81,7 +78,7 @@ public class GraphNameProperty extends Property<GraphName> {
 		});
 		setDefaultList(defaultFrameList, 0);
 		spinnerFrameList = defaultList;
-		
+
 		cam.getFrameTracker().addListener(new AvailableFrameTracker.FrameAddedListener() {
 			public void informFrameAdded(Set<String> newFrames) {
 				handler.sendEmptyMessage(0);
@@ -90,20 +87,16 @@ public class GraphNameProperty extends Property<GraphName> {
 	}
 
 	private void generateSpinnerContents() {
-		if(ftt != null) {
-			framesToList.clear();
-			framesToList.addAll(0, defaultList);
-			Set<String> framesFromFtt = cam.getFrameTracker().getAvailableFrames();
-			synchronized(framesFromFtt) {
-				for(String s : framesFromFtt) {
-					if(!framesToList.contains(s))
-						framesToList.add(s);
-				}
+		framesToList.clear();
+		framesToList.addAll(0, defaultList);
+		Set<String> framesFromFtt = cam.getFrameTracker().getAvailableFrames();
+		synchronized(framesFromFtt) {
+			for(String s : framesFromFtt) {
+				if(!framesToList.contains(s))
+					framesToList.add(s);
 			}
-			spinnerFrameList = framesToList;
-		} else {
-			spinnerFrameList = defaultList;
 		}
+		spinnerFrameList = framesToList;
 	}
 
 	/**
@@ -126,7 +119,7 @@ public class GraphNameProperty extends Property<GraphName> {
 		}
 		return this;
 	}
-	
+
 	public GraphNameProperty addToDefaultList(String item) {
 		defaultList.add(item);
 		setDefaultList(defaultList);
@@ -180,10 +173,6 @@ public class GraphNameProperty extends Property<GraphName> {
 		spin.setSelection(selection);
 		spin.setEnabled(super.enabled);
 		return convertView;
-	}
-
-	public void setTransformTree(FrameTransformTree ftt) {
-		this.ftt = ftt;
 	}
 
 	@Override

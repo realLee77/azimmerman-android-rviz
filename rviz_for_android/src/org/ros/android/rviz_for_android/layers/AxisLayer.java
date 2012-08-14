@@ -64,7 +64,7 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 			public void onPropertyChanged(GraphName newval) {
 				statusController.setTargetFrame(newval);
 			}
-		}, null);
+		});
 		prop.addSubProperty(propParent);
 	}
 
@@ -74,8 +74,7 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	}
 	
 	@Override
-	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {
-		(prop.<GraphNameProperty> getProperty("Parent")).setTransformTree(frameTransformTree);		
+	public void onStart(ConnectedNode connectedNode, Handler handler, final FrameTransformTree frameTransformTree, final Camera camera) {	
 		statusController = new FrameCheckStatusPropertyController(prop.<ReadOnlyProperty> getProperty("Status"), camera, frameTransformTree);
 	}
 
