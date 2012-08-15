@@ -136,7 +136,7 @@ public class VisualizationView extends GLSurfaceView implements NodeMain {
 	}
 
 	private void startTransformListener() {
-		Subscriber<tf.tfMessage> tfSubscriber = connectedNode.newSubscriber("tf", tf.tfMessage._TYPE);
+		Subscriber<tf.tfMessage> tfSubscriber = connectedNode.newSubscriber("tf_throttled", tf.tfMessage._TYPE);
 		tfSubscriber.addMessageListener(new MessageListener<tf.tfMessage>() {
 			@Override
 			public void onNewMessage(tf.tfMessage message) {

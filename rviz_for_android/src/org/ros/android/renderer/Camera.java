@@ -1,6 +1,7 @@
 package org.ros.android.renderer;
 
 import org.ros.namespace.GraphName;
+import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
@@ -84,6 +85,8 @@ public interface Camera {
 	public abstract void scaleM(float sx, float sy, float sz);
 	
 	public abstract void rotateM(float a, float x, float y, float z);
+	
+	public abstract void rotateM(Quaternion q);
 	
 	public abstract void loadIdentityM();
 	

@@ -55,10 +55,16 @@ public class UrdfReader extends VTDXmlReader {
 	public void readUrdf(String urdf) throws InvalidXMLException {
 		this.urdf.clear();
 		if(super.parse(urdf)) {
-			parseUrdf();
+			try {
+				parseUrdf();
+			} catch(IllegalArgumentException e) {
+				Log.e("URDF", "Can't parse URDF: " + e.getMessage());
+				e.printStackTrace();
+				throw new InvalidXMLException(e.getMessage());
+			}
 			buildColors();
 		} else {
-			throw new InvalidXMLException();
+			throw new InvalidXMLException("Improper XML formatting");
 		}
 	}
 

@@ -31,7 +31,6 @@ import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Quaternion;
-import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import visualization_msgs.InteractiveMarkerPose;
@@ -53,7 +52,9 @@ public class InteractiveMarker implements Cleanable {
 	private FrameTransformTree ftt;
 	private GraphName frame;
 	private String frameString;
-	private Transform transform;
+	//private Transform transform;
+	private Quaternion orientation;
+	private Vector3 position;
 
 	private Camera cam;
 	private final MeshFileDownloader mfd;
@@ -68,8 +69,9 @@ public class InteractiveMarker implements Cleanable {
 		Log.d("InteractiveMarker", "Created interactive marker");
 
 		name = msg.getName();
-		transform = Transform.fromPoseMessage(msg.getPose());
-		transform.setRotation(Utility.correctQuaternion(transform.getRotationAndScale()));
+//		transform = new Transform(Vector3.fromPointMessage(msg.getPose().getPosition()), Utility.correctQuaternion(Quaternion.fromQuaternionMessage(msg.getPose().getOrientation())));
+		orientation = Utility.normalize(Utility.correctQuaternion(Quaternion.fromQuaternionMessage(msg.getPose().getOrientation())));
+		position = Vector3.fromPointMessage(msg.getPose().getPosition());
 
 		frameString = msg.getHeader().getFrameId();
 		frame = GraphName.of(frameString);
@@ -125,7 +127,9 @@ public class InteractiveMarker implements Cleanable {
 			return;
 		}
 
-		transform = Transform.fromPoseMessage(p.getPose());
+//		transform = Transform.fromPoseMessage(p.getPose());
+		orientation = Utility.correctQuaternion(Quaternion.fromQuaternionMessage(p.getPose().getOrientation()));
+		position = Vector3.fromPointMessage(p.getPose().getPosition());
 
 		if(!frameString.equals(p.getHeader().getFrameId())) {
 			frameString = p.getHeader().getFrameId();
@@ -140,13 +144,17 @@ public class InteractiveMarker implements Cleanable {
 	}
 
 	public void childRotate(Quaternion q) {
-		transform.setRotation(q.multiply(transform.getRotationAndScale()));
+//		transform.setRotation(q.multiply(transform.getRotationAndScale()));
+		orientation = q.multiply(orientation);
+		
 		updateControls();
 		cam.getSelectionManager().signalCameraMoved();
 	}
 
 	public void childTranslate(Vector3 v) {
-		transform.setTranslation(v);
+//		transform.setTranslation(v);
+		position = v;
+		
 		updateControls();
 		cam.getSelectionManager().signalCameraMoved();
 	}
@@ -164,8 +172,11 @@ public class InteractiveMarker implements Cleanable {
 	 * Update all child controls with the latest parent transform
 	 */
 	private void updateControls() {
-		for(InteractiveMarkerControl imc : controls)
-			imc.setParentTransform(transform);
+		for(InteractiveMarkerControl imc : controls) {
+//			imc.setParentTransform(transform);
+			imc.setParentPosition(position);
+			imc.setParentOrientation(orientation);
+		}
 	}
 
 	private class MenuItem {
@@ -260,8 +271,16 @@ public class InteractiveMarker implements Cleanable {
 		return menuSelection;
 	}
 
-	public Transform getTransform() {
-		return transform;
+//	public Transform getTransform() {
+//		return transform;
+//	}
+	
+	public Vector3 getPosition() {
+		return position;
+	}
+	
+	public Quaternion getOrientation() {
+		return orientation;
 	}
 
 	@Override

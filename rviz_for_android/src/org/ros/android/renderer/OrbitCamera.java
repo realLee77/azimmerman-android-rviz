@@ -21,6 +21,7 @@ import java.util.Set;
 
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
+import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
@@ -280,6 +281,15 @@ public class OrbitCamera implements Camera {
 	public void rotateM(float a, float x, float y, float z) {
 		Matrix.rotateM(modelM, 0, a, x, y, z);
 	}
+	
+	@Override
+	public void rotateM(Quaternion q) {
+		float angleDegrees = (float) Math.toDegrees(Utility.getAngle(q));
+        if(angleDegrees != 0) {
+            Vector3 axis = Utility.getAxis(q);
+            rotateM((float) angleDegrees, (float) axis.getX(), (float) axis.getY(), (float) axis.getZ());
+        }
+	}
 
 	@Override
 	public void loadIdentityM() {
@@ -361,7 +371,7 @@ public class OrbitCamera implements Camera {
 		return frameTracker;
 	}
 
-	int[] offset = {0,0};
+	private int[] offset = {0,0};
 	@Override
 	public void setScreenDisplayOffset(int dx, int dy) {
 		offset[0] = dx;
