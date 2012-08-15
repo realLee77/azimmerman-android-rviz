@@ -98,7 +98,8 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		prop.addSubProperty(new StringProperty("Parameter", DEFAULT_PARAM_VALUE, new PropertyUpdateListener<String>() {
 			@Override
 			public void onPropertyChanged(String newval) {
-				reloadUrdf(newval);
+				if(newval.length() > 0)
+					reloadUrdf(newval);
 			}
 		}));
 		prop.addSubProperty(new BoolProperty("Visual", drawVis, new PropertyUpdateListener<Boolean>() {
@@ -142,7 +143,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 				cam.pushM();
 				// Transform to the URDF link's frame
-				cam.applyTransform(Utility.newTransformIfPossible(ftt, cam.getFixedFrame(), ul.getName()));
+				cam.applyTransform(Utility.newTransformIfPossible(ftt, ul.getName(), cam.getFixedFrame()));
 
 				// Draw the shape
 				if(drawVis && vis != null) {
@@ -350,7 +351,9 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 		}
 
 		if(urdf != null) {
-			urdf.clear();
+			synchronized(urdf) {
+				urdf.clear();
+			}
 			urdf = null;
 		}
 	}

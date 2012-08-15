@@ -18,4 +18,16 @@ package org.ros.android.rviz_for_android.urdf;
 
 public class InvalidXMLException extends Exception {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public InvalidXMLException() {
+		super();
+	}
+	
+	public InvalidXMLException(String msg) {
+		super(msg);
+	}
 }

@@ -41,7 +41,8 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.node.topic.Publisher;
 import org.ros.rosjava_geometry.FrameTransformTree;
-import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Quaternion;
+import org.ros.rosjava_geometry.Vector3;
 
 import visualization_msgs.InteractiveMarkerFeedback;
 import visualization_msgs.InteractiveMarkerInit;
@@ -73,7 +74,9 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 			if(publisher != null) {
 				InteractiveMarkerFeedback msg = publisher.newMessage();
 				
-				geometry_msgs.Pose markerPose = getPoseMessage(interactiveMarker.getTransform());
+				
+//				geometry_msgs.Pose markerPose = getPoseMessage(interactiveMarker.getTransform());
+				geometry_msgs.Pose markerPose = getPoseMessage(interactiveMarker.getPosition(), interactiveMarker.getOrientation());
 				
 				msg.setHeader(getHeaderMessage(interactiveMarker));
 				msg.setClientId(cliendId);
@@ -98,9 +101,10 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 		return msg;
 	}
 	
-	private geometry_msgs.Pose getPoseMessage(Transform t) {
+	private geometry_msgs.Pose getPoseMessage(Vector3 v, Quaternion q) {
 		geometry_msgs.Pose msg = connectedNode.getTopicMessageFactory().newFromType(geometry_msgs.Pose._TYPE);
-		t.toPoseMessage(msg);
+		v.toPointMessage(msg.getPosition());
+		q.toQuaternionMessage(msg.getOrientation());
 		return msg;
 	}
 
