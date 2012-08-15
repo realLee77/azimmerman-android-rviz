@@ -298,7 +298,7 @@ public class MainActivity extends RosActivity {
 
 	@Override
 	protected void init(NodeMainExecutor nodeMainExecutor) {
-		mfd = MeshFileDownloader.getMeshFileDownloader("http://" + getMasterUri().getHost().toString() + ":44644", this);
+		mfd = MeshFileDownloader.initialize("http://" + getMasterUri().getHost().toString() + ":44644", this);
 		NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
 		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/rviz"));
 	}

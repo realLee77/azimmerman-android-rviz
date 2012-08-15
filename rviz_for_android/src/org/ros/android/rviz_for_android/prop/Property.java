@@ -31,6 +31,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 /**
+ * A base class for layer properties
+ * 
  * @author azimmerman
  * @param <T>
  *            The type of value stored by this property
@@ -49,7 +51,7 @@ public abstract class Property<T> {
 	protected boolean indented;
 	protected TextView tvTitle;
 	protected LinkedList<PropertyUpdateListener<T>> updateListeners = new LinkedList<PropertyUpdateListener<T>>();
-	
+
 	private PropertyListAdapter propAdapter;
 	private List<Property<?>> propList = new ArrayList<Property<?>>();
 	private int propListIdx = 0;
@@ -64,11 +66,21 @@ public abstract class Property<T> {
 		addUpdateListener(updateListener);
 	}
 
+	/**
+	 * Add the provided update listener
+	 * 
+	 * @param updateListener
+	 */
 	public void addUpdateListener(PropertyUpdateListener<T> updateListener) {
 		if(updateListener != null)
 			updateListeners.add(updateListener);
 	}
 
+	/**
+	 * Set the value of the property
+	 * 
+	 * @param value
+	 */
 	public void setValue(T value) {
 		if(this.value == null || !this.value.equals(value)) {
 			this.value = value;
@@ -76,17 +88,30 @@ public abstract class Property<T> {
 		}
 	}
 
+	/**
+	 * Inform all update listeners of a new value. This only informs all listeners, it does not change the property value.
+	 * 
+	 * @param newvalue
+	 */
 	protected void informListeners(T newvalue) {
 		for(PropertyUpdateListener<T> pul : updateListeners) {
 			if(pul != null)
 				pul.onPropertyChanged(newvalue);
 		}
 	}
-	
+
+	/**
+	 * Register a PropertyListAdapter with this property. The PLA is informed when a redraw is required
+	 * 
+	 * @param pla
+	 */
 	public void registerPropListAdapter(PropertyListAdapter pla) {
 		this.propAdapter = pla;
 	}
-	
+
+	/**
+	 * Trigger the registered PropertyListAdapter to redraw the list of properties
+	 */
 	protected void redraw() {
 		if(propAdapter != null)
 			propAdapter.notifyDataSetChanged();
@@ -103,7 +128,7 @@ public abstract class Property<T> {
 			return convertView;
 		}
 	}
-	
+
 	public abstract View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title);
 
 	public T getValue() {
@@ -113,18 +138,33 @@ public abstract class Property<T> {
 	public String getName() {
 		return name;
 	}
-	
+
+	/**
+	 * Enable/disable the property. This has no impact unless the subclass of property chooses to use the enabled value.
+	 * 
+	 * @param isEnabled
+	 */
 	public void setEnabled(boolean isEnabled) {
 		this.enabled = isEnabled;
 	}
-	
+
+	/**
+	 * Hide/show the current property. This has no effect if a PropertyListAdapter hasn't been registered.
+	 * 
+	 * @param isVisible
+	 */
 	public void setVisible(boolean isVisible) {
 		if(isVisible != this.visible) {
 			this.visible = isVisible;
 			redraw();
 		}
 	}
-	
+
+	/**
+	 * Enable/disable indenting the property title.
+	 * 
+	 * @param isIndented
+	 */
 	public void setIndented(boolean isIndented) {
 		indented = isIndented;
 	}
@@ -175,8 +215,6 @@ public abstract class Property<T> {
 	}
 
 	public void addSubProperty(Property<?> p, String... levels) {
-//		if(propAdapter != null)
-//			p.registerPropListAdapter(propAdapter);
 		p.setIndented(true);
 		Property<?> cur = this;
 		for(int i = 0; i < levels.length; i++) {

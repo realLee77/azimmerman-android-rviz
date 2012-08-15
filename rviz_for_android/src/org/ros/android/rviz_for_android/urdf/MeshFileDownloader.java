@@ -35,9 +35,13 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 /**
- * Queries a server to download textures and mesh files. Downloaded files are cached in app storage.
+ * Queries a server to download textures and mesh files. Downloaded files are cached in app storage. Only one instance of the MFD may exist.
  * @author azimmerman
  *
+ */
+/**
+ * @author azimmerman
+ * 
  */
 public class MeshFileDownloader {
 
@@ -51,11 +55,27 @@ public class MeshFileDownloader {
 
 	private ProgressDialog mProgressDialog;
 
-	public static MeshFileDownloader getMeshFileDownloader(String host, Activity context) {
+	/**
+	 * Create the singleton instance using the specified hostname and context activity.
+	 * 
+	 * @param host
+	 *            the hostname to connect to
+	 * @param context
+	 *            the main activity context, used to display dialogs and toast messages
+	 * @return
+	 */
+	public static MeshFileDownloader initialize(String host, Activity context) {
 		if(instance == null) {
 			// Initialize the new instance
 			instance = new MeshFileDownloader(host, context);
 		}
+		return instance;
+	}
+
+	/**
+	 * @return the current MFD instance (null if initialize hasn't been called)
+	 */
+	public static MeshFileDownloader getInstance() {
 		return instance;
 	}
 
@@ -78,7 +98,9 @@ public class MeshFileDownloader {
 	}
 
 	/**
-	 * Clear the local cache of downloaded models and textures
+	 * Clear the local cache of downloaded models and textures.
+	 * 
+	 * @return the number of files deleted
 	 */
 	public int clearCache() {
 		int deletedFiles = 0;
@@ -86,7 +108,7 @@ public class MeshFileDownloader {
 			for(String file : context.fileList()) {
 				Log.i("Downloader", "Cleared file " + file);
 				context.deleteFile(file);
-				deletedFiles ++;
+				deletedFiles++;
 			}
 			Log.d("Downloader", "Cleared cache");
 		}
@@ -148,10 +170,11 @@ public class MeshFileDownloader {
 	}
 
 	/**
-	 * Download a file on the current thread. This will block until the file has been downloaded. 
-	 * No progress dialog is shown, so the calling thread will appear to hang.
+	 * Download a file on the current thread. This will block until the file has been downloaded. No progress dialog is shown, so the calling thread will appear to hang.
+	 * This is best called from an AsyncTask.
 	 * 
-	 * @param path the URL (http or package) to download
+	 * @param path
+	 *            the URL (http or package) to download
 	 * @return the name of the file accessible through the context-private file space
 	 */
 	public String getFile(final String path) {
@@ -174,13 +197,15 @@ public class MeshFileDownloader {
 			}
 			// TODO:
 			throw new RuntimeException("Couldn't download file!");
-			//return null;
+			// return null;
 		}
 	}
 
 	/**
-	 * Download a file in a background thread using an AsyncTask. This will show a download progress dialog
-	 * @param path the URL (http or package) to download
+	 * Download a file in a background thread using an AsyncTask. This will show a download progress dialog during download.
+	 * 
+	 * @param path
+	 *            the URL (http or package) to download
 	 * @return the name of the file accessible through the context-private file space
 	 */
 	public String getFileBackground(final String path) {
@@ -214,7 +239,7 @@ public class MeshFileDownloader {
 			}
 			// TODO:
 			throw new RuntimeException("Couldn't download file!");
-			//return null;
+			// return null;
 		}
 	}
 

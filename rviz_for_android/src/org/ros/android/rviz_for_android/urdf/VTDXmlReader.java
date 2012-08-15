@@ -1,4 +1,5 @@
 package org.ros.android.rviz_for_android.urdf;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -9,6 +10,11 @@ import com.ximpleware.VTDNav;
 import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
+/**
+ * An abstract XML parsing class using the VTD library to efficiently parse XML documents
+ * 
+ * @author azimmerman
+ */
 public abstract class VTDXmlReader {
 
 	protected AutoPilot ap;
@@ -17,6 +23,13 @@ public abstract class VTDXmlReader {
 	public VTDXmlReader() {
 	}
 
+	/**
+	 * Build a VTD model of the given XML document
+	 * 
+	 * @param xml
+	 *            the XML document in string form
+	 * @return true if parsing succeeded, false if the XML is malformed
+	 */
 	protected boolean parse(String xml) {
 		final VTDGen vg = new VTDGen();
 		vg.setDoc(xml.getBytes());
@@ -32,6 +45,12 @@ public abstract class VTDXmlReader {
 		return true;
 	}
 
+	/**
+	 * Evaluate the given XPath expression
+	 * 
+	 * @param xPathExpression
+	 *            the XPath expression to evaluate
+	 */
 	protected void getExpression(String... xPathExpression) {
 		try {
 			ap.selectXPath(Compose(xPathExpression));
@@ -40,6 +59,12 @@ public abstract class VTDXmlReader {
 		}
 	}
 
+	/**
+	 * Build an XPath navigable string from the provided node names
+	 * 
+	 * @param pieces
+	 * @return an XPath navigable string combining all provided node names in order
+	 */
 	protected String Compose(String... pieces) {
 		if(pieces.length == 1)
 			return pieces[0];
@@ -54,6 +79,12 @@ public abstract class VTDXmlReader {
 		return sb.toString();
 	}
 
+	/**
+	 * Find all attributes associated with the node specified by an XPath expression
+	 * 
+	 * @param xPathExpression
+	 * @return all attributes of the given node
+	 */
 	protected List<String> getAttributeList(String... xPathExpression) {
 		List<String> retval = new LinkedList<String>();
 		getExpression(xPathExpression);
@@ -72,7 +103,13 @@ public abstract class VTDXmlReader {
 		ap.resetXPath();
 		return retval;
 	}
-	
+
+	/**
+	 * Find all child nodes of the node specified by an XPath expression
+	 * 
+	 * @param xPathExpression
+	 * @return all child nodes of the given node
+	 */
 	protected List<String> getNodeList(String... xPathExpression) {
 		List<String> retval = new LinkedList<String>();
 		getExpression(xPathExpression);
@@ -92,6 +129,13 @@ public abstract class VTDXmlReader {
 		return retval;
 	}
 
+	/**
+	 * Find the value of a single attribute of specified by an XPath expression.
+	 * 
+	 * @param xPathExpression
+	 *            the XPath expression specifying a single attribute. If multiple attributes match the XPath expression an IllegalArgumentException will be thrown.
+	 * @return the attribute requested
+	 */
 	protected String getSingleAttribute(String... xPathExpression) {
 		getExpression(xPathExpression);
 		String result = null;
@@ -110,6 +154,13 @@ public abstract class VTDXmlReader {
 		return result;
 	}
 
+	/**
+	 * Return the contents of a single node specified by an XPath expression
+	 * 
+	 * @param xPathExpression
+	 *            the XPath expression specifying a single node. If multiple attributes match the XPath expression an IllegalArgumentException will be thrown.
+	 * @return the node contents
+	 */
 	protected String getSingleContents(String... xPathExpression) {
 		getExpression(xPathExpression);
 		String result = null;
@@ -128,11 +179,24 @@ public abstract class VTDXmlReader {
 		return result;
 	}
 
+	/**
+	 * Count the number of attributes associated with a node
+	 * 
+	 * @param xPathExpression
+	 * @return
+	 */
 	protected int nodeCount(String... xPathExpression) {
 		return getAttributeList(xPathExpression).size();
 	}
-	
+
 	protected String existResult;
+
+	/**
+	 * Determine if a node exists. Store the results of the specified XPath expression in the protected String variable existResult
+	 * 
+	 * @param xPathExpression
+	 * @return boolean indicating the existence of the requested node.
+	 */
 	protected boolean nodeExists(String... xPathExpression) {
 		boolean result = false;
 		getExpression(xPathExpression);
@@ -151,14 +215,20 @@ public abstract class VTDXmlReader {
 		ap.resetXPath();
 		return result;
 	}
-	
+
+	/**
+	 * Determine if an attribute exists. Store the results of the specified XPath expression in the protected String variable existResult
+	 * 
+	 * @param xPathExpression
+	 * @return boolean indicating the existence of the requested attribute.
+	 */
 	protected boolean attributeExists(String... xPathExpression) {
 		boolean result = false;
 		getExpression(xPathExpression);
 		try {
 			int res = ap.evalXPath();
 			result = (res != -1);
-			existResult = vn.toString(res+1);
+			existResult = vn.toString(res + 1);
 		} catch(XPathEvalException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

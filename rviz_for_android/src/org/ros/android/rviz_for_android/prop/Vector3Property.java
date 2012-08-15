@@ -32,6 +32,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
+/**
+ * A Vector3 property using a TextView GUI which parses three numeric values for a Vector3 object from comma or space separated strings
+ * @author azimmerman
+ *
+ */
 public class Vector3Property extends Property<Vector3> {
 
 	private Vector3 newVector;

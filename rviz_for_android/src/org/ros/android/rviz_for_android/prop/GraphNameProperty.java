@@ -39,6 +39,12 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+/**
+ * A graph name selection property which displays a spinner of all available TF frames. The list of frames is automatically populated with all frames stored in the renderer's FrameTransformTree
+ * 
+ * @author azimmerman
+ * 
+ */
 public class GraphNameProperty extends Property<GraphName> {
 
 	private static final ArrayList<String> defaultFrameList = new ArrayList<String>(Arrays.asList(new String[] { "<Fixed Frame>" }));
@@ -120,6 +126,13 @@ public class GraphNameProperty extends Property<GraphName> {
 		return this;
 	}
 
+	/**
+	 * Add an item to the default list
+	 * 
+	 * @param item
+	 *            the item to add
+	 * @return self
+	 */
 	public GraphNameProperty addToDefaultList(String item) {
 		defaultList.add(item);
 		setDefaultList(defaultList);
@@ -128,6 +141,15 @@ public class GraphNameProperty extends Property<GraphName> {
 		return this;
 	}
 
+	/**
+	 * Set the item to be selected by default. Optionally ignore this item when it is selected. If ignored, the property value will be null when this item is selected
+	 * 
+	 * @param defaultItem
+	 *            the item to set as default
+	 * @param toIgnore
+	 *            enable/disable ignoring this item
+	 * @return self
+	 */
 	public GraphNameProperty setDefaultItem(String defaultItem, boolean toIgnore) {
 		ArrayList<String> newDefault = new ArrayList<String>();
 		newDefault.add(defaultItem);

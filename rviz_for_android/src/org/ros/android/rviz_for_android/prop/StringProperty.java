@@ -29,12 +29,25 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
+/**
+ * A string property which displays a TextView GUI
+ * 
+ * @author azimmerman
+ * 
+ */
 public class StringProperty extends Property<String> {
 	private String newText;
 
 	private EditText et;
 
 	public interface StringPropertyValidator {
+		/**
+		 * Given a string, determine if the string is a valid value for the given property. If so, return true. Otherwise, return false.
+		 * 
+		 * @param newval
+		 *            the potential new value for the string property
+		 * @return accept/reject the new value
+		 */
 		public boolean isAcceptable(String newval);
 	}
 
@@ -48,8 +61,17 @@ public class StringProperty extends Property<String> {
 
 	private StringPropertyValidator validator;
 
+	/**
+	 * Provide the property with a new string validator to use. The old validator will be discarded.
+	 * 
+	 * @param validator
+	 *            the new validator to use. If null, the default validator which accepts all strings will be used instead.
+	 */
 	public void setValidator(StringPropertyValidator validator) {
-		this.validator = validator;
+		if(validator == null)
+			this.validator = DEFAULT_VALIDATOR;
+		else
+			this.validator = validator;
 	}
 
 	public StringProperty(String name, String value, PropertyUpdateListener<String> updateListener) {
