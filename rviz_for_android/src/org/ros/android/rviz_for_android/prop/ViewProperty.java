@@ -24,6 +24,10 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
+/**
+ * A property which displays no controls
+ * @author azimmerman
+ */
 public class ViewProperty extends Property<Object> {
 
 	private TextView tvTitle;

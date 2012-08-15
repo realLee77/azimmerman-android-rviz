@@ -28,13 +28,18 @@ import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.util.Log;
 
+/**
+ * An extension of {@link StatusPropertyController} which automatically updates the status if a transform from the fixed frame to the selected target frame isn't available.
+ * 
+ * @author azimmerman
+ */
 public class FrameCheckStatusPropertyController extends StatusPropertyController implements Cleanable {
 
 	private GraphName targetFrame = null;
-	
+
 	private FrameAddedListener fttListener;
 	private FixedFrameListener camListener;
-	
+
 	private boolean useFrameCheck = true;
 	private boolean transformExists = false;
 	private final FrameTransformTree ftt;
@@ -44,7 +49,7 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 		super(prop);
 		this.cam = cam;
 		this.ftt = ftt;
-		
+
 		camListener = new FixedFrameListener() {
 			@Override
 			public void fixedFrameChanged(GraphName newFrame) {
@@ -52,7 +57,7 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 			}
 		};
 		cam.addFixedFrameListener(camListener);
-		
+
 		fttListener = new FrameAddedListener() {
 			@Override
 			public void informFrameAdded(Set<String> newFrames) {
@@ -61,10 +66,14 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 					checkFrameExists();
 			}
 		};
-		
+
 		cam.getFrameTracker().addListener(fttListener);
 	}
-	
+
+	/**
+	 * Set the current target frame to check against
+	 * @param newFrame
+	 */
 	public void setTargetFrame(GraphName newFrame) {
 		// Only check for existence if the target frame changed
 		if(targetFrame == null || !newFrame.equals(targetFrame)) {
@@ -72,7 +81,11 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 			checkFrameExists();
 		}
 	}
-	
+
+	/**
+	 * Enable/disable checking the existence of a transform between fixed and target frames
+	 * @param frameCheck
+	 */
 	public void setFrameChecking(boolean frameCheck) {
 		// Only run a frame check on the "rising edge" of useFrameCheck
 		if(frameCheck && !useFrameCheck) {
@@ -81,7 +94,7 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 		}
 		useFrameCheck = frameCheck;
 	}
-	
+
 	public boolean getFrameChecking() {
 		return useFrameCheck;
 	}
@@ -104,7 +117,7 @@ public class FrameCheckStatusPropertyController extends StatusPropertyController
 	@Override
 	public void cleanup() {
 		cam.removeFixedFrameListener(camListener);
-		cam.getFrameTracker().removeListener(fttListener);		
+		cam.getFrameTracker().removeListener(fttListener);
 	}
 
 }

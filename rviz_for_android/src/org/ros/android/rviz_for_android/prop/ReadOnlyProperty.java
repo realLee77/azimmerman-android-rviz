@@ -26,7 +26,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
- * A read only property used to display status messages to the user. Messages can optionally have an associated warning level (Ok, Warn, or Error).
+ * A read only property used to display status messages to the user. Messages can optionally have an associated warning level (Ok, Warn, or Error) determined by setting
+ * the text color to a certain {@link StatusColor}
  * 
  * @author azimmerman
  * 

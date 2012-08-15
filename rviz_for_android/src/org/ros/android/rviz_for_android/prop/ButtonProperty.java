@@ -25,6 +25,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+/**
+ * A string property which displays a button GUI. The property value is used as the button text. Clicking the button will call onPropertyChanged for
+ * all listeners.
+ * @author azimmerman
+ */
 public class ButtonProperty extends Property<String> {
 
 	public ButtonProperty(String name, String value, PropertyUpdateListener<String> updateListener) {

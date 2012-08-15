@@ -32,6 +32,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+/**
+ * A color property which displays a button GUI that opens a color selection dialog.
+ * @author azimmerman
+ */
 public class ColorProperty extends Property<Color> {
 
 	public ColorProperty(String name, Color value, PropertyUpdateListener<Color> updateListener) {

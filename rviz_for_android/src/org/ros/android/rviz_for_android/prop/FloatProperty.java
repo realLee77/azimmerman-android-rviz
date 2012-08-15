@@ -31,6 +31,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
+/**
+ * Numeric property which holds a float value
+ * 
+ * @author azimmerman
+ */
 public class FloatProperty extends Property<Float> {
 
 	private float newFloat;
@@ -42,7 +47,7 @@ public class FloatProperty extends Property<Float> {
 	public FloatProperty(String name, Float value, PropertyUpdateListener<Float> updateListener) {
 		super(name, value, updateListener);
 		newFloat = value;
-		
+
 		this.addUpdateListener(new PropertyUpdateListener<Float>() {
 			public void onPropertyChanged(Float newval) {
 				if(et != null)
@@ -55,7 +60,7 @@ public class FloatProperty extends Property<Float> {
 	public View getUi(View convertView, ViewGroup parent, LayoutInflater inflater, String title) {
 		convertView = inflater.inflate(R.layout.row_property_numericfield, parent, false);
 		final InputMethodManager imm = (InputMethodManager) parent.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-		
+
 		tvTitle = (TextView) convertView.findViewById(R.id.tvProp_NumericField_Name);
 		if(title != null)
 			tvTitle.setText(title);
@@ -89,7 +94,14 @@ public class FloatProperty extends Property<Float> {
 		return convertView;
 	}
 
-	public FloatProperty setValidRange(Float min, Float max) {
+	/**
+	 * Set the valid range of input values. If an entered value is outside of this range, onPropertyChanged will not be called and the previous valid value will be used.
+	 * 
+	 * @param min
+	 * @param max
+	 * @return this
+	 */
+	public FloatProperty setValidRange(float min, float max) {
 		this.min = min;
 		this.max = max;
 		return this;

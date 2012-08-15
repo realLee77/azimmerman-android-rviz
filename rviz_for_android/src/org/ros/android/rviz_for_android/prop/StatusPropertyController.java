@@ -18,6 +18,10 @@ package org.ros.android.rviz_for_android.prop;
 
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
 
+/**
+ * A wrapper for the {@link ReadOnlyProperty} which provides convenience methods
+ * @author azimmerman
+ */
 public class StatusPropertyController {
 	private final ReadOnlyProperty prop;
 	

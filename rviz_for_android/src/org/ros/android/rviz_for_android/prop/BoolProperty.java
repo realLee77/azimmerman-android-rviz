@@ -27,6 +27,10 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
 
+/**
+ * A boolean property with checkbox GUI
+ * @author azimmerman
+ */
 public class BoolProperty extends Property<Boolean> {
 
 	public BoolProperty(String name, Boolean value, PropertyUpdateListener<Boolean> updateListener) {

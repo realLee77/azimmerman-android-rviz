@@ -26,6 +26,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 
+/**
+ * List adapter which displays a set of properties in an expandable list
+ * @author azimmerman
+ */
 public class PropertyListAdapter extends BaseExpandableListAdapter {
 	
 	private List<LayerWithProperties> layers;
