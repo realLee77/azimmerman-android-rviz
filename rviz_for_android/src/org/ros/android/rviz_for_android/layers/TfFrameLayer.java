@@ -16,6 +16,7 @@
  */
 package org.ros.android.rviz_for_android.layers;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,34 +45,31 @@ public class TfFrameLayer extends DefaultLayer implements LayerWithProperties {
 	private Axis axis;
 	private FrameAddedListener listener;
 	private FrameTransformTree ftt;
-	private Set<GraphName> frames = new HashSet<GraphName>();
-	private Object syncFrames = new Object();
+	private Set<GraphName> frames = Collections.synchronizedSet(new HashSet<GraphName>());
 	private BoolProperty prop;
 	private float scale = 1f;
-	
+
 	public TfFrameLayer(Camera cam) {
 		super(cam);
 		axis = new Axis(cam);
-		
+
 		prop = new BoolProperty("Enabled", true, null);
 		prop.addSubProperty(new FloatProperty("Scale", scale, new Property.PropertyUpdateListener<Float>() {
 			@Override
 			public void onPropertyChanged(Float newval) {
 				scale = newval;
 			}
-		}));	
+		}));
 	}
 
 	@Override
 	public void draw(GL10 glUnused) {
-		synchronized(syncFrames) {
-			for(GraphName g : frames) {
-				camera.pushM();
-				camera.applyTransform(Utility.newTransformIfPossible(ftt, g, camera.getFixedFrame()));
-				camera.scaleM(scale, scale, scale);
-				axis.draw(glUnused);
-				camera.popM();
-			}
+		for(GraphName g : frames) {
+			camera.pushM();
+			camera.applyTransform(Utility.newTransformIfPossible(ftt, g, camera.getFixedFrame()));
+			camera.scaleM(scale, scale, scale);
+			axis.draw(glUnused);
+			camera.popM();
 		}
 	}
 
@@ -81,10 +79,8 @@ public class TfFrameLayer extends DefaultLayer implements LayerWithProperties {
 		listener = new AvailableFrameTracker.FrameAddedListener() {
 			@Override
 			public void informFrameAdded(Set<String> newFrames) {
-				synchronized(syncFrames) {
-					for(String s : newFrames)
-						frames.add(GraphName.of(s));
-				}
+				for(String s : newFrames)
+					frames.add(GraphName.of(s));
 			}
 		};
 		camera.getFrameTracker().addListener(listener);
@@ -102,7 +98,7 @@ public class TfFrameLayer extends DefaultLayer implements LayerWithProperties {
 	public Property<?> getProperties() {
 		return prop;
 	}
-	
+
 	@Override
 	public boolean isEnabled() {
 		return prop.getValue();

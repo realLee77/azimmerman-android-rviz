@@ -89,7 +89,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 	private InteractionMode interactionMode;
 	private OrientationMode orientationMode;
 
-//	private Transform drawTransform = Transform.identity();
+	// private Transform drawTransform = Transform.identity();
 	private Vector3 drawPosition = Vector3.zero();
 	private Quaternion drawOrientation;
 	private Quaternion myOrientation;
@@ -114,7 +114,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		myOrientation = Utility.correctQuaternion(myOrientation);
 		myOrientation = Utility.normalize(myOrientation);
 		myXaxis = Utility.quatX(myOrientation);
-		
+
 		drawOrientation = myOrientation;
 
 		// TODO: Figure out interactive marker "independent orientation" setting
@@ -129,7 +129,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		if(msg.getMarkers().isEmpty())
 			autoCompleteMarker(msg);
 
-//		setParentTransform(parentControl.getTransform());
+		// setParentTransform(parentControl.getTransform());
 		setParentPosition(parentControl.getPosition());
 		setParentOrientation(parentControl.getOrientation());
 	}
@@ -181,8 +181,8 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 	public void draw(GL10 glUnused) {
 		cam.pushM();
-//		cam.applyTransform(drawTransform);
-		cam.translateM((float)drawPosition.getX(), (float)drawPosition.getY(), (float)drawPosition.getZ());
+		// cam.applyTransform(drawTransform);
+		cam.translateM((float) drawPosition.getX(), (float) drawPosition.getY(), (float) drawPosition.getZ());
 		cam.rotateM(drawOrientation);
 
 		if(captureScreenPosition)
@@ -194,8 +194,8 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 	public void selectionDraw(GL10 glUnused) {
 		cam.pushM();
-//		cam.applyTransform(drawTransform);
-		cam.translateM((float)drawPosition.getX(), (float)drawPosition.getY(), (float)drawPosition.getZ());
+		// cam.applyTransform(drawTransform);
+		cam.translateM((float) drawPosition.getX(), (float) drawPosition.getY(), (float) drawPosition.getZ());
 		cam.rotateM(drawOrientation);
 
 		captureScreenPosition();
@@ -237,7 +237,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		double max_yz = mY > mZ ? mY : mZ;
 		double max_xyz = max_xy > max_yz ? max_xy : max_yz;
 
-		return new Color(Utility.cap((float)(mX / max_xyz),0f,1f), Utility.cap((float)(mY / max_xyz),0f,1f), Utility.cap((float)(mZ / max_xyz),0f,1f), 0.7f);
+		return new Color(Utility.cap((float) (mX / max_xyz), 0f, 1f), Utility.cap((float) (mY / max_xyz), 0f, 1f), Utility.cap((float) (mZ / max_xyz), 0f, 1f), 0.7f);
 	}
 
 	@Override
@@ -338,14 +338,14 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		parentControl.publish(this, visualization_msgs.InteractiveMarkerFeedback.POSE_UPDATE);
 	}
 
-//	public void setParentTransform(Transform transform) {
-//		drawTransform.setTranslation(transform.getTranslation());
-//
-//		if(orientationMode != OrientationMode.FIXED)
-//			drawTransform.setRotation(transform.getRotationAndScale().multiply(myOrientation));
-//		else
-//			drawTransform.setRotation(myOrientation);
-//	}
+	// public void setParentTransform(Transform transform) {
+	// drawTransform.setTranslation(transform.getTranslation());
+	//
+	// if(orientationMode != OrientationMode.FIXED)
+	// drawTransform.setRotation(transform.getRotationAndScale().multiply(myOrientation));
+	// else
+	// drawTransform.setRotation(myOrientation);
+	// }
 
 	private void setMarkerSelection(boolean selected) {
 		for(Marker m : markers)
