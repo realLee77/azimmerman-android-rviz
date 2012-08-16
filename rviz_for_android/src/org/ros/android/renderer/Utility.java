@@ -57,14 +57,15 @@ public final class Utility {
 
 		return true;
 	}
-	
+
 	private static float[] point = new float[4];
+
 	public static void toWorldCoordinates(float[] modelMatrix, int mOffset, float[] pointLocal, float[] pointGlobal) {
 		point[0] = pointLocal[0];
 		point[1] = pointLocal[1];
 		point[2] = pointLocal[2];
 		point[3] = 1f;
-		
+
 		Matrix.multiplyMV(pointGlobal, 0, modelMatrix, 0, point, 0);
 	}
 
@@ -86,9 +87,9 @@ public final class Utility {
 		}
 	}
 
-	public static Quaternion normalize(Quaternion q) {	
-		double length = Math.sqrt(Math.pow(q.getX(), 2) + Math.pow(q.getY(), 2) + Math.pow(q.getZ(), 2) + Math.pow(q.getW(), 2));		
-		Quaternion retval = new Quaternion(q.getX()/length, q.getY()/length, q.getZ()/length, q.getW()/length);
+	public static Quaternion normalize(Quaternion q) {
+		double length = Math.sqrt(Math.pow(q.getX(), 2) + Math.pow(q.getY(), 2) + Math.pow(q.getZ(), 2) + Math.pow(q.getW(), 2));
+		Quaternion retval = new Quaternion(q.getX() / length, q.getY() / length, q.getZ() / length, q.getW() / length);
 		return retval;
 	}
 
@@ -129,7 +130,7 @@ public final class Utility {
 			return Transform.identity();
 		return t.getTransform();
 	}
-	
+
 	/**
 	 * @param q
 	 * @return Angle in radians
@@ -163,9 +164,9 @@ public final class Utility {
 			min = Math.min(f, min);
 		return min;
 	}
-	
+
 	public static Vector3 crossProduct(Vector3 lhs, Vector3 rhs) {
-		return new Vector3(lhs.getY()*rhs.getZ() - lhs.getZ()*rhs.getY(), lhs.getZ()*rhs.getX() - lhs.getX()*rhs.getZ(), lhs.getX()*rhs.getY() - lhs.getY()*rhs.getX());
+		return new Vector3(lhs.getY() * rhs.getZ() - lhs.getZ() * rhs.getY(), lhs.getZ() * rhs.getX() - lhs.getX() * rhs.getZ(), lhs.getX() * rhs.getY() - lhs.getY() * rhs.getX());
 	}
 
 	// Common value manipulation and comparison functions
@@ -289,5 +290,29 @@ public final class Utility {
 		} catch(IOException e) {
 			return null;
 		}
+	}
+
+	public static Quaternion rpyToQuaternion(float roll, float pitch, float yaw) {
+		if(roll == 0f && pitch == 0f && yaw == 0f)
+			return Quaternion.identity();
+		
+		double phi, the, psi;
+
+		phi = roll / 2.0;
+		the = pitch / 2.0;
+		psi = yaw / 2.0;
+
+		double x = Math.sin(phi) * Math.cos(the) * Math.cos(psi) - Math.cos(phi) * Math.sin(the) * Math.sin(psi);
+		double y = Math.cos(phi) * Math.sin(the) * Math.cos(psi) + Math.sin(phi) * Math.cos(the) * Math.sin(psi);
+		double z = Math.cos(phi) * Math.cos(the) * Math.sin(psi) - Math.sin(phi) * Math.sin(the) * Math.cos(psi);
+		double w = Math.cos(phi) * Math.cos(the) * Math.cos(psi) + Math.sin(phi) * Math.sin(the) * Math.sin(psi);
+
+		double l = Math.sqrt(x * x + y * y + z * z + w * w);
+
+		x /= l;
+		y /= l;
+		z /= l;
+		w /= l;
+		return new Quaternion(x, y, z, w);
 	}
 }

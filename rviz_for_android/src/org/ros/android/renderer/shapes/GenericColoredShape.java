@@ -27,6 +27,12 @@ import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 
 import android.opengl.GLES20;
 
+/**
+ * A shape capable of being drawn in any OpenGL ES 2.0 draw mode, specified at construction. Each vertex can optionally have an associated color.
+ * This class is capable of being drawn as a series of triangles, triangle strip, triangle fan, lines, line strip, or points.
+ * @author azimmerman
+ *
+ */
 public class GenericColoredShape extends BaseShape {
 
 	protected final FloatBuffer vertices;
@@ -34,7 +40,7 @@ public class GenericColoredShape extends BaseShape {
 	protected int vertexCount = 0;
 	protected boolean useVertexColors = false;
 	private final int drawMode;
-	
+
 	public GenericColoredShape(Camera cam, int drawMode, float[] vertices, float[] colors) {
 		super(cam);
 		this.drawMode = drawMode;

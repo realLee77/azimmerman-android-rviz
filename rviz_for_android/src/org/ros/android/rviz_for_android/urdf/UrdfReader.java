@@ -18,34 +18,36 @@ package org.ros.android.rviz_for_android.urdf;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.ros.android.renderer.shapes.Color;
 
 import android.util.Log;
 
+/**
+ * Read a URDF file and produce a UrdfLink object for each link in the file
+ * 
+ * @author azimmerman
+ * 
+ */
 public class UrdfReader extends VTDXmlReader {
-	
+
 	public interface UrdfReadingProgressListener {
 		public void readLink(int linkNumber, int linkCount);
 	}
-	
-	private Set<UrdfReadingProgressListener> listeners = new HashSet<UrdfReadingProgressListener>();
-	
-	public void addListener(UrdfReadingProgressListener l) {
-		listeners.add(l);
+
+	private UrdfReadingProgressListener listener;
+
+	public void setListener(UrdfReadingProgressListener l) {
+		listener = l;
 	}
-	
+
 	private void publishProgress(int link, int count) {
-		for(UrdfReadingProgressListener l : listeners) {
-			l.readLink(link, count);
-		}
+		if(listener != null)
+			listener.readLink(link, count);
 	}
-	
-	
+
 	private List<UrdfLink> urdf = new ArrayList<UrdfLink>();
 
 	public UrdfReader() {
@@ -71,7 +73,7 @@ public class UrdfReader extends VTDXmlReader {
 	private void buildColors() {
 		Log.i("URDF", "Building colors...");
 		Map<String, Color> colors = new HashMap<String, Color>();
-		
+
 		// Not all URDF files store the color/name pairs under the links. Must rebuild the color library searching the entire URDF file for color tags
 		List<String> colorNames = getAttributeList("//material/@name");
 		for(String name : colorNames) {
@@ -80,19 +82,19 @@ public class UrdfReader extends VTDXmlReader {
 				if(attributeExists(rgbaQuery)) {
 					float[] color = toFloatArray(super.existResult);
 					colors.put(name, new Color(color[0], color[1], color[2], color[3]));
-					Log.i("URDF","    Built color " + name);
-				}  
+					Log.i("URDF", "    Built color " + name);
+				}
 			}
 		}
 
 		for(UrdfLink ul : urdf) {
 			for(Component c : ul.getComponents()) {
-				if(c.getMaterial_name() != null && colors.containsKey(c.getMaterial_name())) {				
-					c.setMaterial_color(colors.get(c.getMaterial_name()));	
+				if(c.getMaterial_name() != null && colors.containsKey(c.getMaterial_name())) {
+					c.setMaterial_color(colors.get(c.getMaterial_name()));
 				}
 			}
 		}
-	}	
+	}
 
 	public List<UrdfLink> getUrdf() {
 		return urdf;
@@ -100,12 +102,12 @@ public class UrdfReader extends VTDXmlReader {
 
 	private void parseUrdf() {
 		List<String> links = getAttributeList("/robot/link/@name");
-		
+
 		int nodeLength = links.size();
-		
+
 		for(int i = 0; i < nodeLength; i++) {
-			Log.i("URDF", "Parsing node " + (i+1) + " of " + nodeLength);
-			
+			Log.i("URDF", "Parsing node " + (i + 1) + " of " + nodeLength);
+
 			// Link name
 			String name = links.get(i);
 			String prefix = "/robot/link[@name='" + name + "']";
@@ -143,7 +145,7 @@ public class UrdfReader extends VTDXmlReader {
 				case MESH:
 					visBuilder.setMesh(getSingleAttribute(vprefix, "/mesh/@filename"));
 					if(attributeExists(vprefix, "/mesh/@scale"))
-						visBuilder.setMeshScale(Float.parseFloat(existResult));
+						visBuilder.setMeshScale(super.toFloatArray(existResult));
 					break;
 				}
 
@@ -208,7 +210,7 @@ public class UrdfReader extends VTDXmlReader {
 
 			UrdfLink newLink = new UrdfLink(visual, collision, name);
 			urdf.add(newLink);
-			publishProgress(i+1, nodeLength);
+			publishProgress(i + 1, nodeLength);
 		}
 	}
 }

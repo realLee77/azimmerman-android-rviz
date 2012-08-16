@@ -17,8 +17,8 @@
 package org.ros.android.rviz_for_android.layers;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -45,7 +45,7 @@ public class TfFrameLayer extends DefaultLayer implements LayerWithProperties {
 	private Axis axis;
 	private FrameAddedListener listener;
 	private FrameTransformTree ftt;
-	private Set<GraphName> frames = Collections.synchronizedSet(new HashSet<GraphName>());
+	private Set<GraphName> frames = Collections.newSetFromMap(new ConcurrentHashMap<GraphName, Boolean>());
 	private BoolProperty prop;
 	private float scale = 1f;
 
