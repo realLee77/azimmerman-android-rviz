@@ -107,7 +107,8 @@ public class OrbitCamera implements Camera {
 
 		synchronized(fixedFrame) {
 			if(targetFrame != null) {
-				lookTarget = Utility.newTransformIfPossible(frameTransformTree, targetFrame, fixedFrame).getTranslation();
+				lookTarget = Utility.newTransformIfPossible(frameTransformTree, targetFrame, fixedFrame).getTranslation().scale(0.5f);
+				
 				updateLocation();
 			}
 		}
