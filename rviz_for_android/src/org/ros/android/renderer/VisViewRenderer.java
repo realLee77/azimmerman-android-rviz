@@ -122,7 +122,6 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 		GLES20.glReadPixels(selected.x, selected.y, 1, 1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorBuf);
 		colorBuf.position(0);
 		Color selectedColor = new Color((colorBuf.get() & 0xff) / 255f, (colorBuf.get() & 0xff) / 255f, (colorBuf.get() & 0xff) / 255f, 1f);
-		System.out.println("Selected color " + selectedColor);
 		camera.getSelectionManager().selectItemWithColor(selectedColor);
 
 		setFBO(glUnused, false);
@@ -177,7 +176,7 @@ public class VisViewRenderer implements GLSurfaceView.Renderer {
 			// check status
 			int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
 			if(status != GLES20.GL_FRAMEBUFFER_COMPLETE)
-				Log.e("Selection", "Aww snap! Frame buffer couldn't attach!");
+				Log.e("Selection", "Frame buffer couldn't attach!");
 	
 			GLES20.glClearColor(.0f, .0f, .0f, 1.0f);
 			GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);

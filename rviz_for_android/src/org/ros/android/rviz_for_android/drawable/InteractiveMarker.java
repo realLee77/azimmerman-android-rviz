@@ -39,7 +39,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.os.AsyncTask;
-import android.util.Log;
 import android.util.SparseArray;
 
 public class InteractiveMarker implements Cleanable {
@@ -66,7 +65,6 @@ public class InteractiveMarker implements Cleanable {
 	public InteractiveMarker(visualization_msgs.InteractiveMarker msg, Camera cam, FrameTransformTree ftt, MarkerFeedbackPublisher pub) {
 		this.serverConnection = ServerConnection.getInstance();
 		this.publisher = pub;
-		Log.d("InteractiveMarker", "Created interactive marker");
 
 		name = msg.getName();
 		orientation = Utility.normalize(Utility.correctQuaternion(Quaternion.fromQuaternionMessage(msg.getPose().getOrientation())));

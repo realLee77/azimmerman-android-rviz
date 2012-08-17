@@ -34,8 +34,6 @@ import org.ros.android.rviz_for_android.urdf.ServerConnection;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.rosjava_geometry.Transform;
 
-import android.util.Log;
-
 public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable {
 	protected static final ColladaLoader loader = new ColladaLoader();
 
@@ -45,8 +43,6 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 	 * @return a Collada mesh
 	 */
 	public static ColladaMesh newFromFile(String filename, Camera cam) {
-		long now = System.nanoTime();
-
 		List<BaseShape> retval = null;
 
 		// Download the .DAE file if it doesn't exist
@@ -69,7 +65,6 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 			}
 			retval = loader.getGeometries();
 		}
-		Log.i("Collada", "Load time for " + filename + " = " + (System.nanoTime() - now) / 1000000000.0);
 		return new ColladaMesh(cam, retval);
 	}
 
