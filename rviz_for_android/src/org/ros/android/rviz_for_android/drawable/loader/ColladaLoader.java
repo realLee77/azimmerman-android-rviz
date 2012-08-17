@@ -37,7 +37,7 @@ import org.ros.android.renderer.shapes.Color;
 import org.ros.android.renderer.shapes.TexturedBufferedTrianglesShape;
 import org.ros.android.renderer.shapes.TrianglesShape;
 import org.ros.android.rviz_for_android.urdf.InvalidXMLException;
-import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.ServerConnection;
 import org.ros.android.rviz_for_android.urdf.VTDXmlReader;
 
 import android.content.Context;
@@ -70,20 +70,15 @@ public class ColladaLoader extends VTDXmlReader {
 
 	private List<BaseShape> geometries;
 
-	private MeshFileDownloader mfd;
+	private ServerConnection serverConnection;
 	private String imgPrefix;
 	private Camera cam;
 
 	public ColladaLoader() {
 		super();
+		serverConnection = ServerConnection.getInstance();
 	}
 
-	public void setDownloader(MeshFileDownloader mfd) {
-		if(mfd == null)
-			throw new IllegalArgumentException("Passed a null MeshFileDownloader! Just what do you think you're doing?");
-		this.mfd = mfd;
-	}
-	
 	public void setCamera(Camera cam) {
 		this.cam = cam;
 	}
@@ -251,12 +246,12 @@ public class ColladaLoader extends VTDXmlReader {
 				String filename = getSingleAttribute("/COLLADA/library_images/image[@id='" + imgName + "']/init_from");
 
 				// If a cached compressed copy exists, load that. Otherwise, download, compress, and save the image
-				String compressedFilename = "COMPRESSED_" + mfd.getSanitizedPrefix(imgPrefix) + filename;
-				if(!mfd.fileExists(compressedFilename)) {
+				String compressedFilename = "COMPRESSED_" + serverConnection.getSanitizedPrefix(imgPrefix) + filename;
+				if(!serverConnection.fileExists(compressedFilename)) {
 					Log.i("DAE", "No compressed cached copy exists.");
 
 					// Load the uncompressed image
-					Bitmap uncompressed = openTextureFile(mfd.getContext().getFilesDir().toString() + "/", mfd.getFile(imgPrefix + filename));
+					Bitmap uncompressed = openTextureFile(serverConnection.getContext().getFilesDir().toString() + "/", serverConnection.getFile(imgPrefix + filename));
 
 					// Flip the image
 					Matrix flip = new Matrix();
@@ -269,7 +264,7 @@ public class ColladaLoader extends VTDXmlReader {
 
 					// Save the compressed texture
 					try {
-						BufferedOutputStream bout = new BufferedOutputStream(mfd.getContext().openFileOutput(compressedFilename, Context.MODE_WORLD_READABLE));
+						BufferedOutputStream bout = new BufferedOutputStream(serverConnection.getContext().openFileOutput(compressedFilename, Context.MODE_WORLD_READABLE));
 						bout.write(compressed.getData().array());
 						bout.close();
 					} catch(FileNotFoundException e) {
@@ -287,7 +282,7 @@ public class ColladaLoader extends VTDXmlReader {
 
 					// Load the existing compressed texture
 					try {
-						byte[] dataArray = IOUtils.toByteArray(mfd.getContext().openFileInput(compressedFilename));
+						byte[] dataArray = IOUtils.toByteArray(serverConnection.getContext().openFileInput(compressedFilename));
 						// Determine the dimensions of the image
 						int bytes = 2 * dataArray.length;
 						int width = 1024;

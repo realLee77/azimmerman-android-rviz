@@ -16,17 +16,24 @@
  */
 package org.ros.android.rviz_for_android.layers;
 
+import java.io.IOException;
+
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Utility;
 import org.ros.android.renderer.layer.DefaultLayer;
+import org.ros.android.rviz_for_android.MainActivity;
 import org.ros.node.ConnectedNode;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.os.Handler;
 import android.util.Log;
 
+/**
+ * Prints the current FPS on the screen. Only compatible with OpenGL ES 1!!
+ * @author azimmerman
+ */
 public class FPSLayer extends DefaultLayer {
 
 	public FPSLayer(Camera cam) {
@@ -63,7 +70,7 @@ public class FPSLayer extends DefaultLayer {
 		avgRate += framerate;
 		ratecount++;
 
-/*		if(!isLoaded) {
+		if(!isLoaded) {
 			txt = new TexFont(MainActivity.getAppContext(), gl);
 			try {
 				txt.LoadFont("TestFont.bff", gl);
@@ -72,14 +79,14 @@ public class FPSLayer extends DefaultLayer {
 				e.printStackTrace();
 			}
 			txt.SetScale(1);
-		}*/
+		}
 		if(ratecount == windowLimit) {
 			toDraw = Utility.cap((int)Math.round(avgRate / ratecount),99);
 			avgRate = 0;
 			ratecount = 0;
 			windowLimit = Utility.cap(toDraw / FPS_RECALCULATIONS_PER_SECOND, 5, 50);
 		}
-		//txt.PrintAt(gl, "FPS: " + toDraw, width - 50, height - 26);
+		txt.PrintAt(gl, "FPS: " + toDraw, width - 50, height - 26);
 		Log.d("FPS", "FPS: " + toDraw);
 	}
 

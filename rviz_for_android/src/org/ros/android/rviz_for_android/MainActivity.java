@@ -41,7 +41,7 @@ import org.ros.android.rviz_for_android.layers.RobotModelLayer;
 import org.ros.android.rviz_for_android.layers.TfFrameLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
-import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.ServerConnection;
 import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
@@ -78,18 +78,19 @@ public class MainActivity extends RosActivity {
 
 	// Tracking layers
 	private static enum AvailableLayerType {
-		Axis("Axis"),
-		Grid("Grid"),
-		RobotModel("Robot Model"),
-		Map("Map"),
-		PointCloud("Point Cloud"),
-		PointCloud2("Point Cloud2"),
-		TFLayer("TF"),
-		Marker("Marker"),
+		Axis("Axis"), 
+		Grid("Grid"), 
+		RobotModel("Robot Model"), 
+		Map("Map"), 
+		PointCloud("Point Cloud"), 
+		PointCloud2("Point Cloud2"), 
+		TFLayer("TF"), 
+		Marker("Marker"), 
 		InteractiveMarker("Interactive Marker");
-		
+
 		private String printName;
 		private int count = 0;
+
 		AvailableLayerType(String printName) {
 			this.printName = printName;
 		}
@@ -98,9 +99,9 @@ public class MainActivity extends RosActivity {
 		public String toString() {
 			return printName;
 		}
-		
+
 		public int getCount() {
-			return count ++;
+			return count++;
 		}
 	};
 
@@ -132,9 +133,6 @@ public class MainActivity extends RosActivity {
 	boolean following = false;
 	ParentableOrbitCameraControlLayer camControl;
 
-	// Mesh downloader
-	private MeshFileDownloader mfd;
-	
 	// Interactive marker controls
 	private InteractiveControlManager icm;
 
@@ -178,7 +176,7 @@ public class MainActivity extends RosActivity {
 			following = false;
 			break;
 		case R.id.clear_model_cache:
-			int clearedCount = mfd.clearCache();
+			int clearedCount = ServerConnection.getInstance().clearCache();
 			showToast("Cleared " + clearedCount + " items in model cache");
 			propAdapter.notifyDataSetChanged();
 			break;
@@ -227,14 +225,14 @@ public class MainActivity extends RosActivity {
 		ll.setVisibility(LinearLayout.GONE);
 
 		visualizationView = (VisualizationView) findViewById(R.id.visualization);
-		
+
 		camControl = new ParentableOrbitCameraControlLayer(this, visualizationView.getCamera());
 		camControl.setName("Camera");
 		layers.add(camControl);
-		
+
 		for(Layer l : layers)
 			visualizationView.addLayer(l);
-		
+
 		visualizationView.setPreserveEGLContextOnPause(true);
 
 		elv = (ExpandableListView) findViewById(R.id.expandableListView1);
@@ -252,29 +250,20 @@ public class MainActivity extends RosActivity {
 				}
 			}
 		});
-		
+
 		// TODO: MAKE THESE LOAD FROM A CONFIG FILE?
 		addNewLayer(AvailableLayerType.Axis);
 		addNewLayer(AvailableLayerType.Grid);
 
-		// TODO: Fix FPS layer to work with OGLES2?
-		//visualizationView.addLayer(new FPSLayer(visualizationView.getCamera()));
-		
 		icm = new InteractiveControlManager((AngleControlView) findViewById(R.id.acAngleControl), (TranslationControlView) findViewById(R.id.tcTranslationControl), (Translation2DControlView) findViewById(R.id.tcTranslationControl2D));
 		visualizationView.getCamera().getSelectionManager().setInteractiveControlManager(icm);
-		
-//		DisplayMetrics metrics = new DisplayMetrics();
-//		getWindowManager().getDefaultDisplay().getMetrics(metrics);
-//		visualizationView.getCamera().setScreenDisplayOffset(0, visualizationView.getCamera().getViewport().getHeight() - metrics.heightPixels);
-//		Log.e("Move", metrics.heightPixels  + "  "  + visualizationView.getCamera().getViewport().getHeight());
-//		Log.e("Move", "Offset: " + Arrays.toString(visualizationView.getCamera().getScreenDisplayOffset()));
 	}
 
 	@Override
 	protected void onDestroy() {
 		Log.e("MainActivity", "OnDestroy has been called.");
 		super.onDestroy();
-		// TODO: FIX THIS! This is a total hack to fix a strange and unresolved bug relating to the Android application lifecycle conflicting with OpenGL ES 2!
+		// TODO: This is a total hack to fix a strange and unresolved bug relating to the Android application lifecycle conflicting with OpenGL ES 2!
 		System.exit(0);
 	}
 
@@ -298,7 +287,7 @@ public class MainActivity extends RosActivity {
 
 	@Override
 	protected void init(NodeMainExecutor nodeMainExecutor) {
-		mfd = MeshFileDownloader.initialize("http://" + getMasterUri().getHost().toString() + ":44644", this);
+		ServerConnection.initialize("http://" + getMasterUri().getHost().toString() + ":44644", this);
 		NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
 		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/rviz"));
 	}
@@ -307,7 +296,7 @@ public class MainActivity extends RosActivity {
 		Camera cam = visualizationView.getCamera();
 		if(visualizationView.getCamera() == null)
 			throw new IllegalArgumentException("Can not instantiate new layer, camera is null!");
-		
+
 		DefaultLayer newLayer = null;
 		switch(layertype) {
 		case Axis:
@@ -317,7 +306,7 @@ public class MainActivity extends RosActivity {
 			newLayer = new GridLayer(cam, 10, 1f);
 			break;
 		case RobotModel:
-			newLayer = new RobotModelLayer(cam, mfd);
+			newLayer = new RobotModelLayer(cam);
 			break;
 		case Map:
 			newLayer = new MapLayer(cam, GraphName.of("/map"), nav_msgs.OccupancyGrid._TYPE, this);
@@ -332,10 +321,10 @@ public class MainActivity extends RosActivity {
 			newLayer = new TfFrameLayer(cam);
 			break;
 		case Marker:
-			newLayer = new MarkerLayer(GraphName.of("/markers"), Marker._TYPE, cam, mfd);
+			newLayer = new MarkerLayer(GraphName.of("/markers"), Marker._TYPE, cam);
 			break;
 		case InteractiveMarker:
-			newLayer = new InteractiveMarkerLayer(cam, mfd);
+			newLayer = new InteractiveMarkerLayer(cam);
 			break;
 		}
 
@@ -370,7 +359,7 @@ public class MainActivity extends RosActivity {
 		}
 		return liveLayers;
 	}
-	
+
 	private void createLayerDialogs() {
 		// Build a layer selection dialog for adding layers
 		addLayerDialogBuilder = new AlertDialog.Builder(context);
@@ -425,7 +414,7 @@ public class MainActivity extends RosActivity {
 	}
 
 	private void renameLayer(int item) {
-		final int selectedItem = item+1;
+		final int selectedItem = item + 1;
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 		alert.setTitle("Rename Layer");
 		alert.setMessage("New layer name");

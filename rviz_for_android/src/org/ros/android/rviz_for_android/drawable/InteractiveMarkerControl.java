@@ -30,7 +30,6 @@ import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.geometry.Ray;
 import org.ros.android.rviz_for_android.geometry.Vector2;
-import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
@@ -99,7 +98,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 	private boolean captureScreenPosition = false;
 
-	public InteractiveMarkerControl(visualization_msgs.InteractiveMarkerControl msg, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt, InteractiveMarker parentControl) {
+	public InteractiveMarkerControl(visualization_msgs.InteractiveMarkerControl msg, Camera cam, FrameTransformTree ftt, InteractiveMarker parentControl) {
 		this.cam = cam;
 		this.parentControl = parentControl;
 		this.name = msg.getName();
@@ -119,7 +118,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 		// TODO: Figure out interactive marker "independent orientation" setting
 		for(visualization_msgs.Marker marker : msg.getMarkers()) {
-			Marker m = new Marker(marker, cam, mfd, ftt);
+			Marker m = new Marker(marker, cam, ftt);
 			m.setViewFacing(isViewFacing);
 			if(msg.getInteractionMode() != visualization_msgs.InteractiveMarkerControl.NONE)
 				m.setInteractive(this);

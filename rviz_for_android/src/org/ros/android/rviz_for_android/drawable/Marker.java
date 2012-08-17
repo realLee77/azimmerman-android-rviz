@@ -33,7 +33,7 @@ import org.ros.android.renderer.shapes.BaseShapeInterface;
 import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.renderer.shapes.GenericColoredShape;
-import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.ServerConnection;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
@@ -56,7 +56,7 @@ public class Marker implements Cleanable {
 
 	// Mesh loading and storage
 	private static Map<String, BaseShapeInterface> loadedMeshes = new HashMap<String, BaseShapeInterface>();
-	private MeshFileDownloader mfd;
+	private ServerConnection serverConnection;
 
 	// Drawing
 	protected Camera cam;
@@ -86,13 +86,13 @@ public class Marker implements Cleanable {
 	private List<Color> shapeArrayColors = new ArrayList<Color>();
 	private boolean useIndividualShapeArrayColors;
 
-	public Marker(visualization_msgs.Marker msg, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt) {
+	public Marker(visualization_msgs.Marker msg, Camera cam, FrameTransformTree ftt) {
 		namespace = msg.getNs();
 		id = msg.getId();
 		this.ftt = ftt;
 
 		this.cam = cam;
-		this.mfd = mfd;
+		this.serverConnection = ServerConnection.getInstance();
 		markerMessageType = msg.getType();
 		frame = msg.getFrameLocked() ? GraphName.of(msg.getHeader().getFrameId()) : null;
 		scale = new float[] { (float) msg.getScale().getX(), (float) msg.getScale().getY(), (float) msg.getScale().getZ() };
@@ -110,7 +110,7 @@ public class Marker implements Cleanable {
 		this.ftt = ftt;
 
 		this.cam = cam;
-		this.mfd = null;
+		this.serverConnection = null;
 		markerMessageType = 0;
 		markerDrawType = DrawType.SHAPE;
 		this.shape = shape;
@@ -355,9 +355,9 @@ public class Marker implements Cleanable {
 	private UrdfDrawable loadMesh(String meshResourceName) {
 		UrdfDrawable ud;
 		if(meshResourceName.toLowerCase().endsWith(".dae")) {
-			ud = ColladaMesh.newFromFile(meshResourceName, mfd, cam);
+			ud = ColladaMesh.newFromFile(meshResourceName, cam);
 		} else if(meshResourceName.toLowerCase().endsWith(".stl")) {
-			ud = StlMesh.newFromFile(meshResourceName, mfd, cam);
+			ud = StlMesh.newFromFile(meshResourceName, cam);
 		} else {
 			Log.e("MarkerLayer", "Unknown mesh type! " + meshResourceName);
 			return null;

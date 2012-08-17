@@ -25,7 +25,7 @@ import org.ros.android.renderer.shapes.BaseShapeInterface;
 import org.ros.android.renderer.shapes.BufferedTrianglesShape;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.loader.StlLoader;
-import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.ServerConnection;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.rosjava_geometry.Transform;
 
@@ -33,16 +33,16 @@ public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable, Bas
 
 	private static final StlLoader loader = new StlLoader();
 	
-	public static StlMesh newFromFile(String filename, MeshFileDownloader mfd, Camera cam) {
+	public static StlMesh newFromFile(String filename, Camera cam) {
 		float[] v;
 		float[] n;
 		
 		// Download the .DAE file if it doesn't exist
-		String loadedFilename = mfd.getFile(filename);
+		String loadedFilename = ServerConnection.getInstance().getFile(filename);
 		
 		synchronized(loader) {
 			try {
-				loader.load(mfd.getContext().openFileInput(loadedFilename));
+				loader.load(ServerConnection.getInstance().getContext().openFileInput(loadedFilename));
 			} catch(FileNotFoundException e) {
 				e.printStackTrace();
 				return null;
