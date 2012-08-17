@@ -203,4 +203,18 @@ public class GraphNameProperty extends Property<GraphName> {
 			spin.setEnabled(enabled);
 		super.setEnabled(enabled);
 	}
+
+	@Override
+	public void fromPreferences(String val) {
+		if(val == null)
+			return;
+		setValue(GraphName.of(val));
+	}
+
+	@Override
+	public String toPreferences() {
+		if(super.value == null)
+			return null;
+		return super.value.toString();
+	}
 }

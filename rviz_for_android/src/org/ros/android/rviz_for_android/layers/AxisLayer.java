@@ -23,6 +23,7 @@ import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.TfLayer;
+import org.ros.android.rviz_for_android.MainActivity.AvailableLayerType;
 import org.ros.android.rviz_for_android.drawable.Axis;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.FloatProperty;
@@ -95,5 +96,10 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	public void onShutdown(VisualizationView view, Node node) {
 		statusController.cleanup();
 		super.onShutdown(view, node);
+	}
+
+	@Override
+	public AvailableLayerType getType() {
+		return AvailableLayerType.Axis;
 	}
 }

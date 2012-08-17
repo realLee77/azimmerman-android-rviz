@@ -24,6 +24,7 @@ import java.util.Map;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.ros.android.renderer.Camera;
+import org.ros.android.rviz_for_android.MainActivity.AvailableLayerType;
 import org.ros.android.rviz_for_android.drawable.Marker;
 import org.ros.android.rviz_for_android.prop.ButtonProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
@@ -55,8 +56,8 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 	private Object lockObj = new Object();
 	private final ServerConnection serverConnection;
 
-	public MarkerLayer(GraphName topicName, String messageType, Camera cam) {
-		super(topicName, messageType, cam);
+	public MarkerLayer(Camera cam, GraphName topicName) {
+		super(topicName, visualization_msgs.Marker._TYPE, cam);
 		this.serverConnection = ServerConnection.getInstance();
 		nextPruneTime = System.currentTimeMillis() + PRUNE_PERIOD;
 		super.prop.addSubProperty(new ButtonProperty("Namespaces ", "Select", new PropertyUpdateListener<String>() {
@@ -185,5 +186,10 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 
 		AlertDialog dialog = builder.create();
 		dialog.show();
+	}
+
+	@Override
+	public AvailableLayerType getType() {
+		return AvailableLayerType.Marker;
 	}
 }

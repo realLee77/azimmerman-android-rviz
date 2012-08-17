@@ -131,4 +131,18 @@ public class FloatProperty extends Property<Float> {
 			et.setEnabled(enabled);
 		super.setEnabled(enabled);
 	}
+
+	@Override
+	public void fromPreferences(String val) {
+		try {
+			setValue(Float.valueOf(val));
+		} catch(NumberFormatException e) {
+			return;
+		}
+	}
+
+	@Override
+	public String toPreferences() {
+		return super.value.toString();
+	}
 }

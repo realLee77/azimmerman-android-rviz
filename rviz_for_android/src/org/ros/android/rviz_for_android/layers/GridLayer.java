@@ -28,6 +28,7 @@ import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.Color;
+import org.ros.android.rviz_for_android.MainActivity.AvailableLayerType;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram;
 import org.ros.android.rviz_for_android.drawable.GLSLProgram.ShaderVal;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
@@ -240,6 +241,11 @@ public class GridLayer extends DefaultLayer implements LayerWithProperties, TfLa
 	public void onShutdown(VisualizationView view, Node node) {
 		statusController.cleanup();
 		super.onShutdown(view, node);
+	}
+
+	@Override
+	public AvailableLayerType getType() {
+		return AvailableLayerType.Grid;
 	}
 
 }

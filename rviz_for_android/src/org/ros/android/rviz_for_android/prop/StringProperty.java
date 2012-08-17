@@ -123,4 +123,14 @@ public class StringProperty extends Property<String> {
 			et.setEnabled(enabled);
 		super.setEnabled(enabled);
 	}
+
+	@Override
+	public void fromPreferences(String val) {
+		setValue(val);
+	}
+
+	@Override
+	public String toPreferences() {
+		return value;
+	}
 }

@@ -227,4 +227,8 @@ public abstract class Property<T> {
 	public List<Property<?>> getPropertyCollection() {
 		return propList;
 	}
+	
+	public abstract void fromPreferences(String val);
+	
+	public abstract String toPreferences();
 }

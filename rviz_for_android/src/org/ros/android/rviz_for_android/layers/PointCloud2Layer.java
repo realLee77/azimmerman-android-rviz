@@ -22,6 +22,7 @@ import javax.microedition.khronos.opengles.GL10;
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.Color;
+import org.ros.android.rviz_for_android.MainActivity.AvailableLayerType;
 import org.ros.android.rviz_for_android.drawable.PointCloud2GL;
 import org.ros.android.rviz_for_android.prop.ButtonProperty;
 import org.ros.android.rviz_for_android.prop.ColorProperty;
@@ -155,6 +156,11 @@ public class PointCloud2Layer extends EditableStatusSubscriberLayer<sensor_msgs.
 		super.onMessageReceived(msg);
 		pc.setData(msg);
 		propChannelSelect.setList(pc.getChannelNames());
+	}
+
+	@Override
+	public AvailableLayerType getType() {
+		return AvailableLayerType.PointCloud2;
 	}
 	
 	
