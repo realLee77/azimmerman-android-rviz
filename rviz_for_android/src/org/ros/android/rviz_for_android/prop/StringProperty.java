@@ -127,6 +127,7 @@ public class StringProperty extends Property<String> {
 	@Override
 	public void fromPreferences(String val) {
 		setValue(val);
+		newText = value;
 	}
 
 	@Override
