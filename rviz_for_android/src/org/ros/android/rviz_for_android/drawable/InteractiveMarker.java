@@ -27,7 +27,7 @@ import org.ros.android.renderer.Utility;
 import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.rviz_for_android.drawable.InteractiveMarkerControl.InteractionMode;
 import org.ros.android.rviz_for_android.layers.InteractiveMarkerLayer.MarkerFeedbackPublisher;
-import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.ServerConnection;
 import org.ros.namespace.GraphName;
 import org.ros.rosjava_geometry.FrameTransformTree;
 import org.ros.rosjava_geometry.Quaternion;
@@ -57,19 +57,18 @@ public class InteractiveMarker implements Cleanable {
 	private Vector3 position;
 
 	private Camera cam;
-	private final MeshFileDownloader mfd;
+	private final ServerConnection serverConnection;
 	private final MarkerFeedbackPublisher publisher;
 
 	private volatile boolean isInAction = false; // Becomes true when a user is manipulating the marker via a child control
 	private InteractiveMarkerPose latestPose = null; // Save the last received pose message if the marker is being manipulated and apply it when the user is done manipulating
 
-	public InteractiveMarker(visualization_msgs.InteractiveMarker msg, Camera cam, MeshFileDownloader mfd, FrameTransformTree ftt, MarkerFeedbackPublisher pub) {
-		this.mfd = mfd;
+	public InteractiveMarker(visualization_msgs.InteractiveMarker msg, Camera cam, FrameTransformTree ftt, MarkerFeedbackPublisher pub) {
+		this.serverConnection = ServerConnection.getInstance();
 		this.publisher = pub;
 		Log.d("InteractiveMarker", "Created interactive marker");
 
 		name = msg.getName();
-//		transform = new Transform(Vector3.fromPointMessage(msg.getPose().getPosition()), Utility.correctQuaternion(Quaternion.fromQuaternionMessage(msg.getPose().getOrientation())));
 		orientation = Utility.normalize(Utility.correctQuaternion(Quaternion.fromQuaternionMessage(msg.getPose().getOrientation())));
 		position = Vector3.fromPointMessage(msg.getPose().getPosition());
 
@@ -78,8 +77,7 @@ public class InteractiveMarker implements Cleanable {
 
 		// Create controls
 		for(visualization_msgs.InteractiveMarkerControl control : msg.getControls()) {
-			InteractiveMarkerControl imc = new InteractiveMarkerControl(control, cam, mfd, ftt, this);
-			// imc.setParentTransform(transform);
+			InteractiveMarkerControl imc = new InteractiveMarkerControl(control, cam, ftt, this);
 			controls.add(imc);
 		}
 
@@ -127,7 +125,6 @@ public class InteractiveMarker implements Cleanable {
 			return;
 		}
 
-//		transform = Transform.fromPoseMessage(p.getPose());
 		orientation = Utility.correctQuaternion(Quaternion.fromQuaternionMessage(p.getPose().getOrientation()));
 		position = Vector3.fromPointMessage(p.getPose().getPosition());
 
@@ -144,7 +141,6 @@ public class InteractiveMarker implements Cleanable {
 	}
 
 	public void childRotate(Quaternion q) {
-//		transform.setRotation(q.multiply(transform.getRotationAndScale()));
 		orientation = q.multiply(orientation);
 		
 		updateControls();
@@ -152,7 +148,6 @@ public class InteractiveMarker implements Cleanable {
 	}
 
 	public void childTranslate(Vector3 v) {
-//		transform.setTranslation(v);
 		position = v;
 		
 		updateControls();
@@ -173,7 +168,6 @@ public class InteractiveMarker implements Cleanable {
 	 */
 	private void updateControls() {
 		for(InteractiveMarkerControl imc : controls) {
-//			imc.setParentTransform(transform);
 			imc.setParentPosition(position);
 			imc.setParentOrientation(orientation);
 		}
@@ -256,7 +250,7 @@ public class InteractiveMarker implements Cleanable {
 			ids[idx++] = mi.getId();
 		}
 
-		AlertDialog.Builder builder = new AlertDialog.Builder(mfd.getContext());
+		AlertDialog.Builder builder = new AlertDialog.Builder(serverConnection.getContext());
 		builder.setItems(names, new OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
@@ -271,10 +265,6 @@ public class InteractiveMarker implements Cleanable {
 		return menuSelection;
 	}
 
-//	public Transform getTransform() {
-//		return transform;
-//	}
-	
 	public Vector3 getPosition() {
 		return position;
 	}

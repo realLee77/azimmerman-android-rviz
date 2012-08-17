@@ -30,7 +30,7 @@ import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
-import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.ServerConnection;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.rosjava_geometry.FrameTransformTree;
@@ -53,11 +53,11 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 	private long nextPruneTime;
 	private static final long PRUNE_PERIOD = 300; // Milliseconds
 	private Object lockObj = new Object();
-	private final MeshFileDownloader mfd;
+	private final ServerConnection serverConnection;
 
-	public MarkerLayer(GraphName topicName, String messageType, Camera cam, MeshFileDownloader mfd) {
+	public MarkerLayer(GraphName topicName, String messageType, Camera cam) {
 		super(topicName, messageType, cam);
-		this.mfd = mfd;
+		this.serverConnection = ServerConnection.getInstance();
 		nextPruneTime = System.currentTimeMillis() + PRUNE_PERIOD;
 		super.prop.addSubProperty(new ButtonProperty("Namespaces ", "Select", new PropertyUpdateListener<String>() {
 			@Override
@@ -81,7 +81,7 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 					enabledNamespaces.add(ns);
 					namespaceList.add(ns);
 				}
-				markers.get(ns).put(id, new Marker(msg, super.camera, mfd, ftt));
+				markers.get(ns).put(id, new Marker(msg, super.camera, ftt));
 				break;
 			case visualization_msgs.Marker.DELETE:
 				Log.i("MarkerLayer", "Deleting marker " + ns + ":" + id);
@@ -178,7 +178,7 @@ public class MarkerLayer extends EditableStatusSubscriberLayer<visualization_msg
 			}
 		};
 
-		AlertDialog.Builder builder = new AlertDialog.Builder(mfd.getContext());
+		AlertDialog.Builder builder = new AlertDialog.Builder(serverConnection.getContext());
 		builder.setTitle("Select Namespaces");
 		builder.setMultiChoiceItems(namespacesArray, selected, coloursDialogListener);
 		builder.setNeutralButton("Ok", null);

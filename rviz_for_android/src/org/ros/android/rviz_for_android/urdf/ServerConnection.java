@@ -35,23 +35,19 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 /**
- * Queries a server to download textures and mesh files. Downloaded files are cached in app storage. Only one instance of the MFD may exist.
+ * Queries the Python server to download textures and mesh files or start and stop nodes. Any downloaded files are cached in app storage. Only one instance of this class may exist!
  * @author azimmerman
  *
  */
-/**
- * @author azimmerman
- * 
- */
-public class MeshFileDownloader {
+public class ServerConnection {
 
 	private String host;
 	private Activity context;
 	private Object lock = new Object();
 
-	private MeshFileDownloader.QueryServer qs;
+	private ServerConnection.DownloadServerTask downloadTask;
 
-	private static MeshFileDownloader instance;
+	private static ServerConnection instance;
 
 	private ProgressDialog mProgressDialog;
 
@@ -64,22 +60,22 @@ public class MeshFileDownloader {
 	 *            the main activity context, used to display dialogs and toast messages
 	 * @return
 	 */
-	public static MeshFileDownloader initialize(String host, Activity context) {
+	public static ServerConnection initialize(String host, Activity context) {
 		if(instance == null) {
 			// Initialize the new instance
-			instance = new MeshFileDownloader(host, context);
+			instance = new ServerConnection(host, context);
 		}
 		return instance;
 	}
 
 	/**
-	 * @return the current MFD instance (null if initialize hasn't been called)
+	 * @return the current instance (null if initialize hasn't been called)
 	 */
-	public static MeshFileDownloader getInstance() {
+	public static ServerConnection getInstance() {
 		return instance;
 	}
 
-	private MeshFileDownloader(String host, final Activity context) {
+	private ServerConnection(String host, final Activity context) {
 		Log.i("Downloader", "Creating a mesh file downloader object");
 		Log.i("Downloader", "Host IP is " + host);
 		this.context = context;
@@ -170,8 +166,7 @@ public class MeshFileDownloader {
 	}
 
 	/**
-	 * Download a file on the current thread. This will block until the file has been downloaded. No progress dialog is shown, so the calling thread will appear to hang.
-	 * This is best called from an AsyncTask.
+	 * Download a file on the current thread. This will block until the file has been downloaded. No progress dialog is shown, so the calling thread will appear to hang. This is best called from an AsyncTask.
 	 * 
 	 * @param path
 	 *            the URL (http or package) to download
@@ -217,9 +212,9 @@ public class MeshFileDownloader {
 				if(path.startsWith("http://"))
 					return queryServer(new URL(path), filename);
 				else if(path.toLowerCase().startsWith("package://")) {
-					qs = new QueryServer();
-					qs.execute(host + "/PKG" + path.substring(9), filename, path.substring(path.lastIndexOf('/') + 1, path.length()));
-					return qs.get(10, TimeUnit.SECONDS);
+					downloadTask = new DownloadServerTask();
+					downloadTask.execute(host + "/PKG" + path.substring(9), filename, path.substring(path.lastIndexOf('/') + 1, path.length()));
+					return downloadTask.get(10, TimeUnit.SECONDS);
 				} else {
 					Log.e("Downloader", "Unexpected scheme: " + path);
 					return null;
@@ -239,8 +234,37 @@ public class MeshFileDownloader {
 			}
 			// TODO:
 			throw new RuntimeException("Couldn't download file!");
-			// return null;
 		}
+	}
+
+	/**
+	 * Start a node on the host computer with the specified ID handle. This will execute rosrun with the provided arguments.
+	 * 
+	 * @param ID
+	 *            the ID of the process to be started. This ID can be used to stop the node by calling stopNode. Calling startNode with the ID of an existing node will stop the existing node and replace it with the requested node
+	 * @param arguments
+	 *            the arguments to pass to rosrun
+	 */
+	public void startNode(int ID, String... arguments) {
+		StringBuilder pathBuilder = new StringBuilder().append(host).append("/ROSRUN/").append(ID);
+
+		for(String arg : arguments)
+			pathBuilder.append("/").append(arg);
+
+		ConnectServerTask cst = new ConnectServerTask();
+		cst.execute(pathBuilder.toString());
+	}
+
+	/**
+	 * Stop a previously launched node
+	 * 
+	 * @param ID
+	 *            the ID of the node to stop. If no node was started with this ID, no errors will be generated.
+	 */
+	public void stopNode(int ID) {
+		StringBuilder pathBuilder = new StringBuilder(host).append("/ROSSTOP/").append(ID);
+		ConnectServerTask cst = new ConnectServerTask();
+		cst.execute(pathBuilder.toString());
 	}
 
 	private String queryServer(URL url, String filename) {
@@ -285,7 +309,52 @@ public class MeshFileDownloader {
 		return null;
 	}
 
-	private class QueryServer extends AsyncTask<String, Integer, String> {
+	/**
+	 * Connect to a server URL and immediately disconnect
+	 * 
+	 * @author azimmerman
+	 */
+	private class ConnectServerTask extends AsyncTask<String, Void, Void> {
+
+		@Override
+		protected Void doInBackground(String... params) {
+			HttpURLConnection conn = connectURL(params[0]);
+
+			try {
+				conn.getResponseCode();
+			} catch(IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			conn.disconnect();
+			return null;
+		}
+
+		private HttpURLConnection connectURL(String address) {
+			Log.d("Downloader", "Connecting to URL " + address);
+			URL url = null;
+			try {
+				url = new URL(address);
+			} catch(MalformedURLException e) {
+				e.printStackTrace();
+			}
+
+			try {
+				return (HttpURLConnection) url.openConnection();
+			} catch(IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Connect to a URL and attempt to download a file
+	 * 
+	 * @author azimmerman
+	 */
+	private class DownloadServerTask extends AsyncTask<String, Integer, String> {
 
 		@Override
 		protected void onPostExecute(String result) {

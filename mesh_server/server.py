@@ -3,8 +3,11 @@ from os import path
 import rospkg
 import subprocess
 import sys
-    
+
+# Set up dictionary to hold rosrun nodes
+nodes = dict()    
 rp = rospkg.RosPack()
+
 class MyHandler(BaseHTTPRequestHandler):            
     def do_GET(self):
         print "\nIncoming request!"
@@ -37,14 +40,34 @@ class MyHandler(BaseHTTPRequestHandler):
                     return
                 else:
                     self.send_error(404, 'Not enough information supplied: %s' % self.path)
-            if self.path.startswith("/NODE"):
-                # Here is where code could go to set up intermediate nodes.
-                # By default, the server launches a TF throttle node on startup, but a
-                # point cloud compression or image throttle node could be launched here
+            if self.path.startswith("/ROSRUN"):
+                print "Received ROSRUN request!"
                 splitPath = self.path.split("/")
-                self.send_response(200)
-                self.send_header('Content-Type', "text/html")
-                self.end_headers()
+                # splitPath = "","ROSRUN",NODEHANDLE,A,B,C,...N
+                nodeHandle = splitPath[2]
+                del splitPath[0:3]
+                
+                # If a node with this handle was already running, stop it
+                if nodes.has_key(nodeHandle):
+                    print "Already had a node with handle " + nodeHandle + ". Stopping old node and replacing it."
+                    nodes[nodeHandle].kill()
+                
+                # Create a new node, include it in the list
+                splitPath.insert(0,"rosrun")
+                newProc = subprocess.Popen(splitPath, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)                
+                nodes[nodeHandle] = newProc
+                
+                self.send_error(204)
+                return
+            if self.path.startswith("/ROSSTOP"):
+                # Stop the specified node
+                splitPath = self.path.split("/")
+                nodeHandle = splitPath[2]
+                if nodes.has_key(nodeHandle):
+                    print "Stopping node " + nodeHandle
+                    nodes[nodeHandle].kill()
+                    
+                self.send_error(204)    
                 return
             return
         except IOError:
@@ -62,6 +85,12 @@ def main():
     except KeyboardInterrupt:
         print 'Control-C received, shutting down server'
         throttleTFProc.kill()
+        throttleClockProc.kill()
+        
+        # Shut down all roslaunched processes
+        for node in nodes:
+            nodes[node].kill()
+            
         server.socket.close()
 
 if __name__ == '__main__':

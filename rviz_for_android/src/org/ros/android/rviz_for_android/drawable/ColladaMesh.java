@@ -30,7 +30,7 @@ import org.ros.android.renderer.shapes.Cleanable;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.drawable.loader.ColladaLoader;
 import org.ros.android.rviz_for_android.urdf.InvalidXMLException;
-import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.ServerConnection;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.rosjava_geometry.Transform;
 
@@ -42,31 +42,26 @@ public class ColladaMesh implements BaseShapeInterface, UrdfDrawable, Cleanable 
 	/**
 	 * @param filename
 	 *            The name of the DAE file to be loaded, parsed directly from the URDF, contains the "package://" or "html://" piece
-	 * @param mfd
-	 *            The mesh file downloader instance
 	 * @return a Collada mesh
 	 */
-	public static ColladaMesh newFromFile(String filename, MeshFileDownloader mfd, Camera cam) {
+	public static ColladaMesh newFromFile(String filename, Camera cam) {
 		long now = System.nanoTime();
-		if(mfd == null)
-			throw new IllegalArgumentException("Null mesh file downloader! Must have a valid MFD to download meshes.");
 
 		List<BaseShape> retval = null;
 
 		// Download the .DAE file if it doesn't exist
-		String loadedFilename = mfd.getFile(filename);
+		String loadedFilename = ServerConnection.getInstance().getFile(filename);
 
 		if(loadedFilename == null)
 			throw new RuntimeException("Unable to download the file!");
 
 		// Get the image prefix
-		String imgPrefix = mfd.getPrefix(filename);
+		String imgPrefix = ServerConnection.getInstance().getPrefix(filename);
 
 		synchronized(loader) {
-			loader.setDownloader(mfd);
 			loader.setCamera(cam);
 			try {
-				loader.readDae(mfd.getContext().openFileInput(loadedFilename), imgPrefix);
+				loader.readDae(ServerConnection.getInstance().getContext().openFileInput(loadedFilename), imgPrefix);
 			} catch(IOException e) {
 				return null;
 			} catch(InvalidXMLException e) {

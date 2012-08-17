@@ -47,7 +47,7 @@ import org.ros.android.rviz_for_android.prop.ReadOnlyProperty.StatusColor;
 import org.ros.android.rviz_for_android.prop.StringProperty;
 import org.ros.android.rviz_for_android.urdf.Component;
 import org.ros.android.rviz_for_android.urdf.InvalidXMLException;
-import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
+import org.ros.android.rviz_for_android.urdf.ServerConnection;
 import org.ros.android.rviz_for_android.urdf.UrdfDrawable;
 import org.ros.android.rviz_for_android.urdf.UrdfLink;
 import org.ros.android.rviz_for_android.urdf.UrdfReader;
@@ -82,17 +82,15 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	private volatile boolean drawCol = false;
 
 	private Activity context;
-	private MeshFileDownloader mfd;
+	private ServerConnection serverConnection;
 
 	private FrameCheckStatusPropertyController statusController;
 
-	public RobotModelLayer(Camera cam, MeshFileDownloader mfd) {
+	public RobotModelLayer(Camera cam) {
 		super(cam);
-		if(mfd == null)
-			throw new IllegalArgumentException("MFD is null!");
 
-		this.context = mfd.getContext();
-		this.mfd = mfd;
+		this.context = serverConnection.getContext();
+		this.serverConnection = ServerConnection.getInstance();
 
 		reader = new UrdfReader();
 
@@ -196,13 +194,13 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 
 		UrdfDrawable ud;
 		if(meshResourceName.toLowerCase().endsWith(".dae")) {
-			ColladaMesh cm = ColladaMesh.newFromFile(meshResourceName, mfd, cam);
+			ColladaMesh cm = ColladaMesh.newFromFile(meshResourceName, cam);
 			if(cm == null)
 				return false;
 			cm.registerSelectable();
 			ud = (UrdfDrawable) cm;
 		} else if(meshResourceName.toLowerCase().endsWith(".stl")) {
-			StlMesh sm = StlMesh.newFromFile(meshResourceName, mfd, cam);
+			StlMesh sm = StlMesh.newFromFile(meshResourceName, cam);
 			sm.registerSelectable();
 			if(sm == null)
 				return false;

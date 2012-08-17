@@ -35,7 +35,6 @@ import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.Property.PropertyUpdateListener;
 import org.ros.android.rviz_for_android.prop.StringProperty;
-import org.ros.android.rviz_for_android.urdf.MeshFileDownloader;
 import org.ros.message.Time;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
@@ -73,9 +72,7 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 		public void publishFeedback(InteractiveMarker interactiveMarker, InteractiveMarkerControl control, byte type) {
 			if(publisher != null) {
 				InteractiveMarkerFeedback msg = publisher.newMessage();
-				
-				
-//				geometry_msgs.Pose markerPose = getPoseMessage(interactiveMarker.getTransform());
+
 				geometry_msgs.Pose markerPose = getPoseMessage(interactiveMarker.getPosition(), interactiveMarker.getOrientation());
 				
 				msg.setHeader(getHeaderMessage(interactiveMarker));
@@ -124,7 +121,7 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 		}
 	});
 
-	public InteractiveMarkerLayer(Camera cam, final MeshFileDownloader mfd) {
+	public InteractiveMarkerLayer(Camera cam) {
 		super(cam);
 
 		subscriber = new InteractiveMarkerSubscriptionManager("/basic_controls", cam, new InteractiveMarkerCallback() {
@@ -135,7 +132,7 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 					markers.remove(s);
 
 				for(visualization_msgs.InteractiveMarker im : msg.getMarkers())
-					markers.put(im.getName(), new InteractiveMarker(im, camera, mfd, ftt, pubCallback));
+					markers.put(im.getName(), new InteractiveMarker(im, camera, ftt, pubCallback));
 
 				for(InteractiveMarkerPose p : msg.getPoses()) {
 					InteractiveMarker stored = markers.get(p.getName());
@@ -152,7 +149,7 @@ public class InteractiveMarkerLayer extends DefaultLayer implements LayerWithPro
 				synchronized(lockObject) {
 					markers.clear();
 					for(visualization_msgs.InteractiveMarker im : msg.getMarkers())
-						markers.put(im.getName(), new InteractiveMarker(im, camera, mfd, ftt, pubCallback));
+						markers.put(im.getName(), new InteractiveMarker(im, camera, ftt, pubCallback));
 				}
 			}
 
