@@ -27,7 +27,6 @@ import org.ros.node.topic.Subscriber;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.os.Handler;
-import android.util.Log;
 
 public abstract class EditableSubscriberLayer<T extends org.ros.internal.message.Message> extends SubscriberLayer<T> {
 
@@ -57,11 +56,9 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
 		this.connectedNode = connectedNode;
-		Log.d("ESL", "Starting subscriber with topic " + this.topic);
 		sub = getSubscriber();
 		clearSubscriber();
 		initSubscriber(this.topic);
-		//sub.addMessageListener(subListener);
 	}
 
 	@Override
@@ -76,10 +73,8 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 	}
 
 	protected void initSubscriber(String topic) {
-		if(connectedNode == null | topic == null) {
-			Log.e("ESL", "Aborting because of null stuff");
+		if(connectedNode == null | topic == null)
 			return;
-		}
 		sub = connectedNode.newSubscriber(topic, messageType);
 		sub.addMessageListener(subListener);
 		messageCount = 0;
