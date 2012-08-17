@@ -27,6 +27,7 @@ import org.ros.node.topic.Subscriber;
 import org.ros.rosjava_geometry.FrameTransformTree;
 
 import android.os.Handler;
+import android.util.Log;
 
 public abstract class EditableSubscriberLayer<T extends org.ros.internal.message.Message> extends SubscriberLayer<T> {
 
@@ -47,6 +48,7 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 	public EditableSubscriberLayer(GraphName topicName, String messageType, Camera cam) {
 		super(topicName, messageType, cam);
 		this.messageType = messageType;
+		this.topic = topicName.toString();
 	}
 
 	protected abstract void onMessageReceived(T msg);
@@ -54,9 +56,12 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 	@Override
 	public void onStart(ConnectedNode connectedNode, Handler handler, FrameTransformTree frameTransformTree, Camera camera) {
 		super.onStart(connectedNode, handler, frameTransformTree, camera);
-		sub = getSubscriber();
-		sub.addMessageListener(subListener);
 		this.connectedNode = connectedNode;
+		Log.d("ESL", "Starting subscriber with topic " + this.topic);
+		sub = getSubscriber();
+		clearSubscriber();
+		initSubscriber(this.topic);
+		//sub.addMessageListener(subListener);
 	}
 
 	@Override
@@ -66,11 +71,15 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 	}
 	
 	protected void clearSubscriber() {
-		sub.shutdown();
+		if(sub != null)
+			sub.shutdown();
 	}
 
 	protected void initSubscriber(String topic) {
-		this.topic = topic;
+		if(connectedNode == null | topic == null) {
+			Log.e("ESL", "Aborting because of null stuff");
+			return;
+		}
 		sub = connectedNode.newSubscriber(topic, messageType);
 		sub.addMessageListener(subListener);
 		messageCount = 0;
@@ -78,6 +87,7 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 	
 	protected void changeTopic(String topic) {
 		if(!topic.equals(this.topic)) {
+			this.topic = topic;
 			clearSubscriber();
 			initSubscriber(topic);
 		}

@@ -77,7 +77,7 @@ def main():
     # Begin TF throttle
     throttleTFProc = subprocess.Popen(["rosrun", "tf_throttle", "tf_throttle"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     # Begin clock throttle
-    throttleClockProc = subprocess.Popen(["rosrun", "topic_tools", "throttle", "messages", "/clock", "1", "/clock_throttled"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    #throttleClockProc = subprocess.Popen(["rosrun", "topic_tools", "throttle", "messages", "/clock", "1", "/clock_throttled"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     try:
         server = HTTPServer(('', 44644), MyHandler)
         print '\nStarted Rviz for Android resource server on port 44644'
@@ -85,7 +85,7 @@ def main():
     except KeyboardInterrupt:
         print 'Control-C received, shutting down server'
         throttleTFProc.kill()
-        throttleClockProc.kill()
+        #throttleClockProc.kill()
         
         # Shut down all roslaunched processes
         for node in nodes:

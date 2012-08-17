@@ -66,6 +66,8 @@ public abstract class EditableStatusSubscriberLayer<T extends org.ros.internal.m
 	@Override
 	protected void changeTopic(String topic) {
 		super.changeTopic(topic);
+		if(statusController == null)
+			return;
 		statusController.setFrameChecking(false);
 		statusController.setStatus("No " + messageTypeName + " messages received", StatusColor.WARN);
 	}

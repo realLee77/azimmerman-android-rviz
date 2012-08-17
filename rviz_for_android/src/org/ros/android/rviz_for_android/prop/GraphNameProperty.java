@@ -206,6 +206,8 @@ public class GraphNameProperty extends Property<GraphName> {
 
 	@Override
 	public void fromPreferences(String val) {
+		// This doesn't effectively save/restore the selected graph name. Upon loading, the frame transform tree is empty and
+		// a nonexistent transform can't be selected in a GraphName property.
 		if(val == null)
 			return;
 		setValue(GraphName.of(val));

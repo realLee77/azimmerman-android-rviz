@@ -63,7 +63,8 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 		propParent = new GraphNameProperty("Parent", null, cam, new PropertyUpdateListener<GraphName>() {
 			@Override
 			public void onPropertyChanged(GraphName newval) {
-				statusController.setTargetFrame(newval);
+				if(statusController != null)
+					statusController.setTargetFrame(newval);
 			}
 		});
 		prop.addSubProperty(propParent);
