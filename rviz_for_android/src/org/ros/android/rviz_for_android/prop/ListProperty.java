@@ -119,4 +119,27 @@ public class ListProperty extends Property<Integer> {
 			spin.setEnabled(enabled);
 		super.setEnabled(enabled);
 	}
+
+	@Override
+	public void fromPreferences(String val) {
+		if(val == null)
+			return;
+		int selected = 0;
+		try {
+			selected = Integer.parseInt(val);
+		} catch(NumberFormatException e) {
+			return;
+		}
+		
+		// Must make sure that the loaded value is an option in the list
+		if(selected < list.size()) {
+			setValue(selected);
+			spin.setSelection(selected);
+		}
+	}
+
+	@Override
+	public String toPreferences() {
+		return null;
+	}
 }

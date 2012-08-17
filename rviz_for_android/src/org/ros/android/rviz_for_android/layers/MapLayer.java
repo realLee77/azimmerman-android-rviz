@@ -28,6 +28,7 @@ import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.TexturedTrianglesShape;
+import org.ros.android.rviz_for_android.MainActivity.AvailableLayerType;
 import org.ros.android.rviz_for_android.drawable.Plane;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
@@ -73,8 +74,8 @@ public class MapLayer extends EditableStatusSubscriberLayer<nav_msgs.OccupancyGr
 
 	private FrameTransformTree frameTransformTree;
 	
-	public MapLayer(Camera cam, GraphName topicName, String messageType, Context context) {
-		super(topicName, messageType, cam);
+	public MapLayer(Camera cam, GraphName topicName, Context context) {
+		super(topicName, nav_msgs.OccupancyGrid._TYPE, cam);
 		this.context = context;
 	}
 
@@ -278,5 +279,10 @@ public class MapLayer extends EditableStatusSubscriberLayer<nav_msgs.OccupancyGr
 	@Override
 	public GraphName getFrame() {
 		return super.frame;
+	}
+
+	@Override
+	public AvailableLayerType getType() {
+		return AvailableLayerType.Map;
 	}
 }

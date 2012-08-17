@@ -18,9 +18,11 @@
 package org.ros.android.rviz_for_android.prop;
 
 import org.ros.android.renderer.layer.Layer;
+import org.ros.android.rviz_for_android.MainActivity.AvailableLayerType;
 
 // This interface name probably violates some naming convention. Feel free to suggest alternate names! 
 public interface LayerWithProperties extends Layer {
 	public Property<?> getProperties();
 	public String getName();
+	public AvailableLayerType getType();
 }

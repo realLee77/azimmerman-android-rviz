@@ -34,8 +34,9 @@ import android.widget.TextView;
 
 /**
  * A Vector3 property using a TextView GUI which parses three numeric values for a Vector3 object from comma or space separated strings
+ * 
  * @author azimmerman
- *
+ * 
  */
 public class Vector3Property extends Property<Vector3> {
 
@@ -84,5 +85,19 @@ public class Vector3Property extends Property<Vector3> {
 		if(et != null)
 			et.setEnabled(enabled);
 		super.setEnabled(enabled);
+	}
+
+	@Override
+	public void fromPreferences(String val) {
+		try {
+			setValue(Utility.newVector3FromString(val));
+		} catch(NumberFormatException e) {
+			return;
+		}
+	}
+
+	@Override
+	public String toPreferences() {
+		return newVector.getX() + " " + newVector.getY() + " " + newVector.getZ();
 	}
 }

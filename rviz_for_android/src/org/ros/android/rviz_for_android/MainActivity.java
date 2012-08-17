@@ -40,17 +40,19 @@ import org.ros.android.rviz_for_android.layers.PointCloudLayer;
 import org.ros.android.rviz_for_android.layers.RobotModelLayer;
 import org.ros.android.rviz_for_android.layers.TfFrameLayer;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
+import org.ros.android.rviz_for_android.prop.Property;
 import org.ros.android.rviz_for_android.prop.PropertyListAdapter;
 import org.ros.android.rviz_for_android.urdf.ServerConnection;
 import org.ros.namespace.GraphName;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 
-import visualization_msgs.Marker;
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -77,7 +79,7 @@ public class MainActivity extends RosActivity {
 	private Toast msgToast;
 
 	// Tracking layers
-	private static enum AvailableLayerType {
+	public static enum AvailableLayerType {
 		Axis("Axis"), 
 		Grid("Grid"), 
 		RobotModel("Robot Model"), 
@@ -252,8 +254,9 @@ public class MainActivity extends RosActivity {
 		});
 
 		// TODO: MAKE THESE LOAD FROM A CONFIG FILE?
-		addNewLayer(AvailableLayerType.Axis);
-		addNewLayer(AvailableLayerType.Grid);
+//		addNewLayer(AvailableLayerType.Axis);
+//		addNewLayer(AvailableLayerType.Grid);
+		loadLayers();
 
 		icm = new InteractiveControlManager((AngleControlView) findViewById(R.id.acAngleControl), (TranslationControlView) findViewById(R.id.tcTranslationControl), (Translation2DControlView) findViewById(R.id.tcTranslationControl2D));
 		visualizationView.getCamera().getSelectionManager().setInteractiveControlManager(icm);
@@ -262,6 +265,7 @@ public class MainActivity extends RosActivity {
 	@Override
 	protected void onDestroy() {
 		Log.e("MainActivity", "OnDestroy has been called.");
+		saveLayers();
 		super.onDestroy();
 		// TODO: This is a total hack to fix a strange and unresolved bug relating to the Android application lifecycle conflicting with OpenGL ES 2!
 		System.exit(0);
@@ -292,7 +296,7 @@ public class MainActivity extends RosActivity {
 		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/rviz"));
 	}
 
-	private void addNewLayer(AvailableLayerType layertype) {
+	private DefaultLayer addNewLayer(AvailableLayerType layertype) {
 		Camera cam = visualizationView.getCamera();
 		if(visualizationView.getCamera() == null)
 			throw new IllegalArgumentException("Can not instantiate new layer, camera is null!");
@@ -309,10 +313,10 @@ public class MainActivity extends RosActivity {
 			newLayer = new RobotModelLayer(cam);
 			break;
 		case Map:
-			newLayer = new MapLayer(cam, GraphName.of("/map"), nav_msgs.OccupancyGrid._TYPE, this);
+			newLayer = new MapLayer(cam, GraphName.of("/map"), this);
 			break;
 		case PointCloud:
-			newLayer = new PointCloudLayer(cam, GraphName.of("/lots_of_points"), sensor_msgs.PointCloud._TYPE);
+			newLayer = new PointCloudLayer(cam, GraphName.of("/lots_of_points"));
 			break;
 		case PointCloud2:
 			newLayer = new PointCloud2Layer(GraphName.of("/lots_of_points2"), cam, this);
@@ -321,7 +325,7 @@ public class MainActivity extends RosActivity {
 			newLayer = new TfFrameLayer(cam);
 			break;
 		case Marker:
-			newLayer = new MarkerLayer(GraphName.of("/markers"), Marker._TYPE, cam);
+			newLayer = new MarkerLayer(cam, GraphName.of("/markers"));
 			break;
 		case InteractiveMarker:
 			newLayer = new InteractiveMarkerLayer(cam);
@@ -338,6 +342,8 @@ public class MainActivity extends RosActivity {
 		} else {
 			showToast("Invalid selection!");
 		}
+		
+		return newLayer;
 	}
 
 	private void removeLayer(int item) {
@@ -438,5 +444,69 @@ public class MainActivity extends RosActivity {
 			}
 		});
 		alert.show();
+	}
+	
+	private void loadLayers() {
+		Log.d("MainActivity", "Loading layers...");
+		SharedPreferences prefs = this.getPreferences(Activity.MODE_PRIVATE);
+		
+		// Fetch the number of saved layers
+		int layerCount = prefs.getInt("LAYER_COUNT", 0);
+		
+		// For each layer, determine it's layer type
+		for(int i = 0; i < layerCount; i++) {
+			String layerType = prefs.getString("TYPE_"+i, null);
+			if(layerType == null)
+				continue;
+			Log.i("MainActivity", "Restoring layer " + i + ", " + layerType);
+			DefaultLayer newLayer = addNewLayer(AvailableLayerType.valueOf(layerType));
+			newLayer.setName(prefs.getString("NAME_"+i, newLayer.getName()));
+			
+			// Restore layer properties
+			if(newLayer instanceof LayerWithProperties) {
+				LayerWithProperties newLayerProp = (LayerWithProperties) newLayer;
+				Property<?> prop = newLayerProp.getProperties();
+				Log.i("MainActivity", " property " + prop.getName() + " = " + prefs.getString(i+"_"+prop.getName(), "NONEXIST"));
+				prop.fromPreferences(prefs.getString(i+"_"+prop.getName(), prop.toPreferences()));
+				
+				for(Property<?> p : prop.getPropertyCollection()) {
+					Log.i("MainActivity", " property " + p.getName() + " = " + prefs.getString(i+"_"+p.getName(), "NONEXIST"));
+					p.fromPreferences(prefs.getString(i+"_"+p.getName(), p.toPreferences()));
+				}
+			}
+		}
+	}
+	
+	private void saveLayers() {
+		Log.d("MainActivity", "Saving layers...");
+		SharedPreferences prefs = this.getPreferences(Activity.MODE_PRIVATE);
+		SharedPreferences.Editor editor = prefs.edit();
+		
+		// Store the layer count (excluding the camera controller)
+		int layerCount = layers.size();
+		editor.putInt("LAYER_COUNT", layerCount - 1);
+		
+		int idx = 0;
+		for(LayerWithProperties layer : layers) {
+			// Ignore the camera controller or any layer that doesn't report a type
+			if(layer == camControl || layer.getType() == null)
+				continue;
+			Log.d("MainActivity", "Saving " + layer.getType().toString() + " " + idx);
+			editor.putString("TYPE_"+idx, layer.getType().name());
+			editor.putString("NAME_"+idx, layer.getName());
+			
+			// Save layer properties
+			Property<?> prop = layer.getProperties();
+			editor.putString(idx + "_" + prop.getName(), prop.toPreferences());
+			Log.d("MainActivity", "Saving property " + prop.getName());
+			for(Property p : prop.getPropertyCollection()) {
+				Log.d("MainActivity", "Saving property " + p.getName());
+				editor.putString(idx + "_" + p.getName(), p.toPreferences());
+			}
+			
+			idx++;
+		}
+		
+		editor.commit();
 	}
 }

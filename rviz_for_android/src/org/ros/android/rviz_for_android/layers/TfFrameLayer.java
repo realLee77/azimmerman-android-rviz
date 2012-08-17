@@ -28,6 +28,7 @@ import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Utility;
 import org.ros.android.renderer.VisualizationView;
 import org.ros.android.renderer.layer.DefaultLayer;
+import org.ros.android.rviz_for_android.MainActivity.AvailableLayerType;
 import org.ros.android.rviz_for_android.drawable.Axis;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
 import org.ros.android.rviz_for_android.prop.FloatProperty;
@@ -102,5 +103,10 @@ public class TfFrameLayer extends DefaultLayer implements LayerWithProperties {
 	@Override
 	public boolean isEnabled() {
 		return prop.getValue();
+	}
+
+	@Override
+	public AvailableLayerType getType() {
+		return AvailableLayerType.TFLayer;
 	}
 }

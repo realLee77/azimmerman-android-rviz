@@ -115,4 +115,18 @@ public class IntProperty extends Property<Integer> {
 			et.setEnabled(enabled);
 		super.setEnabled(enabled);
 	}
+
+	@Override
+	public void fromPreferences(String val) {
+		try {
+			super.value = Integer.valueOf(val);
+		} catch(NumberFormatException e) {
+			return;
+		}
+	}
+
+	@Override
+	public String toPreferences() {
+		return super.value.toString();
+	}
 }

@@ -52,4 +52,14 @@ public class ViewProperty extends Property<Object> {
 		return convertView;
 	}
 
+	@Override
+	public void fromPreferences(String val) {
+		// Do nothing
+	}
+
+	@Override
+	public String toPreferences() {
+		return null;
+	}
+
 }

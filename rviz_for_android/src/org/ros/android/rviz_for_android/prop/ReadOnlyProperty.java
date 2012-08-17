@@ -100,5 +100,15 @@ public class ReadOnlyProperty extends Property<String> {
 			}
 		});
 		return convertView;
+	}
+
+	@Override
+	public void fromPreferences(String val) {
+		// Do nothing, status messages shouldn't be loaded from saved preferences
+	}
+
+	@Override
+	public String toPreferences() {
+		return null;
 	}	
 }

@@ -31,6 +31,7 @@ import org.ros.android.renderer.layer.DefaultLayer;
 import org.ros.android.renderer.layer.Selectable;
 import org.ros.android.renderer.layer.SelectableLayer;
 import org.ros.android.renderer.shapes.Cleanable;
+import org.ros.android.rviz_for_android.MainActivity.AvailableLayerType;
 import org.ros.android.rviz_for_android.drawable.ColladaMesh;
 import org.ros.android.rviz_for_android.drawable.Cube;
 import org.ros.android.rviz_for_android.drawable.Cylinder;
@@ -417,5 +418,10 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	public Set<Selectable> getSelectables() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public AvailableLayerType getType() {
+		return AvailableLayerType.RobotModel;
 	}
 }

@@ -17,6 +17,8 @@
 
 package org.ros.android.rviz_for_android.prop;
 
+import java.util.Arrays;
+
 import org.ros.android.renderer.Utility;
 import org.ros.android.renderer.shapes.Color;
 import org.ros.android.rviz_for_android.R;
@@ -25,6 +27,7 @@ import org.ros.android.rviz_for_android.color.ColorPickerDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -99,5 +102,35 @@ public class ColorProperty extends Property<Color> {
 		if(btn != null)
 			btn.setEnabled(enabled);
 		super.setEnabled(enabled);
+	}
+
+	@Override
+	public void fromPreferences(String val) {
+		if(val == null)
+			return;
+		String[] parts = val.split(" ");
+		Log.d("Prefs", Arrays.toString(parts));
+		if(parts.length != 4) {
+			Log.e("Prefs", "Parts != 4!");
+			return;
+		}
+		
+		float[] colorComponents = new float[4];
+		for(int i = 0; i < 4; i ++) {
+			try {
+				colorComponents[i] = Float.parseFloat(parts[i]);
+			} catch(NumberFormatException e) {
+				Log.d("Prefs", "NFE on element " + i);
+				return;
+			}
+		}
+		setValue(new Color(colorComponents[0], colorComponents[1], colorComponents[2], colorComponents[3]));
+	}
+
+	@Override
+	public String toPreferences() {
+		if(value == null)
+			return "0 0 0 0";
+		return value.getRed() + " " + value.getGreen() + " " + value.getBlue() + " " + value.getAlpha();
 	}
 }

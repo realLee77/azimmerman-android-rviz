@@ -65,4 +65,14 @@ public class BoolProperty extends Property<Boolean> {
 		super.informListeners(newvalue);
 	}
 
+	@Override
+	public void fromPreferences(String val) {
+		setValue(val.equals("T"));
+	}
+
+	@Override
+	public String toPreferences() {
+		return value ? "T" : "F";
+	}
+
 }

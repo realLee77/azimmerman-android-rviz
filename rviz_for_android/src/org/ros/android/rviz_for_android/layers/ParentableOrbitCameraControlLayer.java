@@ -23,6 +23,7 @@ import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.Camera.AvailableFixedFrameListener;
 import org.ros.android.renderer.OrbitCamera;
 import org.ros.android.renderer.VisualizationView;
+import org.ros.android.rviz_for_android.MainActivity.AvailableLayerType;
 import org.ros.android.rviz_for_android.prop.GraphNameProperty;
 import org.ros.android.rviz_for_android.prop.LayerWithProperties;
 import org.ros.android.rviz_for_android.prop.Property;
@@ -96,5 +97,10 @@ public class ParentableOrbitCameraControlLayer extends OrbitCameraControlLayer i
 			cam.setTargetFrame(GraphName.of(newval));
 			super.enableScrolling = false;
 		}
+	}
+
+	@Override
+	public AvailableLayerType getType() {
+		return null;
 	}
 }

@@ -66,4 +66,15 @@ public class ButtonProperty extends Property<String> {
 		super.setEnabled(enabled);
 	}
 
+	@Override
+	public void fromPreferences(String val) {
+		// Don't trigger a button press by using super.value instead of setValue()
+		super.value = val;
+	}
+
+	@Override
+	public String toPreferences() {
+		return value;
+	}
+
 }

@@ -23,6 +23,7 @@ import javax.microedition.khronos.opengles.GL10;
 import org.ros.android.renderer.Camera;
 import org.ros.android.renderer.layer.TfLayer;
 import org.ros.android.renderer.shapes.Color;
+import org.ros.android.rviz_for_android.MainActivity.AvailableLayerType;
 import org.ros.android.rviz_for_android.drawable.PCShaders;
 import org.ros.android.rviz_for_android.drawable.PointCloudGL;
 import org.ros.android.rviz_for_android.prop.BoolProperty;
@@ -43,8 +44,8 @@ public class PointCloudLayer extends EditableStatusSubscriberLayer<sensor_msgs.P
 	private int pointCount = -1;
 	private PointCloudGL pc;
 
-	public PointCloudLayer(Camera cam, GraphName topicName, String messageType) {
-		super(topicName, messageType, cam);
+	public PointCloudLayer(Camera cam, GraphName topicName) {
+		super(topicName, sensor_msgs.PointCloud._TYPE, cam);
 
 		pc = new PointCloudGL(cam);
 
@@ -180,5 +181,10 @@ public class PointCloudLayer extends EditableStatusSubscriberLayer<sensor_msgs.P
 		}
 		pc.setData(vertices, msg.getChannels());
 		prop.<ListProperty> getProperty("Channels").setList(pc.getChannelNames());
+	}
+
+	@Override
+	public AvailableLayerType getType() {
+		return AvailableLayerType.PointCloud;
 	}
 }
