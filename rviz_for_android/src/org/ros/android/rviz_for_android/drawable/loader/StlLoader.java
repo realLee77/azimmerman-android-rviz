@@ -10,8 +10,6 @@ import org.apache.commons.io.IOUtils;
 import org.ros.android.renderer.Utility;
 import org.ros.rosjava_geometry.Vector3;
 
-import android.util.Log;
-
 /*
  * Copyright (c) 2012, Willow Garage, Inc.
  * All rights reserved.
@@ -66,13 +64,7 @@ public class StlLoader {
 
 		for(int i = 0; i < nTriangles; i++) {
 			// Load the normal, check that it's properly formed
-			normalVec =  new Vector3(getFloat(), getFloat(), getFloat());
-
-			if(!Utility.inRange(normalVec.getMagnitude(), 0.9, 1.1)) {
-				Log.e("STL", "Normal isn't unit length!");
-				normalVec = normalVec.normalize();
-				Log.i("STL", "NORMALIZED: " + normalVec.toString());
-			}
+			normalVec = new Vector3(getFloat(), getFloat(), getFloat()).normalize();
 
 			// Store the normalized normal
 			for(int j = 0; j < 3; j++) {
@@ -86,7 +78,7 @@ public class StlLoader {
 			for(int b = 0; b < 3; b++) {
 				vertexVec[b] = new Vector3(getFloat(), getFloat(), getFloat());
 			}
-			if(Utility.crossProduct(vertexVec[1].subtract(vertexVec[0]),vertexVec[2].subtract(vertexVec[0])).dotProduct(normalVec) < 0) {
+			if(Utility.crossProduct(vertexVec[1].subtract(vertexVec[0]), vertexVec[2].subtract(vertexVec[0])).dotProduct(normalVec) < 0) {
 				vertexVec[3] = vertexVec[2];
 				vertexVec[2] = vertexVec[1];
 				vertexVec[1] = vertexVec[3];

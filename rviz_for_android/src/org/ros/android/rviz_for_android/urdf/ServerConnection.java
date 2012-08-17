@@ -36,8 +36,9 @@ import android.util.Log;
 
 /**
  * Queries the Python server to download textures and mesh files or start and stop nodes. Any downloaded files are cached in app storage. Only one instance of this class may exist!
+ * 
  * @author azimmerman
- *
+ * 
  */
 public class ServerConnection {
 
@@ -76,7 +77,6 @@ public class ServerConnection {
 	}
 
 	private ServerConnection(String host, final Activity context) {
-		Log.i("Downloader", "Creating a mesh file downloader object");
 		Log.i("Downloader", "Host IP is " + host);
 		this.context = context;
 		this.host = host;

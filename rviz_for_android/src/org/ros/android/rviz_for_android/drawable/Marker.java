@@ -220,7 +220,6 @@ public class Marker implements Cleanable {
 		}
 
 		if(markerDrawType != DrawType.ERROR) {
-			Log.d("MarkerLayer", "Marker " + namespace + " : " + id + "  of type " + markerDrawType.toString() + " : " + shape.toString());
 			shapeTransform = Utility.correctTransform(Transform.fromPoseMessage(msg.getPose()));
 			shape.setTransform(shapeTransform);
 			shape.setColor(color);

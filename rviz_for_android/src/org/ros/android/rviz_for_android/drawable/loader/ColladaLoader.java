@@ -185,7 +185,7 @@ public class ColladaLoader extends VTDXmlReader {
 			textures = getTextures(prefix);
 			textured = true;
 		} else if(data.size() == 2 && data.containsKey("NORMAL") && data.containsKey("POSITION") && (data.get("NORMAL").getOffset() == data.get("POSITION").getOffset())) {
-			Log.d("DAE", "I've detected that deindexing is not necessary for this mesh!");
+			Log.d("DAE", "Deindexing is not necessary for this mesh!");
 			return new TrianglesShape(cam, data.get("POSITION").getData().getArray(), data.get("NORMAL").getData().getArray(), indices, defaultColor);
 		}
 
@@ -201,7 +201,7 @@ public class ColladaLoader extends VTDXmlReader {
 		// Deindex
 		Map<String, FloatVector> results = deindex(data, indices, type.getVertexCount(triCount));
 
-		Log.i("DAE", "For each vertex, I have the following information: " + results.keySet());
+		Log.i("DAE", "The following information is available for each vertex: " + results.keySet());
 
 		if(!textured) {
 			switch(type) {
@@ -268,10 +268,8 @@ public class ColladaLoader extends VTDXmlReader {
 						bout.write(compressed.getData().array());
 						bout.close();
 					} catch(FileNotFoundException e) {
-						Log.e("DAE", "FNF for output?");
 						e.printStackTrace();
 					} catch(IOException e) {
-						Log.e("DAE", "IOException!");
 						e.printStackTrace();
 					}
 

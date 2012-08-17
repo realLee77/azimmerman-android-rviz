@@ -69,7 +69,6 @@ public class StlMesh extends BufferedTrianglesShape implements UrdfDrawable, Bas
 	@Override
 	public void setSelected(boolean isSelected) {
 		super.setSelected(isSelected);
-		System.out.println("Am I, the lowly STL Mesh, selected? " + isSelected);
 	}
 
 	@Override
