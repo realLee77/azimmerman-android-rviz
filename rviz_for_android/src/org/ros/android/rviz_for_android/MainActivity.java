@@ -253,11 +253,6 @@ public class MainActivity extends RosActivity {
 			}
 		});
 
-		// TODO: MAKE THESE LOAD FROM A CONFIG FILE?
-//		addNewLayer(AvailableLayerType.Axis);
-//		addNewLayer(AvailableLayerType.Grid);
-		loadLayers();
-
 		icm = new InteractiveControlManager((AngleControlView) findViewById(R.id.acAngleControl), (TranslationControlView) findViewById(R.id.tcTranslationControl), (Translation2DControlView) findViewById(R.id.tcTranslationControl2D));
 		visualizationView.getCamera().getSelectionManager().setInteractiveControlManager(icm);
 	}
@@ -267,7 +262,8 @@ public class MainActivity extends RosActivity {
 		Log.e("MainActivity", "OnDestroy has been called.");
 		saveLayers();
 		super.onDestroy();
-		// TODO: This is a total hack to fix a strange and unresolved bug relating to the Android application lifecycle conflicting with OpenGL ES 2!
+		// TODO: This is a total hack to fix a strange bug relating to the Android application lifecycle conflicting with OpenGL ES 2!
+		// If the application isn't shut down completely, the renderer will not restart properly
 		System.exit(0);
 	}
 
@@ -294,6 +290,15 @@ public class MainActivity extends RosActivity {
 		ServerConnection.initialize("http://" + getMasterUri().getHost().toString() + ":44644", this);
 		NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
 		nodeMainExecutor.execute(visualizationView, nodeConfiguration.setNodeName("android/rviz"));
+
+		// Once the server connection and node executor are initialized, it's safe to load previously saved layers
+		// This must be done on the UI thread
+		runOnUiThread(new Runnable() {			
+			@Override
+			public void run() {
+				loadLayers();
+			}
+		});
 	}
 
 	private DefaultLayer addNewLayer(AvailableLayerType layertype) {
@@ -447,7 +452,6 @@ public class MainActivity extends RosActivity {
 	}
 	
 	private void loadLayers() {
-		Log.d("MainActivity", "Loading layers...");
 		SharedPreferences prefs = this.getPreferences(Activity.MODE_PRIVATE);
 		
 		// Fetch the number of saved layers
@@ -458,7 +462,6 @@ public class MainActivity extends RosActivity {
 			String layerType = prefs.getString("TYPE_"+i, null);
 			if(layerType == null)
 				continue;
-			Log.i("MainActivity", "Restoring layer " + i + ", " + layerType);
 			DefaultLayer newLayer = addNewLayer(AvailableLayerType.valueOf(layerType));
 			newLayer.setName(prefs.getString("NAME_"+i, newLayer.getName()));
 			
@@ -466,25 +469,20 @@ public class MainActivity extends RosActivity {
 			if(newLayer instanceof LayerWithProperties) {
 				LayerWithProperties newLayerProp = (LayerWithProperties) newLayer;
 				Property<?> prop = newLayerProp.getProperties();
-				Log.i("MainActivity", " property " + prop.getName() + " = " + prefs.getString(i+"_"+prop.getName(), "NONEXIST"));
 				prop.fromPreferences(prefs.getString(i+"_"+prop.getName(), prop.toPreferences()));
 				
-				for(Property<?> p : prop.getPropertyCollection()) {
-					Log.i("MainActivity", " property " + p.getName() + " = " + prefs.getString(i+"_"+p.getName(), "NONEXIST"));
+				for(Property<?> p : prop.getPropertyCollection())
 					p.fromPreferences(prefs.getString(i+"_"+p.getName(), p.toPreferences()));
-				}
 			}
 		}
 	}
 	
 	private void saveLayers() {
-		Log.d("MainActivity", "Saving layers...");
 		SharedPreferences prefs = this.getPreferences(Activity.MODE_PRIVATE);
 		SharedPreferences.Editor editor = prefs.edit();
 		
 		// Store the layer count (excluding the camera controller)
-		int layerCount = layers.size();
-		editor.putInt("LAYER_COUNT", layerCount - 1);
+		editor.putInt("LAYER_COUNT", layers.size() - 1);
 		
 		int idx = 0;
 		for(LayerWithProperties layer : layers) {
@@ -498,9 +496,7 @@ public class MainActivity extends RosActivity {
 			// Save layer properties
 			Property<?> prop = layer.getProperties();
 			editor.putString(idx + "_" + prop.getName(), prop.toPreferences());
-			Log.d("MainActivity", "Saving property " + prop.getName());
-			for(Property p : prop.getPropertyCollection()) {
-				Log.d("MainActivity", "Saving property " + p.getName());
+			for(Property<?> p : prop.getPropertyCollection()) {
 				editor.putString(idx + "_" + p.getName(), p.toPreferences());
 			}
 			

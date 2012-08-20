@@ -83,7 +83,7 @@ public class RobotModelLayer extends DefaultLayer implements LayerWithProperties
 	private volatile boolean drawCol = false;
 
 	private Activity context;
-	private ServerConnection serverConnection;
+	private ServerConnection serverConnection = ServerConnection.getInstance();
 
 	private FrameCheckStatusPropertyController statusController;
 
