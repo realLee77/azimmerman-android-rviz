@@ -131,7 +131,7 @@ public class ListProperty extends Property<Integer> {
 			return;
 		}
 		
-		// Must make sure that the loaded value is an option in the list
+		// Must make sure that the loaded value is a valid option in the list
 		if(selected < list.size()) {
 			setValue(selected);
 			spin.setSelection(selected);

@@ -64,7 +64,7 @@ public abstract class EditableSubscriberLayer<T extends org.ros.internal.message
 	@Override
 	public void onShutdown(VisualizationView view, Node node) {
 		clearSubscriber();
-		super.onShutdown(view, node);
+//		super.onShutdown(view, node);
 	}
 	
 	protected void clearSubscriber() {

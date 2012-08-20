@@ -25,7 +25,6 @@ import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
-import android.graphics.Point;
 import android.opengl.Matrix;
 
 import com.google.common.base.Preconditions;
@@ -160,7 +159,11 @@ public class OrbitCamera implements Camera {
 		float xDistCap = Utility.cap(xDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED) * translationScaleFactor;
 		float yDistCap = Utility.cap(yDistance, -MAX_TRANSLATE_SPEED, MAX_TRANSLATE_SPEED) * translationScaleFactor;
 
-		lookTarget = lookTarget.subtract(new Vector3(Math.cos(anglePhi - PI_OVER_TWO) * xDistCap - Math.sin(anglePhi + PI_OVER_TWO) * yDistCap, Math.sin(anglePhi - PI_OVER_TWO) * xDistCap + Math.cos(anglePhi + PI_OVER_TWO) * yDistCap, 0));
+		int ySign = (angleTheta < PI_OVER_TWO) ? 1 : -1;
+		// Project the screen movement vector onto the XY plane
+		Vector3 direction = new Vector3(Math.cos(anglePhi - PI_OVER_TWO) * xDistCap - Math.sin(anglePhi + PI_OVER_TWO) * yDistCap, ySign*(Math.sin(anglePhi - PI_OVER_TWO) * xDistCap + Math.cos(anglePhi + PI_OVER_TWO) * yDistCap), 0);
+
+		lookTarget = lookTarget.subtract(direction);
 		updateLocation();
 	}
 
@@ -213,17 +216,6 @@ public class OrbitCamera implements Camera {
 
 	public void setViewport(Viewport viewport) {
 		this.viewport = viewport;
-	}
-
-	public Vector3 toWorldCoordinates(Point screenPoint) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Transform toOpenGLPose(Point goalScreenPoint, float orientation) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	/**

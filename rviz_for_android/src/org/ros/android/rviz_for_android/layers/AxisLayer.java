@@ -95,7 +95,8 @@ public class AxisLayer extends DefaultLayer implements LayerWithProperties, TfLa
 
 	@Override
 	public void onShutdown(VisualizationView view, Node node) {
-		statusController.cleanup();
+		if(statusController != null)
+			statusController.cleanup();
 		super.onShutdown(view, node);
 	}
 

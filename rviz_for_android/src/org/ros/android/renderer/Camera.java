@@ -5,8 +5,6 @@ import org.ros.rosjava_geometry.Quaternion;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
-import android.graphics.Point;
-
 public interface Camera {
 
 	public abstract void apply();
@@ -31,24 +29,6 @@ public interface Camera {
 	public abstract float[] getViewMatrix();
 
 	public abstract void zoomCamera(float factor);
-
-	/**
-	 * Returns the real world equivalent of the viewport coordinates specified.
-	 * 
-	 * @return the world coordinates of the provided screen coordinates
-	 */
-	public abstract Vector3 toWorldCoordinates(Point screenPoint);
-
-	/**
-	 * Returns the pose in the OpenGL world that corresponds to a screen
-	 * coordinate and an orientation.
-	 * 
-	 * @param goalScreenPoint
-	 *          the point on the screen
-	 * @param orientation
-	 *          the orientation of the pose on the screen
-	 */
-	public abstract Transform toOpenGLPose(Point goalScreenPoint, float orientation);
 
 	public abstract GraphName getFixedFrame();
 
