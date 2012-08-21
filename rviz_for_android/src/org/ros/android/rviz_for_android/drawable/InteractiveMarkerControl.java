@@ -116,7 +116,6 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 		drawOrientation = myOrientation;
 
-		// TODO: Figure out interactive marker "independent orientation" setting
 		for(visualization_msgs.Marker marker : msg.getMarkers()) {
 			Marker m = new Marker(marker, cam, ftt);
 			m.setViewFacing(isViewFacing);
@@ -128,7 +127,6 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		if(msg.getMarkers().isEmpty())
 			autoCompleteMarker(msg);
 
-		// setParentTransform(parentControl.getTransform());
 		setParentPosition(parentControl.getPosition());
 		setParentOrientation(parentControl.getOrientation());
 	}
@@ -180,7 +178,6 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 	public void draw(GL10 glUnused) {
 		cam.pushM();
-		// cam.applyTransform(drawTransform);
 		cam.translateM((float) drawPosition.getX(), (float) drawPosition.getY(), (float) drawPosition.getZ());
 		cam.rotateM(drawOrientation);
 
@@ -193,7 +190,6 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 
 	public void selectionDraw(GL10 glUnused) {
 		cam.pushM();
-		// cam.applyTransform(drawTransform);
 		cam.translateM((float) drawPosition.getX(), (float) drawPosition.getY(), (float) drawPosition.getZ());
 		cam.rotateM(drawOrientation);
 
@@ -336,16 +332,7 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 		parentControl.childRotate(deltaQuaternion);
 		parentControl.publish(this, visualization_msgs.InteractiveMarkerFeedback.POSE_UPDATE);
 	}
-
-	// public void setParentTransform(Transform transform) {
-	// drawTransform.setTranslation(transform.getTranslation());
-	//
-	// if(orientationMode != OrientationMode.FIXED)
-	// drawTransform.setRotation(transform.getRotationAndScale().multiply(myOrientation));
-	// else
-	// drawTransform.setRotation(myOrientation);
-	// }
-
+	
 	private void setMarkerSelection(boolean selected) {
 		for(Marker m : markers)
 			m.setColorAsSelected(selected);
@@ -384,7 +371,6 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 			Vector2 mouseActionPoint = screenRayStart.add(screenRayDir.scalarMultiply(num / den));
 
 			// Step 3: Project the mouse action point into a 3D ray
-			// Ray mouseRay = getMouseRay(X,Y);
 			Ray mouseRay = getMouseRay(mouseActionPoint.getX(), mouseActionPoint.getY());
 
 			if(Utility.containsNaN(mouseRay.getDirection()) || Utility.containsNaN(mouseRay.getStart())) {
@@ -426,7 +412,6 @@ public class InteractiveMarkerControl implements InteractiveObject, Cleanable {
 			// Step 3: Determine the intersection of the mouse ray and motion plane
 			// I don't like the math rviz does, instead using math from
 			// http://www.cs.princeton.edu/courses/archive/fall00/cs426/lectures/raycast/sld017.htm
-
 			double t = motionPlane.getDirection().dotProduct(motionPlane.getStart().subtract(mouseRay.getStart())) / motionPlane.getDirection().dotProduct(mouseRay.getDirection());
 
 			Vector3 pointInPlane = mouseRay.getPoint(t);

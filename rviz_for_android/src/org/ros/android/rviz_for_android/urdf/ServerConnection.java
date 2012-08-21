@@ -190,9 +190,8 @@ public class ServerConnection {
 				Log.e("Downloader", "Path and URL are malformed: " + host + "    " + path);
 				e.printStackTrace();
 			}
-			// TODO:
-			throw new RuntimeException("Couldn't download file!");
-			// return null;
+			Log.e("Downloader", "Couldn't download file!");
+			return null;
 		}
 	}
 
@@ -232,8 +231,8 @@ public class ServerConnection {
 				Log.e("Downloader", "Timed out!!");
 				e.printStackTrace();
 			}
-			// TODO:
-			throw new RuntimeException("Couldn't download file!");
+			Log.e("Downloader", "Couldn't download file!");
+			return null;
 		}
 	}
 

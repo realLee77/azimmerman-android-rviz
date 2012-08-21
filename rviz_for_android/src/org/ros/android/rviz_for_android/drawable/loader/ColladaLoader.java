@@ -164,7 +164,6 @@ public class ColladaLoader extends VTDXmlReader {
 		try {
 			data = getDataFromAllInputs(prefix, type.toString());
 		} catch(Exception e) {
-			// TODO: Determine if we care about this exception
 			e.printStackTrace();
 		}
 
