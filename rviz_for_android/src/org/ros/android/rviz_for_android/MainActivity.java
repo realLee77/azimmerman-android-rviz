@@ -262,7 +262,7 @@ public class MainActivity extends RosActivity {
 		Log.e("MainActivity", "OnDestroy has been called.");
 		saveLayers();
 		super.onDestroy();
-		// TODO: This is a total hack to fix a strange bug relating to the Android application lifecycle conflicting with OpenGL ES 2!
+		// TODO: This is a total hack to fix a strange bug related to the Android application lifecycle conflicting with OpenGL ES 2!
 		// If the application isn't shut down completely, the renderer will not restart properly
 		System.exit(0);
 	}
@@ -489,7 +489,6 @@ public class MainActivity extends RosActivity {
 			// Ignore the camera controller or any layer that doesn't report a type
 			if(layer == camControl || layer.getType() == null)
 				continue;
-			Log.d("MainActivity", "Saving " + layer.getType().toString() + " " + idx);
 			editor.putString("TYPE_"+idx, layer.getType().name());
 			editor.putString("NAME_"+idx, layer.getName());
 			

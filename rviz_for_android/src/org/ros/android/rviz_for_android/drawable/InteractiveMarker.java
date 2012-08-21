@@ -41,6 +41,10 @@ import android.content.DialogInterface.OnClickListener;
 import android.os.AsyncTask;
 import android.util.SparseArray;
 
+/**
+ * @author azimmerman
+ *
+ */
 public class InteractiveMarker implements Cleanable {
 
 	private List<InteractiveMarkerControl> controls = new LinkedList<InteractiveMarkerControl>();
@@ -212,7 +216,9 @@ public class InteractiveMarker implements Cleanable {
 		showMenu(0);
 	}
 
-	// TODO: This feels like a hack, but it's the only way to get the dialog to launch on the UI thread
+	/**
+	 * AsyncTask used to show a dialog on the UI thread
+	 */
 	private class ShowMenu extends AsyncTask<List<MenuItem>, List<MenuItem>, Void> {
 		@Override
 		protected void onProgressUpdate(List<MenuItem>... values) {

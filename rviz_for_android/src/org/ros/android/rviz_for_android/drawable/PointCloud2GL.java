@@ -103,7 +103,6 @@ public class PointCloud2GL extends BaseShape {
 	}
 
 	public synchronized void setData(sensor_msgs.PointCloud2 msg) {
-		// TODO: Comment out to disable flickering
 		drawCloud = false;
 		channelNames.clear();
 		this.fields = msg.getFields();
@@ -123,7 +122,6 @@ public class PointCloud2GL extends BaseShape {
 			}
 		}
 
-		// TODO: Optimize this somehow?
 		for(PointField pf : fields) {
 			channelNames.add(pf.getName());
 			String name = pf.getName().toLowerCase();
